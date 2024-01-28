@@ -35,15 +35,6 @@
     grid-column-end: 5;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-} 
-/* When I try to combine these it doesn't work... */
-.grid-hand-kami > img {
-    transform: rotate(90deg);
-    margin-bottom: var(--neg-margin);
-}
-.grid-hand-shimo > img {
-    transform: rotate(90deg);
-    margin-bottom: var(--neg-margin);
 }
 .grid-hand-self{
     grid-row-start: 5;
@@ -51,7 +42,46 @@
     grid-column-start: 1;
     grid-column-end: 6;
 }
+.grid-discard{
+    display:flex;
+    justify-content:left;
+    align-items:center;
+}
+.grid-discard-kami {
+    grid-row-start:3;
+    grid-row-end:3;
+    grid-column-start:2;
+    grid-column-end:2;
+    writing-mode: vertical-rl;
+}
+.grid-discard-toimen {
+    grid-row-start:2;
+    grid-row-end:2;
+    grid-column-start:3;
+    grid-column-end:3;
+    transform: rotate(180deg);
+}
+.grid-discard-shimo {
+    grid-row-start:3;
+    grid-row-end:3;
+    grid-column-start:4;
+    grid-column-end:4;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+}
+.grid-discard-self {
+    grid-row-start:4;
+    grid-row-end:4;
+    grid-column-start:3;
+    grid-column-end:3;
+}
+.rotate > img {
+    transform: rotate(90deg);
+    margin-bottom: var(--neg-margin);
+}
 .grid-hand > img {
     width:2em;
 }
-
+.grid-discard > img {
+    width:2em;
+}

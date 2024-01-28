@@ -41,22 +41,44 @@ W_tilemap = {
 
 createElements()
 
+{/* <span class="grid-discard grid-discard-self"><img src="media/tiles/2z.svg"><img src="media/tiles/2z.svg"><img src="media/tiles/3z.svg"></span>
+ */}
+
 function createTile(tileStr) {
-    const tileElem = document.createElement('span')
     const tileImg = document.createElement('img')
-    tileElem.classList.add('tile-container')
     tileImg.src = `media/tiles/${tileStr}.svg`
-    tileImg.style.width = '2em'
-    tileElem.appendChild(tileImg)
-    return tileElem
+    return tileImg
+}
+
+function addTiles(container, tileStrArray) {
+    for (i in tileStrArray) {
+        container.appendChild(createTile(tileStrArray[i]))
+    }   
+}
+
+function convertTileStr(str) {
+    let output = []
+    let suit = ''
+    for (i=str.length; i>=0; i--) {
+        if (!isNaN(str[i])) {
+            if (suit == '') {
+                console.log(`error in string: ${str}`)
+            }
+            output.push(str[i]+suit)
+        } else {
+            suit = str[i]
+        }
+    }
+    output.reverse()
+    return output
 }
 
 function createElements() {
-    const tileContainerElem = document.querySelector('.hand-container')
-    const tilesElem = document.createElement('span')
-    const tileElem = createTile('6p')
-    tilesElem.appendChild(tileElem)
-    tilesElem.appendChild(createTile('7p'))
-    tileContainerElem.appendChild(tilesElem)
+    const discards = document.querySelector('.grid-discard-self')
+    discards.replaceChildren()
+    addTiles(discards, convertTileStr('123m456s789p1234z') )
+    const selfHand = document.querySelector('.grid-hand-self')
+    selfHand.replaceChildren()
+    addTiles(selfHand, convertTileStr('123m456s789p1234z') )
 }
 
