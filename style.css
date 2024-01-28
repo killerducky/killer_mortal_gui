@@ -1,7 +1,7 @@
 /* Different options based on user screen size */
 :root{
-    --main-width:500px;
-    --main-height:500px;
+    --main-width:700px;
+    --main-height:700px;
     --neg-margin:-14px;
 }
 .grid-main{
@@ -16,19 +16,19 @@
     justify-content: left;
     align-items: center;
 }
-.grid-hand-kami{
+.grid-hand-p3{
     grid-row-start: 1;
     grid-row-end: 6;
     grid-column-start: 1;
     writing-mode: vertical-rl;
 }
-.grid-hand-toimen{
+.grid-hand-p2{
     grid-row-start: 1;
     grid-column-start: 1;
     grid-column-end: 6;
     transform: rotate(180deg);
 }
-.grid-hand-shimo{
+.grid-hand-p1{
     grid-row-start: 1;
     grid-row-end: 6;
     grid-column-start: 5;
@@ -36,32 +36,33 @@
     writing-mode: vertical-rl;
     transform: rotate(180deg);
 }
-.grid-hand-self{
+.grid-hand-p0{
     grid-row-start: 5;
     grid-row-end: 5;
     grid-column-start: 1;
     grid-column-end: 6;
 }
 .grid-discard{
-    display:flex;
+    display:grid;
+    grid-template-columns: repeat(6, 1fr);
     justify-content:left;
     align-items:center;
 }
-.grid-discard-kami {
+.grid-discard-p3 {
     grid-row-start:3;
     grid-row-end:3;
     grid-column-start:2;
     grid-column-end:2;
     writing-mode: vertical-rl;
 }
-.grid-discard-toimen {
+.grid-discard-p2 {
     grid-row-start:2;
     grid-row-end:2;
     grid-column-start:3;
     grid-column-end:3;
     transform: rotate(180deg);
 }
-.grid-discard-shimo {
+.grid-discard-p1 {
     grid-row-start:3;
     grid-row-end:3;
     grid-column-start:4;
@@ -69,7 +70,7 @@
     writing-mode: vertical-rl;
     transform: rotate(180deg);
 }
-.grid-discard-self {
+.grid-discard-p0 {
     grid-row-start:4;
     grid-row-end:4;
     grid-column-start:3;

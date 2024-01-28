@@ -74,11 +74,13 @@ function convertTileStr(str) {
 }
 
 function createElements() {
-    const discards = document.querySelector('.grid-discard-self')
-    discards.replaceChildren()
-    addTiles(discards, convertTileStr('123m456s789p1234z') )
-    const selfHand = document.querySelector('.grid-hand-self')
-    selfHand.replaceChildren()
-    addTiles(selfHand, convertTileStr('123m456s789p1234z') )
+    for (pnum of Array(4).keys()) {
+        discards = document.querySelector(`.grid-discard-p${pnum}`)
+        discards.replaceChildren()
+        addTiles(discards, convertTileStr('123m456s789p1234z') )
+        selfHand = document.querySelector(`.grid-hand-p${pnum}`)
+        selfHand.replaceChildren()
+        addTiles(selfHand, convertTileStr('123m456s789p1234z') )
+    }
 }
 
