@@ -1,10 +1,8 @@
+/* Different options based on user screen size */
 :root{
     --main-width:500px;
     --main-height:500px;
     --neg-margin:-14px;
-}
-.tile-container > img {
-    width:2em;
 }
 .grid-main{
     display: grid;
@@ -24,10 +22,6 @@
     grid-column-start: 1;
     writing-mode: vertical-rl;
 }
-.grid-hand-kami > img {
-    transform: rotate(90deg);
-    margin-bottom: -14px;
-}
 .grid-hand-toimen{
     grid-row-start: 1;
     grid-column-start: 1;
@@ -42,8 +36,12 @@
     writing-mode: vertical-rl;
     transform: rotate(180deg);
 } 
+/* When I try to combine these it doesn't work... */
+.grid-hand-kami > img {
+    transform: rotate(90deg);
+    margin-bottom: var(--neg-margin);
+}
 .grid-hand-shimo > img {
-    transform-origin: bottom left;
     transform: rotate(90deg);
     margin-bottom: var(--neg-margin);
 }
