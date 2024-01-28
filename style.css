@@ -1,0 +1,59 @@
+:root{
+    --main-width:500px;
+    --main-height:500px;
+    --neg-margin:-14px;
+}
+.tile-container > img {
+    width:2em;
+}
+.grid-main{
+    display: grid;
+    width:var(--main-width);
+    height:var(--main-height);
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+}
+.grid-hand{
+    display: flex;
+    justify-content: left;
+    align-items: center;
+}
+.grid-hand-kami{
+    grid-row-start: 1;
+    grid-row-end: 6;
+    grid-column-start: 1;
+    writing-mode: vertical-rl;
+}
+.grid-hand-kami > img {
+    transform: rotate(90deg);
+    margin-bottom: -14px;
+}
+.grid-hand-toimen{
+    grid-row-start: 1;
+    grid-column-start: 1;
+    grid-column-end: 6;
+    transform: rotate(180deg);
+}
+.grid-hand-shimo{
+    grid-row-start: 1;
+    grid-row-end: 6;
+    grid-column-start: 5;
+    grid-column-end: 5;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+} 
+.grid-hand-shimo > img {
+    transform-origin: bottom left;
+    transform: rotate(90deg);
+    margin-bottom: var(--neg-margin);
+}
+.grid-hand-self{
+    grid-row-start: 5;
+    grid-row-end: 5;
+    grid-column-start: 1;
+    grid-column-end: 6;
+}
+.grid-hand > img {
+    width:2em;
+}
+
