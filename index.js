@@ -39,33 +39,47 @@ W_tilemap = {
     "?": 34
 }
 
-json_data = {"dan":["雀豪★1","雀豪★1","雀豪★1","雀豪★1"],"lobby":0,
-"log":[[[0,0,0], // round
-[25000,25000,25000,25000], // scores
-[14], // dora 4m
-[], // ura
-[39,16,24,33,39,12,35,36,17,46,21,34,37],
-[33,27,37,36,29,35,18,45,41],
-[21,46,12,39,39,24,34,60,60],
-[12,28,17,41,24,12,23,32,36,12,47,38,39],
-[32,15,11,31,26,28,13,27],
-[39,41,60,60,47,36,38,28],
-[13,14,37,26,34,24,45,52,23,46,18,45,19],
-[11,51,35,28,32,44,26,"45p4545"],
-[46,11,37,60,60,60,19,18],
-[22,43,47,38,42,53,18,14,38,18,43,16,25],
-[31,31,21,16,42,46,26,19],
-[60,60,42,47,60,60,21,60],
-["和了",[2000,-2000,0,0],[0,1,0,"40符1飜2000点","一盃口(1飜)"]]]],
-"name":["Aさん","Bさん","Cさん","Dさん"],
-"rate":[849.0,1507.0,1284.0,1199.0],"ratingc":"PF4","rule":{"aka":0,"aka51":1,"aka52":1,"aka53":1,"disp":"玉の間南喰赤"},"sx":["C","C","C","C"]}
+/* Source: https://mjai.ekyu.moe/report/ac7f456533f7d814.html#kyoku-2-0 
+Also saved in mhjong_mortal_ui/example_logs/Example_mjai_report.html
+*/
+json_data = {
+    "dan":["雀豪★1","雀豪★1","雀聖★2","雀聖★2"],
+    "lobby":0,
+    "log":[[
+        [2,0,0], // East 3, no repeats
+        [22000,11300,44700,22000],
+        [22], // Dora 2p
+        [], // Uradora
+        // PID0 = E in E1  now: West
+        [25,18,18,46,22,31,16,34,29,47,17,13,17],
+        [28,21,13,19,24,41,35,34,11,26,41,45,28,34,37],
+        [31,46,47,25,21,60,28,60,60,29,60,60,60,60,60],
+        // PID1 = S in E1  now: North
+        [37,23,45,42,51,37,13,38,43,23,46,38,12],              // hand
+        [47,12,11,44,47,14,"3838p38",43,33,22,36,14,28,12,17], // draws
+        [43,42,46,45,44,47,47,11,43,33,22,36,60,14,60],        // discards
+        // PID2 = W in E1,  now: East << POV player
+        [41,21,36,26,15,39,29,44,47,32,46,26,35],
+        [29,16,43,16,26,52, 38 ,31,32,38,25,36,24,31,"c141516",25],
+        [44,39,60,46,47,32, 60 ,60,60,60,21,26,41,60,29,29],
+        // PID3 i N in E1   now: South
+        [28,19,27,33,15,44,11,22,32,15,19,35,45],       // hand
+        [33,39,19,21,29,44,42,14,27,42,45,42,41,16,39], // draws
+        [44,60,11,45,35,60,33,60,60,60,60,60,60,42,60], // discards
+        ["和了",[-7700,7700,0,0],[1,0,1,"30符4飜7700点","断幺九(1飜)","ドラ(2飜)","赤ドラ(1飜)"]]
+    ]],
+    "name":["Aさん","Bさん","Cさん","Dさん"],
+    "rate":[1538.0,1261.0,2263.0,645.0],
+    "ratingc":"PF4",
+    "rule":{"aka":0,"aka51":1,"aka52":1,"aka53":1,
+    "disp":"玉の間南喰赤"},
+    "sx":["C","C","C","C"]
+}
 
-createElements()
-parseJsonData(json_data)
 
 //take '2m' and return 2 + 10 etc.
-function tm2t(str)
-{   //tenhou's tile encoding:
+function tm2t(str) { 
+    //tenhou's tile encoding:
     //   11-19    - 1-9 man
     //   21-29    - 1-9 pin
     //   31-39    - 1-9 sou
@@ -88,6 +102,50 @@ function tenhou2str(tileInt) {
     const tcon = ['m', 'p', 's', 'z']
     output = tileInt.toString() + tcon[suitInt-1]
     return output
+}
+
+// TODO: This should really just be a class keeping state of the entire round
+class TurnNum {
+    constructor(dealerIdx, draws, discards) {
+        this.dealerIdx = dealerIdx
+        this.draws = draws
+        this.discards = discards
+        this.ply = 0
+        this.pidx = dealerIdx
+        this.nextDiscardIdx = [0,0,0,0]
+        this.nextDrawIdx = [0,0,0,0]
+    }
+    getDraw() {
+        return this.draws[this.pidx][this.nextDrawIdx[this.pidx]]
+    }
+    getDiscard() {
+        return this.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
+    }
+    incPly() {
+        this.nextDrawIdx[this.pidx]++
+        this.nextDiscardIdx[this.pidx]++
+        this.pidx = this.whoIsNext()
+        this.ply++
+    }
+    whoIsNext() {
+        let debug = false
+        for (let tmpPidx of Array(4).keys()) {
+            if (tmpPidx == this.pidx) {
+                debug && console.log('skip: cannot call own tile')
+                continue // skip: cannot call own tile
+            }
+            if (debug) {
+                console.log('test', tmpPidx, this.nextDrawIdx[tmpPidx], this.ply, this.pidx)
+            }
+            let draw = this.draws[tmpPidx][this.nextDrawIdx[tmpPidx]]
+            debug && console.log(draw, tenhou2str(draw), this.draws[tmpPidx])
+            if (typeof draw == 'string' && draw.indexOf('p')) {
+                console.log('pon?', draw, tmpPidx)
+                return tmpPidx
+            }
+        }
+        return (this.pidx+1) % 4
+    }
 }
 
 function parseJsonData(data) {
@@ -117,7 +175,32 @@ function parseJsonData(data) {
     main.append('round ', JSON.stringify(round), document.createElement('br'))
     main.append('dora ', JSON.stringify(dora), document.createElement('br'))
     main.append('uradora ', JSON.stringify(uradora), document.createElement('br'))
+
+    // Initialize whose turn it is, and pointers for current draws/discards for each player
+    const ply = new TurnNum(round[0], draws, discards)
+
+    while (1) {
+        //console.log(ply.ply, ply.turn, ply.pidx)
+        draw = ply.getDraw(draws)
+        if (typeof draw == "undefined") { 
+            console.log("out of draws")
+            break 
+        }
+        console.log(`ply ${ply.ply} pidx ${ply.pidx} draw ${draw}, ${tenhou2str(draw)}`)
+        discard = ply.getDiscard(discards)
+        if (typeof discard == "undefined") {
+            console.log("out of discards")
+            break
+        }
+        if (discard==60) {
+            discard = draw // tsumogiri the drawn tile
+        }
+        console.log(`discard ${discard}, ${tenhou2str(discard)}`)
+        addDiscard(ply.pidx, [tenhou2str(discard)])
+        ply.incPly()
+    }
 }
+
 function createTile(tileStr) {
     const tileImg = document.createElement('img')
     tileImg.src = `media/tiles/${tileStr}.svg`
@@ -131,6 +214,11 @@ function addTiles(container, tileStrArray, replace) {
     for (i in tileStrArray) {
         container.appendChild(createTile(tileStrArray[i]))
     }   
+}
+
+function addDiscard(pidx, tileStrArray) {
+    discardsElem = document.querySelector(`.grid-discard-p${pidx}`)
+    addTiles(discardsElem, tileStrArray)
 }
 
 function convertTileStr(str) {
@@ -152,10 +240,13 @@ function convertTileStr(str) {
 
 function createElements() {
     for (pnum of Array(4).keys()) {
-        discards = document.querySelector(`.grid-discard-p${pnum}`)
-        addTiles(discards, convertTileStr('123m456s789p1234z'), true)
+        //discards = document.querySelector(`.grid-discard-p${pnum}`)
+        //addTiles(discards, convertTileStr('123m456s789p1234z'), true)
         selfHand = document.querySelector(`.grid-hand-p${pnum}`)
         addTiles(selfHand, convertTileStr('123m456s789p1234z'), true)
     }
 }
+
+createElements()
+parseJsonData(json_data)
 

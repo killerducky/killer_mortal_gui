@@ -4,6 +4,10 @@
     --main-height:700px;
     --neg-margin:-14px;
 }
+body{
+/*     background: radial-gradient(circle at 40% 20%, rgb(0, 111, 176) 10%, rgb(4, 50, 111) 50%, rgb(2, 35, 77) 150%); */
+    background: lightblue;
+}
 .grid-main{
     display: grid;
     width:var(--main-width);
