@@ -5,8 +5,8 @@ json_data = {
     "dan":["雀豪★1","雀豪★1","雀聖★2","雀聖★2"],
     "lobby":0,
     "log":[[
-        [2,0,0], // East 3, no repeats
-        [22000,11300,44700,22000],
+        [2,0,0], // East 3, no repeats, no riichi sticks
+        [22000,11300,44700,22000], // start points
         [22], // Dora 2p
         [], // Uradora
         // PID0 = E in E1  now: West
@@ -98,6 +98,7 @@ class TurnNum {
                 console.log('chi', draw)
                 return draw
             }
+            throw new Error(`Cannot parse draw ${draw}`)
         }
         return draw
     }
@@ -105,9 +106,11 @@ class TurnNum {
         return this.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
     }
     incPly() {
-        this.nextDrawIdx[this.pidx]++
-        this.nextDiscardIdx[this.pidx]++
-        this.pidx = this.whoIsNext()
+        if (this.ply%2==1) {
+            this.nextDrawIdx[this.pidx]++
+            this.nextDiscardIdx[this.pidx]++
+            this.pidx = this.whoIsNext()
+        }
         this.ply++
     }
     whoIsNext() {
@@ -151,9 +154,9 @@ function parseJsonData(data) {
     scores = log[logIdx++]
     dora = log[logIdx++]
     uradora = log[logIdx++]
-    haipais = []
-    draws = []
-    discards = []
+    let haipais = []
+    let draws = []
+    let discards = []
     for (pnum of Array(4).keys()) {
         haipais.push(Array.from(log[logIdx++]))
         draws.push(log[logIdx++])
@@ -175,21 +178,27 @@ function parseJsonData(data) {
     }
 
     while (ply.ply < ply_counter) {
-        //console.log(ply.ply, ply.turn, ply.pidx)
+        //console.log(ply.ply, ply.pidx)
         draw = ply.getDraw(draws)
         if (typeof draw == "undefined") {
             console.log("out of draws")
             break 
         }
         //console.log(`ply ${ply.ply} pidx ${ply.pidx} draw ${draw}, ${tenhou2str(draw)}`)
+        ply.incPly()
+        if (ply.ply >= ply_counter) {
+            break
+        }
         discard = ply.getDiscard(discards)
         if (typeof discard == "undefined") {
             console.log("out of discards")
             break
         }
+        //console.log(`ply ${ply.ply} pidx ${ply.pidx} discard ${discard}`)
         if (discard==60) {
             discard = draw // tsumogiri the drawn tile
         } else {
+            //console.log(haipais[ply.pidx], discard)
             removeFromArray(haipais[ply.pidx], discard)
             haipais[ply.pidx].push(draw)
         }
@@ -207,7 +216,10 @@ function parseJsonData(data) {
 
 function createTile(tileStr) {
     const tileImg = document.createElement('img')
-    tileImg.src = `media/tiles/${tileStr}.svg`
+    tileImg.src = `media/Regular_shortnames/${tileStr}.svg`
+    tileImg.style.background = "white"
+    tileImg.style.border = "1px solid grey"
+    tileImg.style.padding = "1px 1px 1px 1px"
     return tileImg
 }
 
@@ -256,9 +268,19 @@ function getPlyCounter() {
 
 function connectUI() {
     const inc = document.getElementById("ply-inc");
+    const inc2 = document.getElementById("ply-inc2");
     const input = document.getElementById("ply-counter");
     const dec = document.getElementById("ply-dec");
+    const dec2 = document.getElementById("ply-dec2");
     inc.addEventListener("click", () => {
+        incPlyCounter();
+        input.value = getPlyCounter();
+        parseJsonData(json_data)
+    });
+    inc2.addEventListener("click", () => {
+        incPlyCounter();
+        incPlyCounter();
+        incPlyCounter();
         incPlyCounter();
         input.value = getPlyCounter();
         parseJsonData(json_data)
@@ -267,6 +289,14 @@ function connectUI() {
         if (input.value > 0) {
           decPlyCounter();
         }
+        input.value = getPlyCounter();
+        parseJsonData(json_data)
+    });
+    dec2.addEventListener("click", () => {
+        decPlyCounter();
+        decPlyCounter();
+        decPlyCounter();
+        decPlyCounter();
         input.value = getPlyCounter();
         parseJsonData(json_data)
     });
