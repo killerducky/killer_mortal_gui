@@ -240,12 +240,15 @@ function parseJsonData(data) {
             discard = drawnTile[ply.pidx] // tsumogiri the drawn tile
             drawnTile[ply.pidx] = null
         } else if (draw[0] == 'draw') {
-            //console.log(hands[ply.pidx], discard)
+            // normal draw and discard
             removeFromArray(hands[ply.pidx], discard)
             hands[ply.pidx].push(drawnTile[ply.pidx])
             hands[ply.pidx].sort(tileSort)
             drawnTile[ply.pidx] = null
-        } // otherwise it was a call, so no new tile to add to hand
+        } else {
+            // otherwise it was a call, no new tile, just discard
+            removeFromArray(hands[ply.pidx], discard)
+        }
         addDiscard(ply.pidx, [tenhou2str(discard)], !tsumogiri)
         ply.incPly()
     }

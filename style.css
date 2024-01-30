@@ -30,29 +30,35 @@ h1{
 .grid-hand{
     display: flex;
     justify-content: left;
-    align-items: center;
-    background: deepskyblue;
 }
 .grid-hand-p3{
     grid-area: ah-p3;
     writing-mode: vertical-rl;
+    background: deepskyblue;
 }
 .grid-hand-p2{
     grid-area: ah-p2;
     transform: rotate(180deg);
+    background: deepskyblue;
+    padding-top: 10px;
+    padding-left: 10px;
 }
 .grid-hand-p1{
     grid-area: ah-p1;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
+    background: deepskyblue;
 }
 .grid-hand-p0{
     grid-area: ah-p0;
+    background: deepskyblue;
+    padding-top: 10px;
+    padding-left: 10px;
 }
 .grid-discard{
     display:grid;
-    grid-template-columns: repeat(6, 36px);
-    grid-template-rows: repeat(3, 47px);
+    grid-template-columns: repeat(6, 34px);
+    grid-template-rows: repeat(3, 44px);
     justify-content:left;
     align-items:center;
 }
@@ -78,10 +84,11 @@ h1{
 .rotate > img {
     transform: rotate(90deg);
     margin-bottom: var(--neg-margin);
+    margin-right: 13px; /* TODO */
 }
 .grid-hand > img {
-    width:2em;
+    width:30px;
 }
 .grid-discard > img {
-    width:2em;
+    width:30px;
 }
