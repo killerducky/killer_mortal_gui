@@ -129,12 +129,12 @@ function parseJsonData(data) {
         }
     }
 
-    const main = document.querySelector('main')
-    // quick hack output some info.
-    main.append(document.createElement('br'))
-    main.append('round ', JSON.stringify(round), document.createElement('br'))
-    main.append('dora ', JSON.stringify(dora), document.createElement('br'))
-    main.append('uradora ', JSON.stringify(uradora), document.createElement('br'))
+    gridInfo = document.querySelector('.grid-info')
+    console.log(gridInfo)
+    gridInfo.replaceChildren()
+    gridInfo.append('round ', JSON.stringify(round), document.createElement('br'))
+    gridInfo.append('dora ', JSON.stringify(dora), document.createElement('br'))
+    gridInfo.append('uradora ', JSON.stringify(uradora), document.createElement('br'))
 
     // Initialize whose turn it is, and pointers for current draws/discards for each player
     let ply = new TurnNum(round[0], draws, discards)
@@ -202,15 +202,6 @@ function convertTileStr(str) {
     return output
 }
 
-function createElements() {
-    for (pnum of Array(4).keys()) {
-        //discards = document.querySelector(`.grid-discard-p${pnum}`)
-        //addTiles(discards, convertTileStr('123m456s789p1234z'), true)
-        selfHand = document.querySelector(`.grid-hand-p${pnum}`)
-        addTiles(selfHand, convertTileStr('123m456s789p1234z'), true)
-    }
-}
-
 function incPlyCounter() {
     ply_counter++;
 }
@@ -242,7 +233,6 @@ function connectUI() {
 }
 
 let ply_counter = 0;
-createElements()
 parseJsonData(json_data)
 connectUI()
 
