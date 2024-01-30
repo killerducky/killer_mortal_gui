@@ -25,7 +25,11 @@ json_data = {
         [28,19,27,33,15,44,11,22,32,15,19,35,45],       // hand
         [33,39,19,21,29,44,42,14,27,42,45,42,41,16,39], // draws
         [44,60,11,45,35,60,33,60,60,60,60,60,60,42,60], // discards
-        ["和了",[-7700,7700,0,0],[1,0,1,"30符4飜7700点","断幺九(1飜)","ドラ(2飜)","赤ドラ(1飜)"]]
+        [
+            "和了", // "heaven" = Agari = Win (Tsumo or Ron)
+            [-7700,7700,0,0], // point change
+            [1,0,1,"30符4飜7700点","断幺九(1飜)","ドラ(2飜)","赤ドラ(1飜)"]
+        ]
     ]],
     "name":["Aさん","Bさん","Cさん","Dさん"],
     "rate":[1538.0,1261.0,2263.0,645.0],
@@ -118,9 +122,14 @@ class TurnNum {
             }
             let draw = this.draws[tmpPidx][this.nextDrawIdx[tmpPidx]]
             debug && console.log(draw, tenhou2str(draw), this.draws[tmpPidx])
-            if (typeof draw == 'string' && draw.indexOf('c') == -1) {
-                console.log('non-chi call?', draw, tmpPidx)
-                return tmpPidx
+            if (typeof draw == 'string') {
+                let chiAllowed = (this.pidx+1) % 4 == tmpPidx
+                if (chiAllowed || draw.indexOf('c') == -1) {
+                    console.log('called', draw, tmpPidx)
+                    let discardsElem = document.querySelector(`.grid-discard-p${this.pidx}`)
+                    discardsElem.lastChild.style.opacity = "0.5"
+                    return tmpPidx
+                }
             }
         }
         return (this.pidx+1) % 4
