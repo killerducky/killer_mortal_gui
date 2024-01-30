@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" sizes="32x32" href="media/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="media/favicon-16x16.png">
-    <title>Mahjong Reviewer</title>
+    <title>Killer Mahjong Reviewer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,6 +24,11 @@
             <span class="grid-discard rotate grid-discard-p3"></span>
             <span class="grid-discard grid-discard-p2"></span>
             <span class="grid-discard rotate grid-discard-p1"></span>
+        </div>
+        <div class="controls">
+            <button id="ply-dec">-</button>
+            <input type="number" id="ply-counter" value="0" readonly>
+            <button id="ply-inc">+</button>
         </div>
     </main>
     <script src="index.js"></script>

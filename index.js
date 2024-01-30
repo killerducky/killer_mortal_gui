@@ -1,46 +1,5 @@
-W_tilemap = {
-    "1m": 0,
-    "2m": 1,
-    "3m": 2,
-    "4m": 3,
-    "5m": 4,
-    "5mr": 4.1,
-    "6m": 5,
-    "7m": 6,
-    "8m": 7,
-    "9m": 8,
-    "1p": 9,
-    "2p": 10,
-    "3p": 11,
-    "4p": 12,
-    "5p": 13,
-    "5pr": 13.1,
-    "6p": 14,
-    "7p": 15,
-    "8p": 16,
-    "9p": 17,
-    "1s": 18,
-    "2s": 19,
-    "3s": 20,
-    "4s": 21,
-    "5s": 22,
-    "5sr": 22.1,
-    "6s": 23,
-    "7s": 24,
-    "8s": 25,
-    "9s": 26,
-    "E": 27,
-    "S": 28,
-    "W": 29,
-    "N": 30,
-    "P": 31,
-    "F": 32,
-    "C": 33,
-    "?": 34
-}
-
 /* Source: https://mjai.ekyu.moe/report/ac7f456533f7d814.html#kyoku-2-0 
-Also saved in mhjong_mortal_ui/example_logs/Example_mjai_report.html
+Also saved in mahjong_mortal_ui/example_logs/Example_mjai_report.html
 */
 json_data = {
     "dan":["雀豪★1","雀豪★1","雀聖★2","雀聖★2"],
@@ -139,8 +98,8 @@ class TurnNum {
             }
             let draw = this.draws[tmpPidx][this.nextDrawIdx[tmpPidx]]
             debug && console.log(draw, tenhou2str(draw), this.draws[tmpPidx])
-            if (typeof draw == 'string' && draw.indexOf('p')) {
-                console.log('pon?', draw, tmpPidx)
+            if (typeof draw == 'string') {
+                console.log('call?', draw, tmpPidx)
                 return tmpPidx
             }
         }
@@ -150,17 +109,18 @@ class TurnNum {
 
 function parseJsonData(data) {
     const log = data['log'][0]
-    round = log.shift()
-    scores = log.shift()
-    dora = log.shift()
-    uradora = log.shift()
+    logIdx = 0
+    round = log[logIdx++]
+    scores = log[logIdx++]
+    dora = log[logIdx++]
+    uradora = log[logIdx++]
     haipais = []
     draws = []
     discards = []
     for (pnum of Array(4).keys()) {
-        haipais.push(log.shift())
-        draws.push(log.shift())
-        discards.push(log.shift())
+        haipais.push(log[logIdx++])
+        draws.push(log[logIdx++])
+        discards.push(log[logIdx++])
         haipais[pnum].sort()
         hand = document.querySelector(`.grid-hand-p${pnum}`)
         hand.replaceChildren()
@@ -177,16 +137,20 @@ function parseJsonData(data) {
     main.append('uradora ', JSON.stringify(uradora), document.createElement('br'))
 
     // Initialize whose turn it is, and pointers for current draws/discards for each player
-    const ply = new TurnNum(round[0], draws, discards)
+    let ply = new TurnNum(round[0], draws, discards)
+    for (let tmpPidx of Array(4).keys()) {
+        discardsElem = document.querySelector(`.grid-discard-p${tmpPidx}`)
+        discardsElem.replaceChildren()
+    }
 
-    while (1) {
+    while (ply.ply < ply_counter) {
         //console.log(ply.ply, ply.turn, ply.pidx)
         draw = ply.getDraw(draws)
         if (typeof draw == "undefined") { 
             console.log("out of draws")
             break 
         }
-        console.log(`ply ${ply.ply} pidx ${ply.pidx} draw ${draw}, ${tenhou2str(draw)}`)
+        //console.log(`ply ${ply.ply} pidx ${ply.pidx} draw ${draw}, ${tenhou2str(draw)}`)
         discard = ply.getDiscard(discards)
         if (typeof discard == "undefined") {
             console.log("out of discards")
@@ -195,7 +159,7 @@ function parseJsonData(data) {
         if (discard==60) {
             discard = draw // tsumogiri the drawn tile
         }
-        console.log(`discard ${discard}, ${tenhou2str(discard)}`)
+        //console.log(`discard ${discard}, ${tenhou2str(discard)}`)
         addDiscard(ply.pidx, [tenhou2str(discard)])
         ply.incPly()
     }
@@ -247,6 +211,38 @@ function createElements() {
     }
 }
 
+function incPlyCounter() {
+    ply_counter++;
+}
+
+function decPlyCounter() {
+    ply_counter > 0 && ply_counter--;
+}
+
+function getPlyCounter() {
+    return ply_counter;
+}
+
+function connectUI() {
+    const inc = document.getElementById("ply-inc");
+    const input = document.getElementById("ply-counter");
+    const dec = document.getElementById("ply-dec");
+    inc.addEventListener("click", () => {
+        incPlyCounter();
+        input.value = getPlyCounter();
+        parseJsonData(json_data)
+    });
+    dec.addEventListener("click", () => {
+        if (input.value > 0) {
+          decPlyCounter();
+        }
+        input.value = getPlyCounter();
+        parseJsonData(json_data)
+    });
+}
+
+let ply_counter = 0;
 createElements()
 parseJsonData(json_data)
+connectUI()
 
