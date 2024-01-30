@@ -14,7 +14,7 @@ json_data = {
         [28,21,13,19,24,41,35,34,11,26,41,45,28,34,37],
         [31,46,47,25,21,60,28,60,60,29,60,60,60,60,60],
         // PID1 = S in E1  now: North
-        [37,23,45,42,51,37,13,38,43,23,46,38,12],              // hand
+        [37,23,45,42,51,37,13,38,43,23,46,38,12],              // haipai = starting hand
         [47,12,11,44,47,14,"3838p38",43,33,22,36,14,28,12,17], // draws
         [43,42,46,45,44,47,47,11,43,33,22,36,60,14,60],        // discards
         // PID2 = W in E1,  now: East << POV player
@@ -22,7 +22,7 @@ json_data = {
         [29,16,43,16,26,52,38,31,32,38,25,36,24,31,"c141516",25],
         [44,39,60,46,47,32,60,60,60,60,21,26,41,60,29,29],
         // PID3 i N in E1   now: South
-        [28,19,27,33,15,44,11,22,32,15,19,35,45],       // hand
+        [28,19,27,33,15,44,11,22,32,15,19,35,45],       // haipai = starting hand
         [33,39,19,21,29,44,42,14,27,42,45,42,41,16,39], // draws
         [44,60,11,45,35,60,33,60,60,60,60,60,60,42,60], // discards
         [
@@ -83,24 +83,27 @@ class TurnNum {
         if (typeof draw == "undefined") { 
             console.log("out of draws")
             max_ply = this.ply
-            return null 
+            return null
         }
         if (typeof draw == "string") {
             console.log('string draw', draw)
-            if (draw.indexOf('p') !== -1) {
+            let idx = draw.indexOf('p')
+            if (idx !== -1) {
                 draw = parseInt(draw[5]+draw[6]) // no matter were 'p' is, the last two digits are the ponned tile
                 console.log('pon', draw)
-                return draw
+                return ['pon', idx, draw]
             }
             let chiIdx = draw.indexOf('c')
             if (chiIdx !== -1) {
-                draw = parseInt(draw[1]+draw[2])
-                console.log('chi', draw)
-                return draw
+                let t0 = parseInt(draw[1]+draw[2])
+                let t1 = parseInt(draw[3]+draw[4])
+                let t2 = parseInt(draw[5]+draw[6])
+                console.log('chi', t0, t1, t2)
+                return ['chi', t0, t1, t2]
             }
             throw new Error(`Cannot parse draw ${draw}`)
         }
-        return draw
+        return ['draw', draw]
     }
     getDiscard() {
         return this.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
@@ -131,7 +134,7 @@ class TurnNum {
                     console.log('called', draw, tmpPidx)
                     let discardsElem = document.querySelector(`.grid-discard-p${this.pidx}`)
                     discardsElem.lastChild.style.opacity = "0.5"
-                    return tmpPidx
+                                        return tmpPidx
                 }
             }
         }
@@ -154,14 +157,16 @@ function parseJsonData(data) {
     scores = log[logIdx++]
     dora = log[logIdx++]
     uradora = log[logIdx++]
-    let haipais = []
+    let hands = []
+    let drawnTile = [null, null, null, null]
+    let calls = [[],[],[],[]]
     let draws = []
     let discards = []
     for (pnum of Array(4).keys()) {
-        haipais.push(Array.from(log[logIdx++]))
+        hands.push(Array.from(log[logIdx++]))
         draws.push(log[logIdx++])
         discards.push(log[logIdx++])
-        haipais[pnum].sort()
+        hands[pnum].sort()
     }
 
     gridInfo = document.querySelector('.grid-info')
@@ -180,9 +185,26 @@ function parseJsonData(data) {
     while (ply.ply < ply_counter) {
         //console.log(ply.ply, ply.pidx)
         draw = ply.getDraw(draws)
-        if (typeof draw == "undefined") {
+        if (draw == null) {
             console.log("out of draws")
             break 
+        }
+        if (draw[0] == 'pon') {
+            removeFromArray(hands[ply.pidx], draw[2])
+            removeFromArray(hands[ply.pidx], draw[2])
+            calls[ply.pidx].push(draw[2])
+            calls[ply.pidx].push(draw[2])
+            calls[ply.pidx].push(draw[2])
+        } else if (draw[0] == 'chi') {
+            removeFromArray(hands[ply.pidx], draw[2])
+            removeFromArray(hands[ply.pidx], draw[3])
+            calls[ply.pidx].push(draw[1])
+            calls[ply.pidx].push(draw[2])
+            calls[ply.pidx].push(draw[3])
+        } else if (draw[0] == 'draw') {
+            drawnTile[ply.pidx] = draw[1]
+        } else {
+            throw new Error(`unknown draw ${draw}`)
         }
         //console.log(`ply ${ply.ply} pidx ${ply.pidx} draw ${draw}, ${tenhou2str(draw)}`)
         ply.incPly()
@@ -195,21 +217,37 @@ function parseJsonData(data) {
             break
         }
         //console.log(`ply ${ply.ply} pidx ${ply.pidx} discard ${discard}`)
-        if (discard==60) {
-            discard = draw // tsumogiri the drawn tile
-        } else {
-            //console.log(haipais[ply.pidx], discard)
-            removeFromArray(haipais[ply.pidx], discard)
-            haipais[ply.pidx].push(draw)
-        }
-        addDiscard(ply.pidx, [tenhou2str(discard)])
+        let tsumogiri = discard==60
+        if (tsumogiri) {
+            discard = drawnTile[ply.pidx] // tsumogiri the drawn tile
+            drawnTile[ply.pidx] = null
+        } else if (draw[0] == 'draw') {
+            //console.log(hands[ply.pidx], discard)
+            removeFromArray(hands[ply.pidx], discard)
+            hands[ply.pidx].push(drawnTile[ply.pidx])
+            hands[ply.pidx].sort()
+            drawnTile[ply.pidx] = null
+        } // otherwise it was a call, so no new tile to add to hand
+        addDiscard(ply.pidx, [tenhou2str(discard)], !tsumogiri)
         ply.incPly()
     }
     for (pnum of Array(4).keys()) {
         hand = document.querySelector(`.grid-hand-p${pnum}`)
         hand.replaceChildren()
-        for (tileInt of haipais[pnum]) {
+        for (tileInt of hands[pnum]) {
             addTiles(hand, [tenhou2str(tileInt)], false)
+        }
+        if (drawnTile[pnum] != null) {
+            addBlankSpace(hand)
+            for (tileInt of [drawnTile[pnum]]) {
+                addTiles(hand, [tenhou2str(tileInt)], false)
+            }
+        }
+        if (calls[pnum].length > 0) {
+            addBlankSpace(hand)
+            for (tileInt of calls[pnum]) {
+                addTiles(hand, [tenhou2str(tileInt)], false)
+            }
         }
     }
 }
@@ -223,6 +261,12 @@ function createTile(tileStr) {
     return tileImg
 }
 
+// TODO kinda hacky way to add a space
+function addBlankSpace(container) {
+    addTiles(hand, ['Blank'], false)
+    hand.lastChild.style.opacity = "0.1"
+}
+
 function addTiles(container, tileStrArray, replace) {
     if (replace) {
         container.replaceChildren()
@@ -232,9 +276,12 @@ function addTiles(container, tileStrArray, replace) {
     }   
 }
 
-function addDiscard(pidx, tileStrArray) {
+function addDiscard(pidx, tileStrArray, tsumogiri) {
     discardsElem = document.querySelector(`.grid-discard-p${pidx}`)
     addTiles(discardsElem, tileStrArray)
+    if (tsumogiri) {
+        discardsElem.lastChild.style.background = "lightgrey"
+    }
 }
 
 function convertTileStr(str) {
