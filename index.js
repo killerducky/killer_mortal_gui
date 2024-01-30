@@ -107,6 +107,14 @@ class TurnNum {
     }
 }
 
+function removeFromArray(array, value) {
+    const indexToRemove = array.indexOf(value)
+    if (indexToRemove === -1) { 
+        throw new Error(`Value ${value} not in array ${array}`)
+    }
+    array.splice(indexToRemove, 1)
+}
+
 function parseJsonData(data) {
     const log = data['log'][0]
     logIdx = 0
@@ -118,19 +126,13 @@ function parseJsonData(data) {
     draws = []
     discards = []
     for (pnum of Array(4).keys()) {
-        haipais.push(log[logIdx++])
+        haipais.push(Array.from(log[logIdx++]))
         draws.push(log[logIdx++])
         discards.push(log[logIdx++])
         haipais[pnum].sort()
-        hand = document.querySelector(`.grid-hand-p${pnum}`)
-        hand.replaceChildren()
-        for (tileInt of haipais[pnum]) {
-            addTiles(hand, [tenhou2str(tileInt)], false)
-        }
     }
 
     gridInfo = document.querySelector('.grid-info')
-    console.log(gridInfo)
     gridInfo.replaceChildren()
     gridInfo.append('round ', JSON.stringify(round), document.createElement('br'))
     gridInfo.append('dora ', JSON.stringify(dora), document.createElement('br'))
@@ -158,10 +160,19 @@ function parseJsonData(data) {
         }
         if (discard==60) {
             discard = draw // tsumogiri the drawn tile
+        } else {
+            removeFromArray(haipais[ply.pidx], discard)
+            haipais[ply.pidx].push(draw)
         }
-        //console.log(`discard ${discard}, ${tenhou2str(discard)}`)
         addDiscard(ply.pidx, [tenhou2str(discard)])
         ply.incPly()
+    }
+    for (pnum of Array(4).keys()) {
+        hand = document.querySelector(`.grid-hand-p${pnum}`)
+        hand.replaceChildren()
+        for (tileInt of haipais[pnum]) {
+            addTiles(hand, [tenhou2str(tileInt)], false)
+        }
     }
 }
 
