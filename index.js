@@ -67,7 +67,20 @@ function tenhou2str(tileInt) {
     return output
 }
 
-// TODO: This should really just be a class keeping state of the entire round
+// take 51 (0m) and return 15.1 for sorting
+function tileInt2Float(tileInt) {
+    let f = tileInt == 51 ? 15.1 : tileInt == 52 ? 25.1 : tileInt == 53 ? 35.1 : tileInt
+    return f
+}
+
+// sort aka red fives
+function tileSort(a, b) {
+    let a1 = tileInt2Float(a)
+    let b1 = tileInt2Float(b)
+    return a1-b1
+}
+
+// TODO: Need work on dividing stuff into classes
 class TurnNum {
     constructor(dealerIdx, draws, discards) {
         this.dealerIdx = dealerIdx
@@ -89,8 +102,10 @@ class TurnNum {
             console.log('string draw', draw)
             let idx = draw.indexOf('p')
             if (idx !== -1) {
+                // idx will be 0, 2, or 4 to indicate who we called from
+                idx = idx/2
                 draw = parseInt(draw[5]+draw[6]) // no matter were 'p' is, the last two digits are the ponned tile
-                console.log('pon', draw)
+                console.log('pon', idx, draw)
                 return ['pon', idx, draw]
             }
             let chiIdx = draw.indexOf('c')
@@ -166,7 +181,7 @@ function parseJsonData(data) {
         hands.push(Array.from(log[logIdx++]))
         draws.push(log[logIdx++])
         discards.push(log[logIdx++])
-        hands[pnum].sort()
+        hands[pnum].sort(tileSort)
     }
 
     gridInfo = document.querySelector('.grid-info')
@@ -186,19 +201,22 @@ function parseJsonData(data) {
         //console.log(ply.ply, ply.pidx)
         draw = ply.getDraw(draws)
         if (draw == null) {
-            console.log("out of draws")
             break 
         }
         if (draw[0] == 'pon') {
             removeFromArray(hands[ply.pidx], draw[2])
             removeFromArray(hands[ply.pidx], draw[2])
             calls[ply.pidx].push(draw[2])
+            if (draw[1] == 0) { calls[ply.pidx].push('rotate')}
             calls[ply.pidx].push(draw[2])
+            if (draw[1] == 1) { calls[ply.pidx].push('rotate')}
             calls[ply.pidx].push(draw[2])
+            if (draw[1] == 2) { calls[ply.pidx].push('rotate')}
         } else if (draw[0] == 'chi') {
             removeFromArray(hands[ply.pidx], draw[2])
             removeFromArray(hands[ply.pidx], draw[3])
             calls[ply.pidx].push(draw[1])
+            calls[ply.pidx].push('rotate')
             calls[ply.pidx].push(draw[2])
             calls[ply.pidx].push(draw[3])
         } else if (draw[0] == 'draw') {
@@ -225,7 +243,7 @@ function parseJsonData(data) {
             //console.log(hands[ply.pidx], discard)
             removeFromArray(hands[ply.pidx], discard)
             hands[ply.pidx].push(drawnTile[ply.pidx])
-            hands[ply.pidx].sort()
+            hands[ply.pidx].sort(tileSort)
             drawnTile[ply.pidx] = null
         } // otherwise it was a call, so no new tile to add to hand
         addDiscard(ply.pidx, [tenhou2str(discard)], !tsumogiri)
@@ -246,7 +264,13 @@ function parseJsonData(data) {
         if (calls[pnum].length > 0) {
             addBlankSpace(hand)
             for (tileInt of calls[pnum]) {
-                addTiles(hand, [tenhou2str(tileInt)], false)
+                if (tileInt == 'rotate') {
+                    let angle = (pnum * 90 + 90) % 360
+                    hand.lastChild.style.transform = `rotate(${angle}deg)`
+                    hand.lastChild.style.margin = '6px'
+                } else {
+                    addTiles(hand, [tenhou2str(tileInt)], false)
+                }
             }
         }
     }

@@ -12,6 +12,9 @@ body{
 /*     background: radial-gradient(circle at 40% 20%, rgb(0, 111, 176) 10%, rgb(4, 50, 111) 50%, rgb(2, 35, 77) 150%); */
     background: lightblue;
 }
+h1{
+    background: deepskyblue;
+}
 .grid-main{
     display: grid;
     width:var(--main-width);
@@ -23,7 +26,8 @@ body{
     display: flex;
     justify-content: left;
     align-items: center;
-}
+/*     background: deepskyblue
+ */}
 .grid-hand-p3{
     grid-row-start: 1;
     grid-row-end: 5;
@@ -101,6 +105,3 @@ body{
 .grid-discard > img {
     width:2em;
 }
-/* .controls {
-    box-sizing: border-box;
-} */
