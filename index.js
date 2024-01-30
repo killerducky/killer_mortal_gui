@@ -19,8 +19,8 @@ json_data = {
         [43,42,46,45,44,47,47,11,43,33,22,36,60,14,60],        // discards
         // PID2 = W in E1,  now: East << POV player
         [41,21,36,26,15,39,29,44,47,32,46,26,35],
-        [29,16,43,16,26,52, 38 ,31,32,38,25,36,24,31,"c141516",25],
-        [44,39,60,46,47,32, 60 ,60,60,60,21,26,41,60,29,29],
+        [29,16,43,16,26,52,38,31,32,38,25,36,24,31,"c141516",25],
+        [44,39,60,46,47,32,60,60,60,60,21,26,41,60,29,29],
         // PID3 i N in E1   now: South
         [28,19,27,33,15,44,11,22,32,15,19,35,45],       // hand
         [33,39,19,21,29,44,42,14,27,42,45,42,41,16,39], // draws
@@ -75,7 +75,27 @@ class TurnNum {
         this.nextDrawIdx = [0,0,0,0]
     }
     getDraw() {
-        return this.draws[this.pidx][this.nextDrawIdx[this.pidx]]
+        let draw = this.draws[this.pidx][this.nextDrawIdx[this.pidx]]
+        if (typeof draw == "undefined") { 
+            console.log("out of draws")
+            max_ply = this.ply
+            return null 
+        }
+        if (typeof draw == "string") {
+            console.log('string draw', draw)
+            if (draw.indexOf('p') !== -1) {
+                draw = parseInt(draw[5]+draw[6]) // no matter were 'p' is, the last two digits are the ponned tile
+                console.log('pon', draw)
+                return draw
+            }
+            let chiIdx = draw.indexOf('c')
+            if (chiIdx !== -1) {
+                draw = parseInt(draw[1]+draw[2])
+                console.log('chi', draw)
+                return draw
+            }
+        }
+        return draw
     }
     getDiscard() {
         return this.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
@@ -98,8 +118,8 @@ class TurnNum {
             }
             let draw = this.draws[tmpPidx][this.nextDrawIdx[tmpPidx]]
             debug && console.log(draw, tenhou2str(draw), this.draws[tmpPidx])
-            if (typeof draw == 'string') {
-                console.log('call?', draw, tmpPidx)
+            if (typeof draw == 'string' && draw.indexOf('c') == -1) {
+                console.log('non-chi call?', draw, tmpPidx)
                 return tmpPidx
             }
         }
@@ -148,7 +168,7 @@ function parseJsonData(data) {
     while (ply.ply < ply_counter) {
         //console.log(ply.ply, ply.turn, ply.pidx)
         draw = ply.getDraw(draws)
-        if (typeof draw == "undefined") { 
+        if (typeof draw == "undefined") {
             console.log("out of draws")
             break 
         }
@@ -214,7 +234,7 @@ function convertTileStr(str) {
 }
 
 function incPlyCounter() {
-    ply_counter++;
+    ply_counter < max_ply && ply_counter++;
 }
 
 function decPlyCounter() {
@@ -243,7 +263,8 @@ function connectUI() {
     });
 }
 
-let ply_counter = 0;
+let ply_counter = 0
+let max_ply = 999
 parseJsonData(json_data)
 connectUI()
 
