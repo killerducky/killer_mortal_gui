@@ -44,44 +44,94 @@ class UI {
     constructor() {
         this.hands = []
         this.discards = []
+        this.gridInfo = document.querySelector('.grid-info')
         for (let pnum of Array(4).keys()) {
             this.hands.push(document.querySelector(`.grid-hand-p${pnum}`))
             this.discards.push(document.querySelector(`.grid-discard-p${pnum}`))
         }
     }
 
-    addTiles(pidx, type, tileStrArray, replace) {
-        let container = null
-        if (type == 'discard') {
-            container = this.discards[pidx]
-        } else if (type == 'hand') {
-            container = this.hands[pidx]
-        } else {
-            throw new Error(`invalid type ${type}`)
+    reset(round, dora, uradora) {
+        this.gridInfo.replaceChildren()
+        this.gridInfo.append('round ', JSON.stringify(round), document.createElement('br'))
+        this.gridInfo.append('dora ', JSON.stringify(dora), document.createElement('br'))
+        this.gridInfo.append('uradora ', JSON.stringify(uradora), document.createElement('br'))
+        for (let i of Array(4).keys()) {
+            this.discards[i].replaceChildren()
         }
+    }
+
+    updateGridInfo() {
+        this.gridInfo.append('mortalIdx ', GS.mortalPidx, ' idx ', GS.mortalEvalIdx, ' ', JSON.stringify(GS.mortalEvals[GS.mortalEvalIdx]))
+    }
+
+    updateHandInfo(hands, calls, drawnTile) {
+        for (pnum of Array(4).keys()) {
+            GS.ui.addHandTiles(pnum, [], true)
+            for (let tileInt of hands[pnum]) {
+                GS.ui.addHandTiles(pnum, [tenhou2str(tileInt)], false)
+            }
+            if (drawnTile[pnum] != null) {
+                GS.ui.addBlankSpace(pnum)
+                for (let tileInt of [drawnTile[pnum]]) {
+                    GS.ui.addHandTiles(pnum, [tenhou2str(tileInt)], false)
+                }
+            }
+            if (calls[pnum].length > 0) {
+                GS.ui.addBlankSpace(pnum)
+                for (let tileInt of calls[pnum]) {
+                    if (tileInt == 'rotate') {
+                        GS.ui.rotateLastTile(pnum)
+                    } else {
+                        GS.ui.addHandTiles(pnum, [tenhou2str(tileInt)], false)
+                    }
+                }
+            }
+        }
+    }
+
+    addHandTiles(pidx, tileStrArray, replace) {
         if (replace) {
-            container.replaceChildren()
+            this.hands[pidx].replaceChildren()
         }
         for (let i in tileStrArray) {
-            container.appendChild(createTile(tileStrArray[i]))
+            this.hands[pidx].appendChild(createTile(tileStrArray[i]))
         }   
     }
+
+    addDiscardTiles(pidx, tileStrArray, replace) {
+        if (replace) {
+            this.discards[pidx].replaceChildren()
+        }
+        for (let i in tileStrArray) {
+            this.discards[pidx].appendChild(createTile(tileStrArray[i]))
+        }   
+    }
+
+    rotateLastTile(pidx) {
+        let angle = (pnum * 90 + 90) % 360
+        this.hands[pidx].lastChild.style.transform = `rotate(${angle}deg)`
+        this.hands[pidx].lastChild.style.margin = '6px'
+    }
+
     // TODO kinda hacky way to add a space
     addBlankSpace(pidx) {
-        this.addTiles(pidx, 'hand', ['Blank'], false)
+        this.addHandTiles(pidx, ['Blank'], false)
         this.hands[pidx].lastChild.style.opacity = "0.1"
     }
     
     addDiscard(pidx, tileStrArray, tsumogiri, riichi) {
-        let discardsElem = this.discards[pidx]
-        this.addTiles(pidx, 'discard', tileStrArray)
+        this.addDiscardTiles(pidx, tileStrArray)
         if (!tsumogiri) {
-            discardsElem.lastChild.style.background = "lightgrey"
+            this.discards[pidx].lastChild.style.background = "lightgrey"
         }
         if (riichi) {
             let angle = (pidx * 90 + 90) % 360
-            discardsElem.lastChild.style.transform = `rotate(${angle}deg`
+            this.discards[pidx].lastChild.style.transform = `rotate(${angle}deg`
         }
+    }
+    lastDiscardWasCalled(pidx) {
+        this.discards[pidx].lastChild.style.opacity = "0.5"
     }
 }
 
@@ -205,12 +255,9 @@ class TurnNum {
                     called = true
                     debug && console.log('huh', offset, draw, draw[offset*2])
                 }
-                //let chiAllowed = (this.pidx+1) % 4 == tmpPidx
-                //if (chiAllowed || draw.indexOf('c') == -1) {
                 if (called) {
                     console.log('called', draw, tmpPidx)
-                    let discardsElem = document.querySelector(`.grid-discard-p${this.pidx}`)
-                    discardsElem.lastChild.style.opacity = "0.5"
+                    GS.ui.lastDiscardWasCalled(tmpPidx)
                     return tmpPidx
                 }
             }
@@ -246,19 +293,10 @@ function parseJsonData(data) {
         hands[pnum].sort(tileSort)
     }
 
-    gridInfo = document.querySelector('.grid-info')
-    gridInfo.replaceChildren()
-    gridInfo.append('round ', JSON.stringify(round), document.createElement('br'))
-    gridInfo.append('dora ', JSON.stringify(dora), document.createElement('br'))
-    gridInfo.append('uradora ', JSON.stringify(uradora), document.createElement('br'))
-
     // Initialize whose turn it is, and pointers for current draws/discards for each player
     GS.mortalEvalIdx = 0
     let ply = new TurnNum(round[0], draws, discards)
-    for (let tmpPidx of Array(4).keys()) {
-        discardsElem = document.querySelector(`.grid-discard-p${tmpPidx}`)
-        discardsElem.replaceChildren()
-    }
+    GS.ui.reset(round, dora, uradora)
 
     while (ply.ply < GS.ply_counter) {
         //console.log(ply.ply, ply.pidx)
@@ -323,32 +361,9 @@ function parseJsonData(data) {
         GS.ui.addDiscard(ply.pidx, [tenhou2str(discard)], !tsumogiri, riichi)
         ply.incPly()
     }
-    for (pnum of Array(4).keys()) {
-        hand = document.querySelector(`.grid-hand-p${pnum}`)
-        hand.replaceChildren()
-        for (tileInt of hands[pnum]) {
-            GS.ui.addTiles(pnum, 'hand', [tenhou2str(tileInt)], false)
-        }
-        if (drawnTile[pnum] != null) {
-            GS.ui.addBlankSpace(pnum)
-            for (tileInt of [drawnTile[pnum]]) {
-                GS.ui.addTiles(pnum, 'hand', [tenhou2str(tileInt)], false)
-            }
-        }
-        if (calls[pnum].length > 0) {
-            GS.ui.addBlankSpace(pnum)
-            for (tileInt of calls[pnum]) {
-                if (tileInt == 'rotate') {
-                    let angle = (pnum * 90 + 90) % 360
-                    hand.lastChild.style.transform = `rotate(${angle}deg)`
-                    hand.lastChild.style.margin = '6px'
-                } else {
-                    GS.ui.addTiles(pnum, 'hand', [tenhou2str(tileInt)], false)
-                }
-            }
-        }
-    }
-    gridInfo.append('mortalIdx ', GS.mortalPidx, ' idx ', GS.mortalEvalIdx, ' ', JSON.stringify(GS.mortalEvals[GS.mortalEvalIdx]))
+
+    GS.ui.updateHandInfo(hands, calls, drawnTile)
+    GS.ui.updateGridInfo()
 }
 
 function createTile(tileStr) {
