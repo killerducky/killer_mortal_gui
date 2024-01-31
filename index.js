@@ -40,6 +40,51 @@ json_data = {
 }
 */
 
+class UI {
+    constructor() {
+        this.hands = []
+        this.discards = []
+        for (let pnum of Array(4).keys()) {
+            this.hands.push(document.querySelector(`.grid-hand-p${pnum}`))
+            this.discards.push(document.querySelector(`.grid-discard-p${pnum}`))
+        }
+    }
+
+    addTiles(pidx, type, tileStrArray, replace) {
+        let container = null
+        if (type == 'discard') {
+            container = this.discards[pidx]
+        } else if (type == 'hand') {
+            container = this.hands[pidx]
+        } else {
+            throw new Error(`invalid type ${type}`)
+        }
+        if (replace) {
+            container.replaceChildren()
+        }
+        for (let i in tileStrArray) {
+            container.appendChild(createTile(tileStrArray[i]))
+        }   
+    }
+    // TODO kinda hacky way to add a space
+    addBlankSpace(pidx) {
+        this.addTiles(pidx, 'hand', ['Blank'], false)
+        this.hands[pidx].lastChild.style.opacity = "0.1"
+    }
+    
+    addDiscard(pidx, tileStrArray, tsumogiri, riichi) {
+        let discardsElem = this.discards[pidx]
+        this.addTiles(pidx, 'discard', tileStrArray)
+        if (!tsumogiri) {
+            discardsElem.lastChild.style.background = "lightgrey"
+        }
+        if (riichi) {
+            let angle = (pidx * 90 + 90) % 360
+            discardsElem.lastChild.style.transform = `rotate(${angle}deg`
+        }
+    }
+}
+
 //take '2m' and return 2 + 10 etc.
 function tm2t(str) { 
     //tenhou's tile encoding:
@@ -129,6 +174,9 @@ class TurnNum {
         // TODO: It's weird that we don't increment draw in the even ply?
         //       but for now it doesn't matter
         if (this.ply%2==1) {
+            if (this.pidx == GS.mortalPidx) {
+                GS.mortalEvalIdx++
+            }
             this.nextDrawIdx[this.pidx]++
             this.nextDiscardIdx[this.pidx]++
             this.pidx = this.whoIsNext()
@@ -205,6 +253,7 @@ function parseJsonData(data) {
     gridInfo.append('uradora ', JSON.stringify(uradora), document.createElement('br'))
 
     // Initialize whose turn it is, and pointers for current draws/discards for each player
+    GS.mortalEvalIdx = 0
     let ply = new TurnNum(round[0], draws, discards)
     for (let tmpPidx of Array(4).keys()) {
         discardsElem = document.querySelector(`.grid-discard-p${tmpPidx}`)
@@ -243,10 +292,18 @@ function parseJsonData(data) {
         if (ply.ply >= GS.ply_counter) {
             break
         }
-        discard = ply.getDiscard(discards)
+        let discard = ply.getDiscard(discards)
         if (typeof discard == "undefined") {
             console.log("out of discards")
             break
+        }
+        let riichi = false
+        if (discard[0] == 'r') {
+            riichi = true
+            discard = parseInt(discard.substring(1))
+            console.log('riichi', riichi, discard)
+        } else if (typeof discard != 'number') {
+            throw new Error('discard should be number', typeof discard, discard)
         }
         //console.log(`ply ${ply.ply} pidx ${ply.pidx} discard ${discard}`)
         let tsumogiri = discard==60
@@ -263,34 +320,35 @@ function parseJsonData(data) {
             // otherwise it was a call, no new tile, just discard
             removeFromArray(hands[ply.pidx], discard)
         }
-        addDiscard(ply.pidx, [tenhou2str(discard)], !tsumogiri)
+        GS.ui.addDiscard(ply.pidx, [tenhou2str(discard)], !tsumogiri, riichi)
         ply.incPly()
     }
     for (pnum of Array(4).keys()) {
         hand = document.querySelector(`.grid-hand-p${pnum}`)
         hand.replaceChildren()
         for (tileInt of hands[pnum]) {
-            addTiles(hand, [tenhou2str(tileInt)], false)
+            GS.ui.addTiles(pnum, 'hand', [tenhou2str(tileInt)], false)
         }
         if (drawnTile[pnum] != null) {
-            addBlankSpace(hand)
+            GS.ui.addBlankSpace(pnum)
             for (tileInt of [drawnTile[pnum]]) {
-                addTiles(hand, [tenhou2str(tileInt)], false)
+                GS.ui.addTiles(pnum, 'hand', [tenhou2str(tileInt)], false)
             }
         }
         if (calls[pnum].length > 0) {
-            addBlankSpace(hand)
+            GS.ui.addBlankSpace(pnum)
             for (tileInt of calls[pnum]) {
                 if (tileInt == 'rotate') {
                     let angle = (pnum * 90 + 90) % 360
                     hand.lastChild.style.transform = `rotate(${angle}deg)`
                     hand.lastChild.style.margin = '6px'
                 } else {
-                    addTiles(hand, [tenhou2str(tileInt)], false)
+                    GS.ui.addTiles(pnum, 'hand', [tenhou2str(tileInt)], false)
                 }
             }
         }
     }
+    gridInfo.append('mortalIdx ', GS.mortalPidx, ' idx ', GS.mortalEvalIdx, ' ', JSON.stringify(GS.mortalEvals[GS.mortalEvalIdx]))
 }
 
 function createTile(tileStr) {
@@ -300,29 +358,6 @@ function createTile(tileStr) {
     tileImg.style.border = "1px solid grey"
     tileImg.style.padding = "1px 1px 1px 1px"
     return tileImg
-}
-
-// TODO kinda hacky way to add a space
-function addBlankSpace(container) {
-    addTiles(hand, ['Blank'], false)
-    hand.lastChild.style.opacity = "0.1"
-}
-
-function addTiles(container, tileStrArray, replace) {
-    if (replace) {
-        container.replaceChildren()
-    }
-    for (i in tileStrArray) {
-        container.appendChild(createTile(tileStrArray[i]))
-    }   
-}
-
-function addDiscard(pidx, tileStrArray, tsumogiri) {
-    discardsElem = document.querySelector(`.grid-discard-p${pidx}`)
-    addTiles(discardsElem, tileStrArray)
-    if (!tsumogiri) {
-        discardsElem.lastChild.style.background = "lightgrey"
-    }
 }
 
 function convertTileStr(str) {
@@ -402,6 +437,17 @@ function setMortalHtmlStr(data) {
 function parseMortalHtml() {
     let RiichiState = null
     let debug = false
+    
+    let pid = null
+    for (dtElement of GS.mortalHtmlDoc.querySelectorAll('dt')) {
+        if (dtElement.textContent === 'player id') {
+            GS.mortalPidx = parseInt(dtElement.nextSibling.textContent)
+            GS.povPidx = GS.mortalPidx // TODO: UI for changing povPidx
+            break
+        }
+    }
+
+    GS.mortalEvals = []
     for (d of GS.mortalHtmlDoc.querySelectorAll('details')) {
         debug && console.log(d)
         let summary = d.querySelector('summary')
@@ -459,6 +505,7 @@ function parseMortalHtml() {
             }
         })
         console.log(p_discard, m_discard, p_Pval, m_Pval)
+        GS.mortalEvals.push({'p_discard':p_discard, 'm_discard':m_discard, 'p_Pval':p_Pval, 'm_Pval':m_Pval})
     }
 }
 
@@ -490,6 +537,11 @@ class GlobalState {
         this.max_ply = 999
         this.mortalHtmlDoc = null
         this.json_data = null
+        this.mortalEvals = []
+        this.mortalEvalIdx = 0
+        this.mortalPidx = null
+        this.povPidx = 0
+        this.ui = new UI
     }
 }
 
