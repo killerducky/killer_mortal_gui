@@ -396,7 +396,96 @@ function setMortalHtmlStr(data) {
     GS.mortalHtmlDoc = parser.parseFromString(data, 'text/html')
     GS.json_data = JSON.parse(GS.mortalHtmlDoc.querySelector('textarea').value)
     console.log(GS.json_data)
+    parseMortalHtml()
 }
+
+function parseMortalHtml() {
+    let RiichiState = null
+    let debug = false
+    for (d of GS.mortalHtmlDoc.querySelectorAll('details')) {
+        debug && console.log(d)
+        let summary = d.querySelector('summary')
+        if (!summary) {
+            debug && console.log('empty summary')
+            continue
+        }
+        debug && console.log('sum', summary)
+        debug && console.log('sumtext', summary.textContent)
+        summary = summary.textContent
+        if (summary.includes("Turn 1 ")) {
+            RiichiState = null // reset state
+        }
+        if (RiichiState === 'complete') {
+            continue // skip if we riiched a previous turn
+        }
+        let roles = d.querySelectorAll('span.role')
+        debug && console.log(roles)
+        if (roles.length == 0) {
+            debug && console.log('no roles, skip')
+            continue
+        }
+        debug && console.log(roles[0])
+        let p_action = roles[0].nextSibling.textContent
+        console.log(typeof p_action, p_action)
+        //console.log(p_action.textContent)
+        if (p_action.includes('Riichi')) {
+            RiichiState = 'discarding' // set flag so we process the Riichi discard next
+        }
+        if (!p_action.includes('Discard')) {
+            continue // TODO: Add code for calls also!
+        }
+        if (RiichiState === 'discarding') {
+            RiichiState = 'complete' // We are now processing the riichi discard set the state now
+        }
+    }
+}
+/* 
+RiichiState = None
+details = data['soup'].find_all('details', {'class':'collapse entry'})
+for d in details:
+    if "Turn 1 " in d.findChild('summary').contents[0]:
+        RiichiState = None # reset state
+    if RiichiState == 'complete':
+         # Skip if we riiched a previous turn
+        continue
+    roles = d.findChildren('span', {'class':'role'})
+    p_action = roles[0].nextSibling
+    if "Riichi" in p_action:
+        # Set flag so we process the Riichi discard next
+        RiichiState = 'discarding'
+    if not "Discard" in p_action:
+        # Only do stats on discards
+        continue 
+    if RiichiState == "discarding":
+        # We are now processing the riichi discard set the state now
+        RiichiState = 'complete'
+    dahaiDecisionCount += 1
+    p_discard = roles[0].contents[0].find_next('use')['href']
+    m_discard = roles[1].contents[0].find_next('use')['href']
+    #print(p_discard, m_discard)
+    if p_discard != m_discard: notMatchMoveCount += 1
+    tbody = d.find('tbody')
+    for row in tbody.findChildren('tr'):
+        td = row.findChild('td')
+        if "Riichi" in td.contents[0]:
+            tile = None
+        else:
+            tile = td.contents[1].findChild('use')['href']
+        i = td.findChildren('span', {'class':'int'})
+        f = td.findChildren('span', {'class':'frac'})
+        Qval = float(f'{i[0].contents[0]}{f[0].contents[0]}')
+        Pval = float(f'{i[1].contents[0]}{f[1].contents[0]}')/100
+        if tile == m_discard:
+            m_Pval = Pval
+        if tile == p_discard:
+            p_Pval = Pval
+            if Pval < 0.05:
+                badMoveCount += 1
+    diff = m_Pval - p_Pval
+    nagaRate += diff
+ */
+
+
 
 function getJsonData() {
     data = localStorage.getItem('mortalHtmlStr')
