@@ -1,6 +1,6 @@
 /* Source: https://mjai.ekyu.moe/report/ac7f456533f7d814.html#kyoku-2-0 
 Also saved in mahjong_mortal_ui/example_logs/Example_mjai_report.html
-*/
+
 json_data = {
     "dan":["雀豪★1","雀豪★1","雀聖★2","雀聖★2"],
     "lobby":0,
@@ -38,7 +38,7 @@ json_data = {
     "disp":"玉の間南喰赤"},
     "sx":["C","C","C","C"]
 }
-
+*/
 
 //take '2m' and return 2 + 10 etc.
 function tm2t(str) { 
@@ -95,17 +95,18 @@ class TurnNum {
         let draw = this.draws[this.pidx][this.nextDrawIdx[this.pidx]]
         if (typeof draw == "undefined") { 
             console.log("out of draws")
-            max_ply = this.ply
+            GS.max_ply = this.ply
             return null
         }
         if (typeof draw == "string") {
-            console.log('string draw', draw)
+            // by the time we are here, it's guaranteed any call is legal
+            // no need to check who it came from etc
+            //console.log('string draw', draw)
             let idx = draw.indexOf('p')
             if (idx !== -1) {
-                // idx will be 0, 2, or 4 to indicate who we called from
                 idx = idx/2
-                draw = parseInt(draw[5]+draw[6]) // no matter were 'p' is, the last two digits are the ponned tile
-                console.log('pon', idx, draw)
+                draw = parseInt(draw[5]+draw[6]) // no matter where 'p' is, the last two digits are the ponned tile
+                //console.log('pon', idx, draw)
                 return ['pon', idx, draw]
             }
             let chiIdx = draw.indexOf('c')
@@ -113,7 +114,7 @@ class TurnNum {
                 let t0 = parseInt(draw[1]+draw[2])
                 let t1 = parseInt(draw[3]+draw[4])
                 let t2 = parseInt(draw[5]+draw[6])
-                console.log('chi', t0, t1, t2)
+                //console.log('chi', t0, t1, t2)
                 return ['chi', t0, t1, t2]
             }
             throw new Error(`Cannot parse draw ${draw}`)
@@ -124,6 +125,9 @@ class TurnNum {
         return this.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
     }
     incPly() {
+        // even ply draw, odd ply discard
+        // TODO: It's weird that we don't increment draw in the even ply?
+        //       but for now it doesn't matter
         if (this.ply%2==1) {
             this.nextDrawIdx[this.pidx]++
             this.nextDiscardIdx[this.pidx]++
@@ -132,24 +136,34 @@ class TurnNum {
         this.ply++
     }
     whoIsNext() {
+        // To know who is next we have to look at the other three players draw arrays
+        // and determine there were any calls to disrupt the normal turn order
         let debug = false
         for (let tmpPidx of Array(4).keys()) {
             if (tmpPidx == this.pidx) {
-                debug && console.log('skip: cannot call own tile')
-                continue // skip: cannot call own tile
-            }
-            if (debug) {
-                console.log('test', tmpPidx, this.nextDrawIdx[tmpPidx], this.ply, this.pidx)
+                continue // cannot call own tile
             }
             let draw = this.draws[tmpPidx][this.nextDrawIdx[tmpPidx]]
-            debug && console.log(draw, tenhou2str(draw), this.draws[tmpPidx])
             if (typeof draw == 'string') {
-                let chiAllowed = (this.pidx+1) % 4 == tmpPidx
-                if (chiAllowed || draw.indexOf('c') == -1) {
+                //        tmp         this             v-- extra 4+ because e.g. -1%4 = -1 (we want 3)
+                // p212121 p0 pon from p3   idx/2=0   (4+0-3)%4 = 1-1 = 0
+                // 21p2121 p0 pon from p2   idx/2=1   (4+0-2)%4 = 2-1 = 1
+                // 2121p21 p0 pon from p1   idx/2=2   (4+0-1)%4 = 3-1 = 2
+                let offset = (4 + tmpPidx - this.pidx) % 4 - 1
+                debug && console.log('whoisnext', draw, this.draws[tmpPidx], this.pidx, tmpPidx, offset)
+                let called = false
+                // check if the non-numeric is in the legal spot
+                if (draw[offset*2]<'0' || draw[offset*2]>'9') {
+                    called = true
+                    debug && console.log('huh', offset, draw, draw[offset*2])
+                }
+                //let chiAllowed = (this.pidx+1) % 4 == tmpPidx
+                //if (chiAllowed || draw.indexOf('c') == -1) {
+                if (called) {
                     console.log('called', draw, tmpPidx)
                     let discardsElem = document.querySelector(`.grid-discard-p${this.pidx}`)
                     discardsElem.lastChild.style.opacity = "0.5"
-                                        return tmpPidx
+                    return tmpPidx
                 }
             }
         }
@@ -197,7 +211,7 @@ function parseJsonData(data) {
         discardsElem.replaceChildren()
     }
 
-    while (ply.ply < ply_counter) {
+    while (ply.ply < GS.ply_counter) {
         //console.log(ply.ply, ply.pidx)
         draw = ply.getDraw(draws)
         if (draw == null) {
@@ -226,7 +240,7 @@ function parseJsonData(data) {
         }
         //console.log(`ply ${ply.ply} pidx ${ply.pidx} draw ${draw}, ${tenhou2str(draw)}`)
         ply.incPly()
-        if (ply.ply >= ply_counter) {
+        if (ply.ply >= GS.ply_counter) {
             break
         }
         discard = ply.getDiscard(discards)
@@ -306,7 +320,7 @@ function addTiles(container, tileStrArray, replace) {
 function addDiscard(pidx, tileStrArray, tsumogiri) {
     discardsElem = document.querySelector(`.grid-discard-p${pidx}`)
     addTiles(discardsElem, tileStrArray)
-    if (tsumogiri) {
+    if (!tsumogiri) {
         discardsElem.lastChild.style.background = "lightgrey"
     }
 }
@@ -329,15 +343,15 @@ function convertTileStr(str) {
 }
 
 function incPlyCounter() {
-    ply_counter < max_ply && ply_counter++;
+    GS.ply_counter < GS.max_ply && GS.ply_counter++;
 }
 
 function decPlyCounter() {
-    ply_counter > 0 && ply_counter--;
+    GS.ply_counter > 0 && GS.ply_counter--;
 }
 
 function getPlyCounter() {
-    return ply_counter;
+    return GS.ply_counter;
 }
 
 function connectUI() {
@@ -349,7 +363,7 @@ function connectUI() {
     inc.addEventListener("click", () => {
         incPlyCounter();
         input.value = getPlyCounter();
-        parseJsonData(json_data)
+        parseJsonData(GS.json_data)
     });
     inc2.addEventListener("click", () => {
         incPlyCounter();
@@ -357,14 +371,14 @@ function connectUI() {
         incPlyCounter();
         incPlyCounter();
         input.value = getPlyCounter();
-        parseJsonData(json_data)
+        parseJsonData(GS.json_data)
     });
     dec.addEventListener("click", () => {
         if (input.value > 0) {
           decPlyCounter();
         }
         input.value = getPlyCounter();
-        parseJsonData(json_data)
+        parseJsonData(GS.json_data)
     });
     dec2.addEventListener("click", () => {
         decPlyCounter();
@@ -372,16 +386,16 @@ function connectUI() {
         decPlyCounter();
         decPlyCounter();
         input.value = getPlyCounter();
-        parseJsonData(json_data)
+        parseJsonData(GS.json_data)
     });
 }
 
 function setMortalHtmlStr(data) {
     console.log('setMortalHtmlStr')
     const parser = new DOMParser()
-    mortalHtmlDoc = parser.parseFromString(data, 'text/html')
-    local_json_data = mortalHtmlDoc.querySelector('textarea')
-    console.log(local_json_data)
+    GS.mortalHtmlDoc = parser.parseFromString(data, 'text/html')
+    GS.json_data = JSON.parse(GS.mortalHtmlDoc.querySelector('textarea').value)
+    console.log(GS.json_data)
 }
 
 function getJsonData() {
@@ -406,10 +420,17 @@ function getJsonData() {
     })
 }
 
-let ply_counter = 0
-let max_ply = 999
-let mortalHtmlDoc = null
+class GlobalState {
+    constructor() {
+        this.ply_counter = 0
+        this.max_ply = 999
+        this.mortalHtmlDoc = null
+        this.json_data = null
+    }
+}
+
+const GS = new GlobalState
 getJsonData()
-parseJsonData(json_data)
+parseJsonData(GS.json_data)
 connectUI()
 
