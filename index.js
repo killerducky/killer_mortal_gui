@@ -376,8 +376,40 @@ function connectUI() {
     });
 }
 
+function setMortalHtmlStr(data) {
+    console.log('setMortalHtmlStr')
+    const parser = new DOMParser()
+    mortalHtmlDoc = parser.parseFromString(data, 'text/html')
+    local_json_data = mortalHtmlDoc.querySelector('textarea')
+    console.log(local_json_data)
+}
+
+function getJsonData() {
+    data = localStorage.getItem('mortalHtmlStr')
+    if (data) {
+        setMortalHtmlStr(data)
+    }
+
+    let fileInput = document.getElementById('mortal-html-file')
+    fileInput.addEventListener('change', function(event) {
+        let file = event.target.files[0]
+        if (file) {
+            let fr = new FileReader()
+            fr.readAsText(file)
+            fr.onload = function() {
+                localStorage.setItem('mortalHtmlStr', fr.result)
+                setMortalHtmlStr(fr.result)
+            };
+        } else {
+            console.log('no file')
+        }
+    })
+}
+
 let ply_counter = 0
 let max_ply = 999
+let mortalHtmlDoc = null
+getJsonData()
 parseJsonData(json_data)
 connectUI()
 
