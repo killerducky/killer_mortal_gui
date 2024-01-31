@@ -17,7 +17,7 @@ json_data = {
         [37,23,45,42,51,37,13,38,43,23,46,38,12],              // haipai = starting hand
         [47,12,11,44,47,14,"3838p38",43,33,22,36,14,28,12,17], // draws
         [43,42,46,45,44,47,47,11,43,33,22,36,60,14,60],        // discards
-        // PID2 = W in E1,  now: East << POV player
+        // PID2 = W in E1,  now: East                          // mortal POV player
         [41,21,36,26,15,39,29,44,47,32,46,26,35],
         [29,16,43,16,26,52,38,31,32,38,25,36,24,31,"c141516",25],
         [44,39,60,46,47,32,60,60,60,60,21,26,41,60,29,29],
@@ -40,17 +40,42 @@ json_data = {
 }
 */
 
+class GlobalState {
+    constructor() {
+        this.ply_counter = 0
+        this.max_ply = 999
+        this.mortalHtmlDoc = null
+        this.json_data = null
+        this.mortalEvals = []
+        this.mortalEvalIdx = 0
+        this.mortalPidx = null
+        this.ui = new UI
+    }
+}
+
+class PIDX {
+    constructor(pidx) {
+        this.pidx = pidx
+    }
+    logical() {
+        return this.pidx
+    }
+    pov() {
+        return (GS.ui.povPidx + this.pidx) % 4
+    }
+}
+
 class UI {
     constructor() {
         this.hands = []
         this.discards = []
         this.gridInfo = document.querySelector('.grid-info')
+        this.povPidx = 0
         for (let pnum of Array(4).keys()) {
             this.hands.push(document.querySelector(`.grid-hand-p${pnum}`))
             this.discards.push(document.querySelector(`.grid-discard-p${pnum}`))
         }
     }
-
     reset(round, dora, uradora) {
         this.gridInfo.replaceChildren()
         this.gridInfo.append('round ', JSON.stringify(round), document.createElement('br'))
@@ -60,78 +85,74 @@ class UI {
             this.discards[i].replaceChildren()
         }
     }
-
     updateGridInfo() {
         this.gridInfo.append('mortalIdx ', GS.mortalPidx, ' idx ', GS.mortalEvalIdx, ' ', JSON.stringify(GS.mortalEvals[GS.mortalEvalIdx]))
     }
-
     updateHandInfo(hands, calls, drawnTile) {
-        for (pnum of Array(4).keys()) {
-            GS.ui.addHandTiles(pnum, [], true)
-            for (let tileInt of hands[pnum]) {
-                GS.ui.addHandTiles(pnum, [tenhou2str(tileInt)], false)
+        for (i of Array(4).keys()) {
+            let pnum = new PIDX(i)
+            this.addHandTiles(pnum, [], true)
+            for (let tileInt of hands[pnum.pov()]) {
+                this.addHandTiles(pnum, [tenhou2str(tileInt)], false)
             }
             if (drawnTile[pnum] != null) {
-                GS.ui.addBlankSpace(pnum)
-                for (let tileInt of [drawnTile[pnum]]) {
-                    GS.ui.addHandTiles(pnum, [tenhou2str(tileInt)], false)
+                this.addBlankSpace(pnum)
+                for (let tileInt of [drawnTile[pnum.pov()]]) {
+                    this.addHandTiles(pnum, [tenhou2str(tileInt)], false)
                 }
             }
-            if (calls[pnum].length > 0) {
-                GS.ui.addBlankSpace(pnum)
-                for (let tileInt of calls[pnum]) {
+            if (calls[pnum.pov()].length > 0) {
+                this.addBlankSpace(pnum)
+                for (let tileInt of calls[pnum.pov()]) {
                     if (tileInt == 'rotate') {
-                        GS.ui.rotateLastTile(pnum)
+                        this.rotateLastTile(pnum)
                     } else {
-                        GS.ui.addHandTiles(pnum, [tenhou2str(tileInt)], false)
+                        this.addHandTiles(pnum, [tenhou2str(tileInt)], false)
                     }
                 }
             }
         }
     }
-
     addHandTiles(pidx, tileStrArray, replace) {
         if (replace) {
-            this.hands[pidx].replaceChildren()
+            this.hands[pidx.pov()].replaceChildren()
         }
         for (let i in tileStrArray) {
-            this.hands[pidx].appendChild(createTile(tileStrArray[i]))
+            this.hands[pidx.pov()].appendChild(createTile(tileStrArray[i]))
         }   
     }
-
     addDiscardTiles(pidx, tileStrArray, replace) {
         if (replace) {
-            this.discards[pidx].replaceChildren()
+            this.discards[pidx.pov()].replaceChildren()
         }
         for (let i in tileStrArray) {
-            this.discards[pidx].appendChild(createTile(tileStrArray[i]))
+            this.discards[pidx.pov()].appendChild(createTile(tileStrArray[i]))
         }   
     }
-
     rotateLastTile(pidx) {
-        let angle = (pnum * 90 + 90) % 360
-        this.hands[pidx].lastChild.style.transform = `rotate(${angle}deg)`
-        this.hands[pidx].lastChild.style.margin = '6px'
+        let angle = (pidx.pov() * 90 + 90) % 360
+        this.hands[pidx.pov()].lastChild.style.transform = `rotate(${angle}deg)`
+        this.hands[pidx.pov()].lastChild.style.margin = '6px'
     }
 
     // TODO kinda hacky way to add a space
     addBlankSpace(pidx) {
         this.addHandTiles(pidx, ['Blank'], false)
-        this.hands[pidx].lastChild.style.opacity = "0.1"
+        this.hands[pidx.pov()].lastChild.style.opacity = "0.1"
     }
     
     addDiscard(pidx, tileStrArray, tsumogiri, riichi) {
         this.addDiscardTiles(pidx, tileStrArray)
         if (!tsumogiri) {
-            this.discards[pidx].lastChild.style.background = "lightgrey"
+            this.discards[pidx.pov()].lastChild.style.background = "lightgrey"
         }
         if (riichi) {
-            let angle = (pidx * 90 + 90) % 360
-            this.discards[pidx].lastChild.style.transform = `rotate(${angle}deg`
+            let angle = (pidx.pov() * 90 + 90) % 360
+            this.discards[pidx.pov()].lastChild.style.transform = `rotate(${angle}deg`
         }
     }
     lastDiscardWasCalled(pidx) {
-        this.discards[pidx].lastChild.style.opacity = "0.5"
+        this.discards[pidx.pov()].lastChild.style.opacity = "0.5"
     }
 }
 
@@ -243,21 +264,22 @@ class TurnNum {
             }
             let draw = this.draws[tmpPidx][this.nextDrawIdx[tmpPidx]]
             if (typeof draw == 'string') {
-                //        tmp         this             v-- extra 4+ because e.g. -1%4 = -1 (we want 3)
-                // p212121 p0 pon from p3   idx/2=0   (4+0-3)%4 = 1-1 = 0
-                // 21p2121 p0 pon from p2   idx/2=1   (4+0-2)%4 = 2-1 = 1
-                // 2121p21 p0 pon from p1   idx/2=2   (4+0-1)%4 = 3-1 = 2
+                // The call string encodes who they called from by putting e.g. 'p' in idx=0,2,4
+                // See if the timing is correct by comparing caller idx to current discarder idx
+                //        tmp                             this             v-- extra 4+ because e.g. -1%4 = -1 (we want 3)
+                // p212121 p0 pon from their kami/left     p3   idx/2=0   (4+0-3)%4 = 1-1 = 0
+                // 21p2121 p0 pon from their toimen/cross  p2   idx/2=1   (4+0-2)%4 = 2-1 = 1
+                // 2121p21 p0 pon from their shimo/right   p1   idx/2=2   (4+0-1)%4 = 3-1 = 2
                 let offset = (4 + tmpPidx - this.pidx) % 4 - 1
                 debug && console.log('whoisnext', draw, this.draws[tmpPidx], this.pidx, tmpPidx, offset)
                 let called = false
-                // check if the non-numeric is in the legal spot
+                // check if the non-numeric (e.g. 'p') is in the calculated offset spot
                 if (draw[offset*2]<'0' || draw[offset*2]>'9') {
                     called = true
                     debug && console.log('huh', offset, draw, draw[offset*2])
                 }
                 if (called) {
-                    console.log('called', draw, tmpPidx)
-                    GS.ui.lastDiscardWasCalled(tmpPidx)
+                    GS.ui.lastDiscardWasCalled(new PIDX(tmpPidx))
                     return tmpPidx
                 }
             }
@@ -358,7 +380,7 @@ function parseJsonData(data) {
             // otherwise it was a call, no new tile, just discard
             removeFromArray(hands[ply.pidx], discard)
         }
-        GS.ui.addDiscard(ply.pidx, [tenhou2str(discard)], !tsumogiri, riichi)
+        GS.ui.addDiscard(new PIDX(ply.pidx), [tenhou2str(discard)], !tsumogiri, riichi)
         ply.incPly()
     }
 
@@ -457,7 +479,8 @@ function parseMortalHtml() {
     for (dtElement of GS.mortalHtmlDoc.querySelectorAll('dt')) {
         if (dtElement.textContent === 'player id') {
             GS.mortalPidx = parseInt(dtElement.nextSibling.textContent)
-            GS.povPidx = GS.mortalPidx // TODO: UI for changing povPidx
+            GS.ui.povPidx = 0
+            GS.ui.povPidx = GS.mortalPidx // TODO: UI for changing povPidx
             break
         }
     }
@@ -466,27 +489,24 @@ function parseMortalHtml() {
     for (d of GS.mortalHtmlDoc.querySelectorAll('details')) {
         debug && console.log(d)
         let summary = d.querySelector('summary')
+        let currTurn = null
         if (!summary) {
-            debug && console.log('no summary')
             continue
         }
-        debug && console.log('sum', summary)
-        summary = summary.textContent
-        if (summary.includes("Turn 1 ")) {
+        if (summary.textContent.includes("Turn 1 ")) {
             RiichiState = null // reset state
+        }
+        if (summary.textContent.includes("Turn")) {
+            currTurn = summary.textContent
         }
         if (RiichiState === 'complete') {
             continue // skip if we riiched a previous turn
         }
         let roles = d.querySelectorAll('span.role')
-        debug && console.log(roles)
         if (roles.length == 0) {
-            debug && console.log('no roles, skip')
             continue
         }
-        //console.log('roles 0', typeof roles[0], roles[0])
         let p_action = roles[0].nextSibling.textContent
-        //console.log(typeof p_action, p_action)
         if (p_action.includes('Riichi')) {
             RiichiState = 'discarding' // set flag so we process the Riichi discard next
         }
@@ -519,8 +539,9 @@ function parseMortalHtml() {
                 p_Pval = Pval
             }
         })
-        console.log(p_discard, m_discard, p_Pval, m_Pval)
-        GS.mortalEvals.push({'p_discard':p_discard, 'm_discard':m_discard, 'p_Pval':p_Pval, 'm_Pval':m_Pval})
+        let info = {'p_discard':p_discard, 'm_discard':m_discard, 'p_Pval':p_Pval, 'm_Pval':m_Pval, 'currTurn':currTurn,}
+        console.log(info)
+        GS.mortalEvals.push(info)
     }
 }
 
@@ -546,22 +567,11 @@ function getJsonData() {
     })
 }
 
-class GlobalState {
-    constructor() {
-        this.ply_counter = 0
-        this.max_ply = 999
-        this.mortalHtmlDoc = null
-        this.json_data = null
-        this.mortalEvals = []
-        this.mortalEvalIdx = 0
-        this.mortalPidx = null
-        this.povPidx = 0
-        this.ui = new UI
-    }
-}
-
 const GS = new GlobalState
-getJsonData()
-parseJsonData(GS.json_data)
-connectUI()
+function main() {
+    getJsonData()
+    parseJsonData(GS.json_data)
+    connectUI()
+}
+main()
 
