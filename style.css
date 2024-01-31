@@ -1,12 +1,14 @@
-/* TODO Different options based on user screen size */
-:root{
-    --main-width:700px;
-    --main-height:700px;
-    --neg-margin:-11px; 
-    /* TODO: size a container instead 
-    https://stackoverflow.com/questions/38476117/how-do-i-fix-width-height-of-rotated-img-div/38476256#38476256
+/*
+TODO Different options based on user screen size 
+TODO: size a container instead 
+https://stackoverflow.com/questions/38476117/how-do-i-fix-width-height-of-rotated-img-div/38476256#38476256
 Wrap the image in a div the right size after translation and it'll be fine..
 */
+
+:root{
+    --main-width: 700px;
+    --main-height: 700px;
+    --neg-margin: -11px; 
 }
 body{
 /*     background: radial-gradient(circle at 40% 20%, rgb(0, 111, 176) 10%, rgb(4, 50, 111) 50%, rgb(2, 35, 77) 150%); */
@@ -17,10 +19,10 @@ h1{
 }
 .grid-main{
     display: grid;
-    width:var(--main-width);
-    height:var(--main-height);
-    grid-template-columns: calc(var(--main-height)/5-5px) calc(var(--main-height)/5+5px) calc(var(--main-height)/5) calc(var(--main-height)/5+5px) calc(var(--main-height)/5-5px);
-    grid-template-rows: calc(var(--main-height)/5-5px) calc(var(--main-height)/5+5px) calc(var(--main-height)/5) calc(var(--main-height)/5+5px) calc(var(--main-height)/5-5px);
+    width: var(--main-width);
+    height: calc(var(--main-height) + 50px);
+    grid-template-columns: 95px 155px 200px 155px 95px;
+    grid-template-rows: 95px 155px 200px 155px 95px;
     grid-template-areas: "ah-p3 ah-p2 ah-p2   ah-p2 ah-p2"
                          "ah-p3 .     ad-p2   .     ah-p1"
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"
