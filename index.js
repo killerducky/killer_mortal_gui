@@ -57,7 +57,7 @@ class PIDX {
     constructor(pidx) {
         this.pidx = pidx
     }
-    logical() {
+    log() {
         return this.pidx
     }
     pov() {
@@ -76,6 +76,12 @@ class UI {
             this.discards.push(document.querySelector(`.grid-discard-p${pnum}`))
         }
     }
+    #getHand(pidx) { 
+        return this.hands[pidx.pov()] 
+    }
+    #getDiscard(pidx) { 
+        return this.discards[pidx.pov()]
+    }
     reset(round, dora, uradora) {
         this.gridInfo.replaceChildren()
         this.gridInfo.append('round ', JSON.stringify(round), document.createElement('br'))
@@ -89,25 +95,25 @@ class UI {
         this.gridInfo.append('mortalIdx ', GS.mortalPidx, ' idx ', GS.mortalEvalIdx, ' ', JSON.stringify(GS.mortalEvals[GS.mortalEvalIdx]))
     }
     updateHandInfo(hands, calls, drawnTile) {
-        for (i of Array(4).keys()) {
-            let pnum = new PIDX(i)
-            this.addHandTiles(pnum, [], true)
-            for (let tileInt of hands[pnum.pov()]) {
-                this.addHandTiles(pnum, [tenhou2str(tileInt)], false)
+        for (let pnum of Array(4).keys()) {
+            let objPnum = new PIDX(pnum)
+            this.addHandTiles(objPnum, [], true)
+            for (let tileInt of hands[pnum]) {
+                this.addHandTiles(objPnum, [tenhou2str(tileInt)], false)
             }
             if (drawnTile[pnum] != null) {
-                this.addBlankSpace(pnum)
-                for (let tileInt of [drawnTile[pnum.pov()]]) {
-                    this.addHandTiles(pnum, [tenhou2str(tileInt)], false)
+                this.addBlankSpace(objPnum)
+                for (let tileInt of [drawnTile[pnum]]) {
+                    this.addHandTiles(objPnum, [tenhou2str(tileInt)], false)
                 }
             }
-            if (calls[pnum.pov()].length > 0) {
-                this.addBlankSpace(pnum)
-                for (let tileInt of calls[pnum.pov()]) {
+            if (calls[pnum].length > 0) {
+                this.addBlankSpace(objPnum)
+                for (let tileInt of calls[pnum]) {
                     if (tileInt == 'rotate') {
-                        this.rotateLastTile(pnum)
+                        this.rotateLastTile(objPnum)
                     } else {
-                        this.addHandTiles(pnum, [tenhou2str(tileInt)], false)
+                        this.addHandTiles(objPnum, [tenhou2str(tileInt)], false)
                     }
                 }
             }
@@ -115,44 +121,43 @@ class UI {
     }
     addHandTiles(pidx, tileStrArray, replace) {
         if (replace) {
-            this.hands[pidx.pov()].replaceChildren()
+            this.#getHand(pidx).replaceChildren()
         }
         for (let i in tileStrArray) {
-            this.hands[pidx.pov()].appendChild(createTile(tileStrArray[i]))
+            this.#getHand(pidx).appendChild(createTile(tileStrArray[i]))
         }   
     }
     addDiscardTiles(pidx, tileStrArray, replace) {
         if (replace) {
-            this.discards[pidx.pov()].replaceChildren()
+            this.#getDiscard(pidx).replaceChildren()
         }
         for (let i in tileStrArray) {
-            this.discards[pidx.pov()].appendChild(createTile(tileStrArray[i]))
+            this.#getDiscard(pidx).appendChild(createTile(tileStrArray[i]))
         }   
     }
     rotateLastTile(pidx) {
         let angle = (pidx.pov() * 90 + 90) % 360
-        this.hands[pidx.pov()].lastChild.style.transform = `rotate(${angle}deg)`
-        this.hands[pidx.pov()].lastChild.style.margin = '6px'
+        this.#getHand(pidx).lastChild.style.transform = `rotate(${angle}deg)`
+        this.#getHand(pidx).lastChild.style.margin = '6px'
     }
 
     // TODO kinda hacky way to add a space
     addBlankSpace(pidx) {
         this.addHandTiles(pidx, ['Blank'], false)
-        this.hands[pidx.pov()].lastChild.style.opacity = "0.1"
+        this.#getHand(pidx).lastChild.style.opacity = "0.1"
     }
-    
     addDiscard(pidx, tileStrArray, tsumogiri, riichi) {
         this.addDiscardTiles(pidx, tileStrArray)
         if (!tsumogiri) {
-            this.discards[pidx.pov()].lastChild.style.background = "lightgrey"
+            this.#getDiscard(pidx).lastChild.style.background = "lightgrey"
         }
         if (riichi) {
             let angle = (pidx.pov() * 90 + 90) % 360
-            this.discards[pidx.pov()].lastChild.style.transform = `rotate(${angle}deg`
+            this.#getDiscard(pidx).lastChild.style.transform = `rotate(${angle}deg`
         }
     }
     lastDiscardWasCalled(pidx) {
-        this.discards[pidx.pov()].lastChild.style.opacity = "0.5"
+        this.#getDiscard(pidx).lastChild.style.opacity = "0.5"
     }
 }
 
@@ -279,7 +284,7 @@ class TurnNum {
                     debug && console.log('huh', offset, draw, draw[offset*2])
                 }
                 if (called) {
-                    GS.ui.lastDiscardWasCalled(new PIDX(tmpPidx))
+                    GS.ui.lastDiscardWasCalled(new PIDX(this.pidx))
                     return tmpPidx
                 }
             }
@@ -361,7 +366,6 @@ function parseJsonData(data) {
         if (discard[0] == 'r') {
             riichi = true
             discard = parseInt(discard.substring(1))
-            console.log('riichi', riichi, discard)
         } else if (typeof discard != 'number') {
             throw new Error('discard should be number', typeof discard, discard)
         }
