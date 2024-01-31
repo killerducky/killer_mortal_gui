@@ -47,9 +47,11 @@ h1{
     transform: rotate(180deg);
     background: deepskyblue;
 }
-.grid-hand-p0{
+.grid-hand-p0-container{
     grid-area: ah-p0;
     background: deepskyblue;
+}
+.grid-hand-p0{
     padding-top: 10px;
     padding-left: 10px;
 }

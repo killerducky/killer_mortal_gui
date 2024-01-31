@@ -46,9 +46,9 @@ class GlobalState {
         this.max_ply = 999
         this.mortalHtmlDoc = null
         this.json_data = null
-        this.mortalEvals = []
-        this.mortalEvalIdx = 0
-        this.mortalPidx = null
+        this.mortalEvals = []    // flat array of all decisions
+        this.mortalEvalIdx = 0   // index to current decision
+        this.mortalPidx = null   // player index mortal reviewed
         this.ui = new UI
     }
 }
@@ -57,7 +57,7 @@ class PIDX {
     constructor(pidx) {
         this.pidx = pidx
     }
-    log() {
+    logical() {
         return this.pidx
     }
     pov() {
@@ -91,8 +91,61 @@ class UI {
             this.discards[i].replaceChildren()
         }
     }
-    updateGridInfo() {
-        this.gridInfo.append('mortalIdx ', GS.mortalPidx, ' idx ', GS.mortalEvalIdx, ' ', JSON.stringify(GS.mortalEvals[GS.mortalEvalIdx]))
+    updateGridInfo(ply, hands, calls, drawnTile) {
+        this.clearDiscardBars()
+        if (GS.mortalPidx == ply.pidx) {
+            this.gridInfo.append('mortalIdx ', GS.mortalPidx, ' idx ', GS.mortalEvalIdx, ' ', JSON.stringify(GS.mortalEvals[GS.mortalEvalIdx]))
+            if (GS.mortalPidx == ply.pidx && (ply.ply%2)==1) {
+                this.gridInfo.append('discarding')
+                this.updateDiscardBars(ply, hands, calls, drawnTile)
+            }
+        }
+    }
+    clearDiscardBars() {
+        const discardBars = document.getElementById("discard-bars")
+        discardBars.replaceChildren()
+        let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        let maxHeight = 60
+        svgElement.setAttribute("width", 605)
+        svgElement.setAttribute("height", maxHeight)
+        svgElement.setAttribute("padding", 15)
+        discardBars.appendChild(svgElement);
+    }
+    updateDiscardBars(ply, hands, calls, drawnTile) {
+        const discardBars = document.getElementById("discard-bars")
+        discardBars.replaceChildren() // TODO don't recreate the svgElement twice every time
+        let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        let maxHeight = 60
+        svgElement.setAttribute("width", 605)
+        svgElement.setAttribute("height", maxHeight)
+        svgElement.setAttribute("padding", 15)
+        for (let tile of hands[ply.pidx]) {
+            console.log(tile, GS.mortalEvals[GS.mortalEvalIdx]['Pvals'][tile])
+        }
+        console.log(GS.mortalEvals[GS.mortalEvalIdx])
+        for (let i = -1; i < hands[ply.pidx].length; i++) {
+            let tile = null
+            let Pval = null
+            if (i==-1) {
+                tile = drawnTile[ply.pidx]
+            } else {
+                tile = hands[ply.pidx][i]
+            }
+            Pval = GS.mortalEvals[GS.mortalEvalIdx]['Pvals'][tile]
+            console.log('i', i, tile, Pval, Math.floor(Pval/100*maxHeight))
+            let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+            if (i==-1) {
+                rect.setAttribute("x", 34/2 + (hands[ply.pidx].length+1)*34)
+            } else {
+                rect.setAttribute("x", 34/2 + i*34)
+            }
+            rect.setAttribute("y", Math.floor((1-Pval/100)*maxHeight))
+            rect.setAttribute("width", 10)
+            rect.setAttribute("height", maxHeight)
+            rect.setAttribute("fill", "blue")
+            svgElement.appendChild(rect);
+        }
+        discardBars.appendChild(svgElement);
     }
     updateHandInfo(hands, calls, drawnTile) {
         for (let pnum of Array(4).keys()) {
@@ -389,7 +442,7 @@ function parseJsonData(data) {
     }
 
     GS.ui.updateHandInfo(hands, calls, drawnTile)
-    GS.ui.updateGridInfo()
+    GS.ui.updateGridInfo(ply, hands, calls, drawnTile)
 }
 
 function createTile(tileStr) {
@@ -525,6 +578,7 @@ function parseMortalHtml() {
         let tbody = d.querySelector('tbody')
         let m_Pval = null
         let p_Pval = null
+        let info = {'p_discard':p_discard, 'm_discard':m_discard, 'currTurn':currTurn, 'Pvals':{}}
         tbody.querySelectorAll('tr').forEach(row => {
             let td = row.querySelector('td')
             let tile = null
@@ -542,8 +596,12 @@ function parseMortalHtml() {
             if (tile == p_discard) {
                 p_Pval = Pval
             }
+            tile = tile.replace('#pai-', '')
+            tile = tm2t(tile)
+            info['Pvals'][tile] = Pval
         })
-        let info = {'p_discard':p_discard, 'm_discard':m_discard, 'p_Pval':p_Pval, 'm_Pval':m_Pval, 'currTurn':currTurn,}
+        info['m_Pval'] = m_Pval
+        info['p_Pval'] = p_Pval
         console.log(info)
         GS.mortalEvals.push(info)
     }
@@ -564,7 +622,7 @@ function getJsonData() {
             fr.onload = function() {
                 localStorage.setItem('mortalHtmlStr', fr.result)
                 setMortalHtmlStr(fr.result)
-            };
+            }
         } else {
             console.log('no file')
         }
