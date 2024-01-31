@@ -26,10 +26,6 @@ h1{
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"
                          "ah-p3 .     ad-p0   .     ah-p1"
                          "ah-p0 ah-p0 ah-p0   ah-p0 ah-p1";
-};
-.grid-hand{
-    display: flex;
-    justify-content: left;
 }
 .grid-hand-p3{
     grid-area: ah-p3;
