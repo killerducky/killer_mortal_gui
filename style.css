@@ -17,6 +17,10 @@ body{
 h1{
     background: deepskyblue;
 }
+.outer {
+    display: grid;
+    grid-template-columns: 700px 1fr;
+}
 .grid-main{
     display: grid;
     width: var(--main-width);

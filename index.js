@@ -114,15 +114,20 @@ class UI {
     updateDiscardBars(ply, hands, calls, drawnTile) {
         const discardBars = document.getElementById("discard-bars")
         discardBars.replaceChildren() // TODO don't recreate the svgElement twice every time
+        let evals = GS.mortalEvals[GS.mortalEvalIdx]
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         let maxHeight = 60
         svgElement.setAttribute("width", 605)
         svgElement.setAttribute("height", maxHeight)
         svgElement.setAttribute("padding", 15)
-        for (let tile of hands[ply.pidx]) {
-            console.log(tile, GS.mortalEvals[GS.mortalEvalIdx]['Pvals'][tile])
+        console.log(evals)
+        let heroDiscard = ply.getDiscard()
+        let match = true // did we discard what mortal would?
+        console.log(' upcoming discard: ', heroDiscard)
+        if (evals['m_discard'] != evals['p_discard']) {
+            console.log(' mismatch!', evals['m_discard'], evals['p_discard'])
+            match = false
         }
-        console.log(GS.mortalEvals[GS.mortalEvalIdx])
         for (let i = -1; i < hands[ply.pidx].length; i++) {
             let tile = null
             let Pval = null
@@ -131,8 +136,23 @@ class UI {
             } else {
                 tile = hands[ply.pidx][i]
             }
-            Pval = GS.mortalEvals[GS.mortalEvalIdx]['Pvals'][tile]
-            console.log('i', i, tile, Pval, Math.floor(Pval/100*maxHeight))
+            Pval = evals['Pvals'][tile]
+            //console.log('i', i, tile, Pval, Math.floor(Pval/100*maxHeight))
+            if (tile == heroDiscard) {
+                console.log('this is us')
+                let rect2 = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+                if (i==-1) {
+                    rect2.setAttribute("x", 34/2 + (hands[ply.pidx].length+1)*34)
+                } else {
+                    rect2.setAttribute("x", 34/2 + i*34)
+                }
+                rect2.setAttribute("y", Math.floor(0*maxHeight))
+                rect2.setAttribute("width", 15)
+                rect2.setAttribute("height", Math.floor(1*maxHeight))
+                rect2.setAttribute("fill", "red")
+                rect2.setAttribute("z-index", -1)
+                svgElement.appendChild(rect2)
+            }
             let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
             if (i==-1) {
                 rect.setAttribute("x", 34/2 + (hands[ply.pidx].length+1)*34)
@@ -141,7 +161,7 @@ class UI {
             }
             rect.setAttribute("y", Math.floor((1-Pval/100)*maxHeight))
             rect.setAttribute("width", 10)
-            rect.setAttribute("height", maxHeight)
+            rect.setAttribute("height", Math.floor((Pval/100)*maxHeight))
             rect.setAttribute("fill", "blue")
             svgElement.appendChild(rect);
         }
@@ -431,7 +451,7 @@ function parseJsonData(data) {
         if (ply.ply >= GS.ply_counter) {
             break
         }
-        let discard = ply.getDiscard(discards)
+        let discard = ply.getDiscard()
         if (typeof discard == "undefined") {
             console.log("out of discards")
             break
@@ -595,8 +615,10 @@ function parseMortalHtml() {
         if (RiichiState === 'discarding') {
             RiichiState = 'complete' // We are now processing the riichi discard set the state now
         }
-        p_discard = roles[0].parentElement.querySelector('use').href.baseVal
-        m_discard = roles[1].parentElement.querySelector('use').href.baseVal
+        // Player is wrapped nicely in a parent span
+        let p_discard = roles[0].parentElement.querySelector('use').href.baseVal
+        // Mortal is not wrapped, use next.next instead
+        let m_discard = roles[1].nextSibling.nextSibling.querySelector('use').href.baseVal
         let tbody = d.querySelector('tbody')
         let m_Pval = null
         let p_Pval = null
