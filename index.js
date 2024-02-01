@@ -94,9 +94,9 @@ class UI {
     updateGridInfo(ply, hands, calls, drawnTile) {
         this.clearDiscardBars()
         if (GS.mortalPidx == ply.pidx) {
-            this.gridInfo.append('mortalIdx ', GS.mortalPidx, ' idx ', GS.mortalEvalIdx, ' ', JSON.stringify(GS.mortalEvals[GS.mortalEvalIdx]))
+            this.gridInfo.append('mortalIdx ', GS.mortalPidx, ' idx ', GS.mortalEvalIdx)
             if (GS.mortalPidx == ply.pidx && (ply.ply%2)==1) {
-                this.gridInfo.append('discarding')
+                this.gridInfo.append(' discarding')
                 this.updateDiscardBars(ply, hands, calls, drawnTile)
             }
         }
@@ -213,7 +213,7 @@ class UI {
         this.#getDiscard(pidx).lastChild.style.opacity = "0.5"
     }
 }
-
+                
 //take '2m' and return 2 + 10 etc.
 function tm2t(str) { 
     //tenhou's tile encoding:
@@ -222,8 +222,25 @@ function tm2t(str) {
     //   31-39    - 1-9 sou
     //   41-47    - ESWN WGR
     //   51,52,53 - aka 5 man, pin, sou
-    let num = parseInt(str[0]);
     const tcon = { m : 1, p : 2, s : 3, z : 4 };
+    // handle mortal '5sr' for red 5s
+    if (str.length==3) {
+        if (str[0] != '5' || str[2] != 'r') {
+            throw new Error('Expected something like "5sr"!')
+        }
+        str = str.substring(0, str.length - 1)
+        return 50+tcon[str[1]]
+    }
+    let num = parseInt(str[0]);
+    if (isNaN(num)) {
+        //                                                   Pai=White Fa=Green Chun=Red
+        const yakuhai = { 'e': 41, 's': 42, 'w': 43, 'n': 44, 'p':45, 'f':46, 'c': 47}
+        tile = yakuhai[str[0]]
+        if (tile == null) {
+            throw new Error(`Could not parse ${str}`)
+        }
+        return yakuhai[str[0]]
+    }
 
     return num ? 10 * tcon[str[1]] + num : 50 + tcon[str[1]];
 }
@@ -355,6 +372,10 @@ function removeFromArray(array, value) {
 }
 
 function parseJsonData(data) {
+    if (data == null) {
+        console.log('no data to parse yet')
+        return
+    }
     const log = data['log'][0]
     logIdx = 0
     round = log[logIdx++]
@@ -523,9 +544,10 @@ function setMortalHtmlStr(data) {
     console.log('setMortalHtmlStr')
     const parser = new DOMParser()
     GS.mortalHtmlDoc = parser.parseFromString(data, 'text/html')
+    parseMortalHtml()
     GS.json_data = JSON.parse(GS.mortalHtmlDoc.querySelector('textarea').value)
     console.log(GS.json_data)
-    parseMortalHtml()
+    parseJsonData(GS.json_data)
 }
 
 function parseMortalHtml() {
@@ -579,30 +601,45 @@ function parseMortalHtml() {
         let m_Pval = null
         let p_Pval = null
         let info = {'p_discard':p_discard, 'm_discard':m_discard, 'currTurn':currTurn, 'Pvals':{}}
-        tbody.querySelectorAll('tr').forEach(row => {
-            let td = row.querySelector('td')
+        for (let tr of tbody.querySelectorAll('tr')) {
+            m_Pval = null
+            p_Pval = null
             let tile = null
-            let action = td.textContent.trim()
-            if (!action.includes("Riichi")) {
-                tile = td.querySelector('use').href.baseVal
+            let riichi = false
+            let action = tr.textContent.trim()
+            //console.log('')
+            //console.log(tr)
+            //console.log('action', typeof action, action)
+            if (action.includes("Riichi")) {
+                riichi = true
+                //console.log('riichied')
+            } else {
+                tile = tr.querySelector('use').href.baseVal
             }
-            i = td.parentElement.querySelectorAll('span.int')
-            f = td.parentElement.querySelectorAll('span.frac')
+            i = tr.querySelectorAll('span.int')
+            f = tr.querySelectorAll('span.frac')
             Qval = parseFloat(i[0].textContent + f[0].textContent)
             Pval = parseFloat(i[1].textContent + f[1].textContent)
-            if (tile == m_discard) {
-                m_Pval = Pval
+            //console.log('tile', tile, riichi)
+            if (riichi) {
+                info['Pvals']['riichi'] = Pval
+                // TODO: m_Pval and p_Pval
+            } else {
+                if (tile == m_discard) {
+                    m_Pval = Pval
+                }
+                if (tile == p_discard) {
+                    p_Pval = Pval
+                }
+                //console.log('parse tile', tile)
+                tile = tile.replace('#pai-', '')
+                tile = tm2t(tile)
+                info['Pvals'][tile] = Pval
             }
-            if (tile == p_discard) {
-                p_Pval = Pval
-            }
-            tile = tile.replace('#pai-', '')
-            tile = tm2t(tile)
-            info['Pvals'][tile] = Pval
-        })
+        }
         info['m_Pval'] = m_Pval
         info['p_Pval'] = p_Pval
-        console.log(info)
+        //console.log(info)
         GS.mortalEvals.push(info)
     }
 }
