@@ -5,7 +5,7 @@ json_data = {
     "dan":["雀豪★1","雀豪★1","雀聖★2","雀聖★2"],
     "lobby":0,
     "log":[[
-        [2,0,0], // East 3, no repeats, no riichi sticks
+        [2,0,0], // East 3, no repeats, no riichi sticks  E3 means PID2 is now East/Dealer
         [22000,11300,44700,22000], // start points
         [22], // Dora 2p
         [], // Uradora
@@ -17,11 +17,11 @@ json_data = {
         [37,23,45,42,51,37,13,38,43,23,46,38,12],              // haipai = starting hand
         [47,12,11,44,47,14,"3838p38",43,33,22,36,14,28,12,17], // draws
         [43,42,46,45,44,47,47,11,43,33,22,36,60,14,60],        // discards
-        // PID2 = W in E1,  now: East                          // mortal POV player
+        // PID2 = W in E1  now: East                           // (mortal POV player in this case)
         [41,21,36,26,15,39,29,44,47,32,46,26,35],
         [29,16,43,16,26,52,38,31,32,38,25,36,24,31,"c141516",25],
         [44,39,60,46,47,32,60,60,60,60,21,26,41,60,29,29],
-        // PID3 i N in E1   now: South
+        // PID3 = N in E1  now: South
         [28,19,27,33,15,44,11,22,32,15,19,35,45],       // haipai = starting hand
         [33,39,19,21,29,44,42,14,27,42,45,42,41,16,39], // draws
         [44,60,11,45,35,60,33,60,60,60,60,60,60,42,60], // discards
@@ -40,6 +40,7 @@ json_data = {
 }
 */
 
+
 class GlobalState {
     constructor() {
         this.ply_counter = 0
@@ -50,6 +51,13 @@ class GlobalState {
         this.mortalEvalIdx = 0   // index to current decision
         this.mortalPidx = null   // player index mortal reviewed
         this.ui = new UI
+        this.C_db_height = 60
+        this.C_db_totWidth = 605
+        this.C_db_handPadding = 10
+        this.C_db_padding = 15
+        this.C_db_tileWidth = 34
+        this.C_db_heroBarWidth = 16
+        this.C_db_mortBarWidth = 10
     }
 }
 
@@ -105,10 +113,9 @@ class UI {
         const discardBars = document.getElementById("discard-bars")
         discardBars.replaceChildren()
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        let maxHeight = 60
-        svgElement.setAttribute("width", 605)
-        svgElement.setAttribute("height", maxHeight)
-        svgElement.setAttribute("padding", 15)
+        svgElement.setAttribute("width", GS.C_db_totWidth)
+        svgElement.setAttribute("height", GS.C_db_height)
+        svgElement.setAttribute("padding", GS.C_db_padding)
         discardBars.appendChild(svgElement);
     }
     updateDiscardBars(ply, hands, calls, drawnTile) {
@@ -116,10 +123,9 @@ class UI {
         discardBars.replaceChildren() // TODO don't recreate the svgElement twice every time
         let evals = GS.mortalEvals[GS.mortalEvalIdx]
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        let maxHeight = 60
-        svgElement.setAttribute("width", 605)
-        svgElement.setAttribute("height", maxHeight)
-        svgElement.setAttribute("padding", 15)
+        svgElement.setAttribute("width", GS.C_db_totWidth)
+        svgElement.setAttribute("height", GS.C_db_height)
+        svgElement.setAttribute("padding", GS.C_db_height)
         console.log(evals)
         let heroDiscard = ply.getDiscard()
         let match = true // did we discard what mortal would?
@@ -137,31 +143,24 @@ class UI {
                 tile = hands[ply.pidx][i]
             }
             Pval = evals['Pvals'][tile]
-            //console.log('i', i, tile, Pval, Math.floor(Pval/100*maxHeight))
+            let slot = (i !== -1) ? i : hands[ply.pidx].length+1
+            let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (tile == heroDiscard) {
                 console.log('this is us')
                 let rect2 = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-                if (i==-1) {
-                    rect2.setAttribute("x", 34/2 + (hands[ply.pidx].length+1)*34)
-                } else {
-                    rect2.setAttribute("x", 34/2 + i*34)
-                }
-                rect2.setAttribute("y", Math.floor(0*maxHeight))
-                rect2.setAttribute("width", 15)
-                rect2.setAttribute("height", Math.floor(1*maxHeight))
+                rect2.setAttribute("x", xloc-GS.C_db_heroBarWidth/2)
+                rect2.setAttribute("y", 0)
+                rect2.setAttribute("width", GS.C_db_heroBarWidth)
+                rect2.setAttribute("height", Math.floor(1*GS.C_db_height))
                 rect2.setAttribute("fill", "red")
                 rect2.setAttribute("z-index", -1)
                 svgElement.appendChild(rect2)
             }
             let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-            if (i==-1) {
-                rect.setAttribute("x", 34/2 + (hands[ply.pidx].length+1)*34)
-            } else {
-                rect.setAttribute("x", 34/2 + i*34)
-            }
-            rect.setAttribute("y", Math.floor((1-Pval/100)*maxHeight))
-            rect.setAttribute("width", 10)
-            rect.setAttribute("height", Math.floor((Pval/100)*maxHeight))
+            rect.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
+            rect.setAttribute("y", Math.floor((1-Pval/100)*GS.C_db_height))
+            rect.setAttribute("width", GS.C_db_mortBarWidth)
+            rect.setAttribute("height", Math.ceil((Pval/100)*GS.C_db_height))
             rect.setAttribute("fill", "blue")
             svgElement.appendChild(rect);
         }
@@ -217,7 +216,7 @@ class UI {
     // TODO kinda hacky way to add a space
     addBlankSpace(pidx) {
         this.addHandTiles(pidx, ['Blank'], false)
-        this.#getHand(pidx).lastChild.style.opacity = "0.1"
+        this.#getHand(pidx).lastChild.style.opacity = "0"
     }
     addDiscard(pidx, tileStrArray, tsumogiri, riichi) {
         this.addDiscardTiles(pidx, tileStrArray)
@@ -561,7 +560,6 @@ function connectUI() {
 }
 
 function setMortalHtmlStr(data) {
-    console.log('setMortalHtmlStr')
     const parser = new DOMParser()
     GS.mortalHtmlDoc = parser.parseFromString(data, 'text/html')
     parseMortalHtml()
@@ -669,6 +667,7 @@ function parseMortalHtml() {
 function getJsonData() {
     data = localStorage.getItem('mortalHtmlStr')
     if (data) {
+        data = LZString.decompressFromUTF16(data)
         setMortalHtmlStr(data)
     }
 
@@ -679,7 +678,8 @@ function getJsonData() {
             let fr = new FileReader()
             fr.readAsText(file)
             fr.onload = function() {
-                localStorage.setItem('mortalHtmlStr', fr.result)
+                let data = LZString.compressToUTF16(fr.result)
+                localStorage.setItem('mortalHtmlStr', data)
                 setMortalHtmlStr(fr.result)
             }
         } else {

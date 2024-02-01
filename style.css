@@ -96,3 +96,8 @@ h1{
 .grid-discard > img {
     width:30px;
 }
+.discard-bars {
+    display: grid;
+    grid-template-columns: 1fr;
+    height:62px;
+}
