@@ -26,9 +26,10 @@ json_data = {
         [33,39,19,21,29,44,42,14,27,42,45,42,41,16,39], // draws
         [44,60,11,45,35,60,33,60,60,60,60,60,60,42,60], // discards
         [
-            "和了", // "heaven" = Agari = Win (Tsumo or Ron)
+            "和了",           // "heaven" = Agari = Win (Tsumo or Ron)
             [-7700,7700,0,0], // point change
-            [1,0,1,"30符4飜7700点","断幺九(1飜)","ドラ(2飜)","赤ドラ(1飜)"]
+            [1,0,1,           // who won, points from (self if tsumo), who won or if pao: who's responsible
+                "30符4飜7700点","断幺九(1飜)","ドラ(2飜)","赤ドラ(1飜)"]  // score info strings
         ]
     ]],
     "name":["Aさん","Bさん","Cさん","Dさん"],
@@ -40,17 +41,81 @@ json_data = {
 }
 */
 
+class GameLog {
+    constructor(log) {
+        const RUNES  = {
+            /*hand limits*/
+            "mangan"         : ["満貫",         "Mangan ",         "Mangan "               ],
+            "haneman"        : ["跳満",         "Haneman ",        "Haneman "              ],
+            "baiman"         : ["倍満",         "Baiman ",         "Baiman "               ],
+            "sanbaiman"      : ["三倍満",       "Sanbaiman ",      "Sanbaiman "            ],
+            "yakuman"        : ["役満",         "Yakuman ",        "Yakuman "              ],
+            "kazoeyakuman"   : ["数え役満",     "Kazoe Yakuman ",  "Counted Yakuman "      ],
+            "kiriagemangan"  : ["切り上げ満貫", "Kiriage Mangan ", "Rounded Mangan "       ],
+            /*round enders*/
+            "agari"          : ["和了",         "Agari",           "Agari"                 ],
+            "ryuukyoku"      : ["流局",         "Ryuukyoku",       "Exhaustive Draw"       ],
+            "nagashimangan"  : ["流し満貫",     "Nagashi Mangan",  "Mangan at Draw"        ],
+            "suukaikan"      : ["四開槓",       "Suukaikan",       "Four Kan Abortion"     ],
+            "sanchahou"      : ["三家和",       "Sanchahou",       "Three Ron Abortion"    ],
+            "kyuushukyuuhai" : ["九種九牌",     "Kyuushu Kyuuhai", "Nine Terminal Abortion"],
+            "suufonrenda"    : ["四風連打",     "Suufon Renda",    "Four Wind Abortion"    ],
+            "suuchariichi"   : ["四家立直",     "Suucha Riichi",   "Four Riichi Abortion"  ],
+            /*scoring*/
+            "fu"             : ["符",           /*"Fu",*/"符",     "Fu"                    ],
+            "han"            : ["飜",           /*"Han",*/"飜",    "Han"                   ],
+            "points"         : ["点",           /*"Points",*/"点", "Points"                ],
+            "all"            : ["∀",            "∀",               "∀"                     ],
+            "pao"            : ["包",           "pao",             "Responsibility"        ],
+            /*rooms*/
+            "tonpuu"         : ["東喰",         " East",           " East"                 ],
+            "hanchan"        : ["南喰",         " South",          " South"                ],
+            "friendly"       : ["友人戦",       "Friendly",        "Friendly"              ],
+            "tournament"     : ["大会戦",       "Tounament",       "Tournament"            ],
+            "sanma"          : ["三",           "3-Player ",       "3-Player "             ],
+            "red"            : ["赤",           " Red",            " Red Fives"            ],
+            "nored"          : ["",             " Aka Nashi",      " No Red Fives"         ]
+        };
+        
+        let logIdx = 0
+        this.round = log[logIdx++]
+        this.scores = log[logIdx++]
+        this.dora = log[logIdx++]
+        this.uradora = log[logIdx++]
+        this.hands = []
+        this.drawnTile = [null, null, null, null]
+        this.calls = [[],[],[],[]]
+        this.draws = []
+        this.discards = []
+        for (let pnum of Array(4).keys()) {
+            this.hands.push(Array.from(log[logIdx++]))
+            this.draws.push(log[logIdx++])
+            this.discards.push(log[logIdx++])
+            this.hands[pnum].sort(tileSort)
+        }
+        this.result = log[logIdx][0]
+        this.scoreChanges = log[logIdx][1]
+        this.winner = log[logIdx][2][0]
+        this.payer = log[logIdx][2][1]
+        this.pao = log[logIdx][2][2] // TODO: Find an example of this
+        this.yakuStrings = log[logIdx][2].slice(3)
+        this.handOver = false
+    }
+}
 
 class GlobalState {
     constructor() {
+        this.ui = new UI
+        this.gl = null
+
         this.ply_counter = 0
         this.max_ply = 999
         this.mortalHtmlDoc = null
         this.json_data = null
         this.mortalEvals = []    // flat array of all decisions
         this.mortalEvalIdx = 0   // index to current decision
-        this.mortalPidx = null   // player index mortal reviewed
-        this.ui = new UI
+        this.heroPidx = null   // player index mortal reviewed
+
         this.C_db_height = 60
         this.C_db_totWidth = 605
         this.C_db_handPadding = 10
@@ -101,12 +166,18 @@ class UI {
     }
     updateGridInfo(ply, hands, calls, drawnTile) {
         this.clearDiscardBars()
-        if (GS.mortalPidx == ply.pidx) {
-            this.gridInfo.append('mortalIdx ', GS.mortalPidx, ' idx ', GS.mortalEvalIdx)
-            if (GS.mortalPidx == ply.pidx && (ply.ply%2)==1) {
+        if (GS.heroPidx == ply.pidx) {
+            this.gridInfo.append('mortalIdx ', GS.heroPidx, ' idx ', GS.mortalEvalIdx)
+            if (GS.heroPidx == ply.pidx && (ply.ply%2)==1) {
                 this.gridInfo.append(' discarding')
                 this.updateDiscardBars(ply, hands, calls, drawnTile)
             }
+        }
+        if (GS.gl.handOver) {
+            this.gridInfo.append(document.createElement('br'))
+            this.gridInfo.append('\nHand Over', document.createElement('br'))
+            this.gridInfo.append(`result ${GS.gl.result} winner ${GS.gl.winner} payer ${GS.gl.payer}`, document.createElement('br'))
+            this.gridInfo.append(JSON.stringify(GS.gl.scoreChanges, GS.gl.yakuStrings), document.createElement('br'))
         }
     }
     clearDiscardBars() {
@@ -128,8 +199,11 @@ class UI {
         svgElement.setAttribute("padding", GS.C_db_height)
         console.log(evals)
         let heroDiscard = ply.getDiscard()
+        if (heroDiscard = 60) {
+            heroDiscard = drawnTile[ply.pidx]
+        }
         let match = true // did we discard what mortal would?
-        console.log(' upcoming discard: ', heroDiscard)
+        //console.log(' upcoming discard: ', heroDiscard)
         if (evals['m_discard'] != evals['p_discard']) {
             console.log(' mismatch!', evals['m_discard'], evals['p_discard'])
             match = false
@@ -146,14 +220,13 @@ class UI {
             let slot = (i !== -1) ? i : hands[ply.pidx].length+1
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (tile == heroDiscard) {
-                console.log('this is us')
                 let rect2 = document.createElementNS("http://www.w3.org/2000/svg", "rect")
                 rect2.setAttribute("x", xloc-GS.C_db_heroBarWidth/2)
                 rect2.setAttribute("y", 0)
                 rect2.setAttribute("width", GS.C_db_heroBarWidth)
-                rect2.setAttribute("height", Math.floor(1*GS.C_db_height))
+                rect2.setAttribute("height", Math.ceil(1*GS.C_db_height))
                 rect2.setAttribute("fill", "red")
-                rect2.setAttribute("z-index", -1)
+                rect2.setAttribute("z-index", -1) // behind Mortal's Bar, but wider
                 svgElement.appendChild(rect2)
             }
             let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
@@ -304,7 +377,6 @@ class TurnNum {
     getDraw() {
         let draw = this.draws[this.pidx][this.nextDrawIdx[this.pidx]]
         if (typeof draw == "undefined") { 
-            console.log("out of draws")
             GS.max_ply = this.ply
             return null
         }
@@ -339,7 +411,7 @@ class TurnNum {
         // TODO: It's weird that we don't increment draw in the even ply?
         //       but for now it doesn't matter
         if (this.ply%2==1) {
-            if (this.pidx == GS.mortalPidx) {
+            if (this.pidx == GS.heroPidx) {
                 GS.mortalEvalIdx++
             }
             this.nextDrawIdx[this.pidx]++
@@ -395,6 +467,8 @@ function parseJsonData(data) {
         console.log('no data to parse yet')
         return
     }
+
+    GS.gl = new GameLog(data['log'][0])
     const log = data['log'][0]
     logIdx = 0
     round = log[logIdx++]
@@ -422,7 +496,9 @@ function parseJsonData(data) {
         //console.log(ply.ply, ply.pidx)
         draw = ply.getDraw(draws)
         if (draw == null) {
-            break 
+            console.log("out of draws")
+            GS.gl.handOver = true
+            break
         }
         if (draw[0] == 'pon') {
             removeFromArray(hands[ply.pidx], draw[2])
@@ -453,6 +529,7 @@ function parseJsonData(data) {
         let discard = ply.getDiscard()
         if (typeof discard == "undefined") {
             console.log("out of discards")
+            GS.gl.handOver = true
             break
         }
         let riichi = false
@@ -575,9 +652,9 @@ function parseMortalHtml() {
     let pid = null
     for (dtElement of GS.mortalHtmlDoc.querySelectorAll('dt')) {
         if (dtElement.textContent === 'player id') {
-            GS.mortalPidx = parseInt(dtElement.nextSibling.textContent)
+            GS.heroPidx = parseInt(dtElement.nextSibling.textContent)
             GS.ui.povPidx = 0
-            GS.ui.povPidx = GS.mortalPidx // TODO: UI for changing povPidx
+            GS.ui.povPidx = GS.heroPidx // TODO: UI for changing povPidx
             break
         }
     }
