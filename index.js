@@ -79,8 +79,9 @@ class GameLog {
         
         let logIdx = 0
         this.rawRound = log[logIdx++]
-        this.roundWind = this.rawRound[0] % 4 + tm2t('e')
-        this.roundNum = this.rawRound[1]
+        this.roundWind = Math.floor(this.rawRound[0]/4) + tm2t('e')
+        this.roundNum = this.rawRound[0] % 4 + 1
+        this.honbas = this.rawRound[1]
         this.roundSticks = this.rawRound[2]
         this.scores = log[logIdx++]
         this.dora = log[logIdx++]
@@ -96,12 +97,20 @@ class GameLog {
             this.discards.push(log[logIdx++])
             this.hands[pnum].sort(tileSort)
         }
-        this.result = log[logIdx][0]
-        this.scoreChanges = log[logIdx][1]
-        this.winner = log[logIdx][2][0]
-        this.payer = log[logIdx][2][1]
-        this.pao = log[logIdx][2][2] // TODO: Find an example of this
-        this.yakuStrings = log[logIdx][2].slice(3)
+        this.resultArray = log[logIdx++]
+        this.result = this.resultArray[0]
+        this.scoreChanges = this.resultArray[1]
+        if (this.resultArray.length > 2) {
+            this.winner = this.resultArray[2][0]
+            this.payer = this.resultArray[2][1]
+            this.pao = this.resultArray[2][2] // TODO: Find an example of this
+            this.yakuStrings = this.resultArray[2].slice(3)
+        } else {
+            this.winner = null
+            this.payer = null
+            this.pao = null
+            this.yakuStrings = null
+        }
         this.handOver = false
     }
 }
@@ -117,7 +126,7 @@ class GlobalState {
         this.max_ply = 999
         this.mortalHtmlDoc = null
         this.json_data = null
-        this.mortalEvals = []    // flat array of all decisions
+        this.mortalEvals = []    // array of rounds -> array of decisions for that round
         this.mortalEvalIdx = 0   // index to current decision
         this.heroPidx = null   // player index mortal reviewed
 
@@ -169,6 +178,9 @@ class UI {
         this.round.lastChild.setAttribute('width', 15)
         this.round.lastChild.setAttribute('style', null)
         this.round.append(GS.gl.roundNum)
+        this.round.append(' ', GS.gl.rawRound)
+        this.honbas.replaceChildren(`Honbas ${GS.gl.honbas}`)
+        this.sticks.replaceChildren()
         this.doras.replaceChildren()
         for (let i=0; i<5; i++) {
             if (GS.gl.dora[i] == null) {
@@ -192,10 +204,7 @@ class UI {
             }
         }
         if (GS.gl.handOver) {
-            this.sticks.replaceChildren()
-            this.sticks.append(`r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer}`, document.createElement('br'))
-            this.sticks.append('u', GS.gl.uradora, ' ')
-            this.sticks.append(JSON.stringify(GS.gl.scoreChanges, GS.gl.yakuStrings), document.createElement('br'))
+            console.log(`r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer}`, 'u', GS.gl.uradora, GS.gl.scoreChanges, GS.gl.yakuStrings)
         }
     }
     clearDiscardBars() {
@@ -210,7 +219,7 @@ class UI {
     updateDiscardBars(ply, hands, calls, drawnTile) {
         const discardBars = document.getElementById("discard-bars")
         discardBars.replaceChildren() // TODO don't recreate the svgElement twice every time
-        let evals = GS.mortalEvals[GS.mortalEvalIdx]
+        let evals = GS.mortalEvals[GS.hand_counter][GS.mortalEvalIdx]
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
@@ -497,9 +506,9 @@ function parseJsonData(data) {
         console.log('no data to parse yet')
         return
     }
-
-    GS.gl = new GameLog(data['log'][0])
-    const log = data['log'][0]
+    GS.gl = new GameLog(data[GS.hand_counter]['log'][0])
+    console.log(GS.gl)
+    const log = data[GS.hand_counter]['log'][0]
     logIdx = 0
     round = log[logIdx++]
     scores = log[logIdx++]
@@ -630,13 +639,20 @@ function decPlyCounter() {
 
 function incHandCounter() {
     GS.hand_counter++
-    if (GS.hand_counter > GS.max_hands) {
+    if (GS.hand_counter >= GS.mortalEvals.length) {
         GS.hand_counter = 0
     }
+    GS.ply_counter = 0
+    GS.max_ply = 999
 }
 
 function decHandCounter() {
-    GS.hand_counter && GS.hand_counter--
+    GS.hand_counter--
+    if (GS.hand_counter < 0) {
+        GS.hand_counter = GS.mortalEvals.length-1
+    }
+    GS.ply_counter = 0
+    GS.max_ply = 999
 }
 
 function connectUI() {
@@ -644,7 +660,7 @@ function connectUI() {
     const inc2 = document.getElementById("ply-inc2");
     const dec = document.getElementById("ply-dec");
     const dec2 = document.getElementById("ply-dec2");
-    const handInc = document.getElementById("hand-dec")
+    const handInc = document.getElementById("hand-inc")
     const handDec = document.getElementById("hand-dec")
     inc.addEventListener("click", () => {
         incPlyCounter();
@@ -682,8 +698,11 @@ function setMortalHtmlStr(data) {
     const parser = new DOMParser()
     GS.mortalHtmlDoc = parser.parseFromString(data, 'text/html')
     parseMortalHtml()
-    GS.json_data = JSON.parse(GS.mortalHtmlDoc.querySelector('textarea').value)
-    console.log(GS.json_data)
+    GS.json_data = []
+    for (ta of GS.mortalHtmlDoc.querySelectorAll('textarea')) {
+        GS.json_data.push(JSON.parse(ta.value))
+    }
+    console.log('json_data logs', GS.json_data)
     parseJsonData(GS.json_data)
 }
 
@@ -701,7 +720,7 @@ function parseMortalHtml() {
     }
 
     GS.mortalEvals = []
-    let round = -1
+    let currRound = -1
     for (d of GS.mortalHtmlDoc.querySelectorAll('details')) {
         debug && console.log(d)
         let summary = d.querySelector('summary')
@@ -709,10 +728,13 @@ function parseMortalHtml() {
         if (!summary) {
             continue
         }
-        if (summary.textContent.includes("Turn 1 ")) {
+        // the Tenhou JSON log is in this, use it to find new rounds
+        if (d.querySelector('textarea')) {
+            console.log(summary.textContent)
             RiichiState = null // reset state
-            round++
-            console.log('round', round)
+            currRound++
+            GS.mortalEvals.push([])
+            console.assert(GS.mortalEvals.length-1 == currRound)
         }
         if (summary.textContent.includes("Turn")) {
             currTurn = summary.textContent
@@ -781,8 +803,9 @@ function parseMortalHtml() {
         info['m_Pval'] = m_Pval
         info['p_Pval'] = p_Pval
         //console.log(info)
-        GS.mortalEvals.push(info)
+        GS.mortalEvals[currRound].push(info)
     }
+    console.log('done parsing mortal ', GS.mortalEvals.length, currRound)
 }
 
 function getJsonData() {
