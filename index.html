@@ -28,20 +28,27 @@
                 <span class="grid-discard rotate grid-discard-p3"></span>
                 <span class="grid-discard grid-discard-p2"></span>
                 <span class="grid-discard rotate grid-discard-p1"></span>
-                <div class="grid-info"></div>
+                <div class="grid-info">
+                    <span class="info-round"></span>
+                    <span class="info-sticks"></span>
+                    <span class="info-honbas"></span>
+                    <span class="info-doras"></span>
+                </div>
             </div>
         <div class="sidebar">
             <div class="controls">
-                <button id="ply-dec2">--</button>
-                <button id="ply-dec">-</button>
-                <input type="number" id="ply-counter" value="0" readonly>
-                <button id="ply-inc">+</button>
-                <button id="ply-inc2">++</button>
-            </div>
-            <div class="mortal-html">
                 <input type="file" id="mortal-html-file">
+                <button id="hand-dec">&lt; Prev Hand</button>
+                <button id="hand-inc">Next Hand &gt;</button>
+                <button id="ply-dec2">&lt; Prev x4</button>
+                <button id="ply-inc2">Next x4 &gt;</button>
+                <button id="ply-dec">&lt; Prev</button>
+                <button id="ply-inc">Next &gt;</button>
             </div>
-            <img src="media/killerducky.png"></img>
+            <div class="killer-call-div">
+                <div class="killer-call-bars"></div>
+                <img class="killer-call-img" src="media/killerducky.png"></img>
+            </div>
         </div>
     </main>
     <script src="lz-string.min.js"></script>

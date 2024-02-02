@@ -109,6 +109,8 @@ class GlobalState {
         this.gl = null
 
         this.ply_counter = 0
+        this.hand_counter = 0
+        this.max_hands = 999
         this.max_ply = 999
         this.mortalHtmlDoc = null
         this.json_data = null
@@ -148,6 +150,10 @@ class UI {
             this.hands.push(document.querySelector(`.grid-hand-p${pnum}`))
             this.discards.push(document.querySelector(`.grid-discard-p${pnum}`))
         }
+        this.round = document.querySelector('.info-round')
+        this.sticks = document.querySelector('.info-sticks')
+        this.honbas = document.querySelector('.info-honbas')
+        this.doras = document.querySelector('.info-doras')
     }
     #getHand(pidx) { 
         return this.hands[pidx.pov()] 
@@ -156,20 +162,19 @@ class UI {
         return this.discards[pidx.pov()]
     }
     reset(round, dora, uradora) {
-        this.gridInfo.replaceChildren()
-        this.gridInfo.append('round ', JSON.stringify(round), document.createElement('br'))
-        this.gridInfo.append('dora ', JSON.stringify(dora), document.createElement('br'))
-        this.gridInfo.append('uradora ', JSON.stringify(uradora), document.createElement('br'))
-        for (let i of Array(4).keys()) {
+        this.round.replaceChildren('round', JSON.stringify(round))
+        this.doras.replaceChildren('dora ', JSON.stringify(dora))
+        this.honbas.replaceChildren('uradora ', JSON.stringify(uradora))
+        for (let i=0; i<4; i++) {
             this.discards[i].replaceChildren()
         }
     }
     updateGridInfo(ply, hands, calls, drawnTile) {
         this.clearDiscardBars()
         if (GS.heroPidx == ply.pidx) {
-            this.gridInfo.append('heroIdx ', GS.heroPidx, ' idx ', GS.mortalEvalIdx)
+            //this.gridInfo.append('heroIdx ', GS.heroPidx, ' idx ', GS.mortalEvalIdx)
             if (GS.heroPidx == ply.pidx && (ply.ply%2)==1) {
-                this.gridInfo.append(' discarding')
+                //this.gridInfo.append(' discarding')
                 this.updateDiscardBars(ply, hands, calls, drawnTile)
             }
         }
@@ -603,26 +608,33 @@ function convertTileStr(str) {
 }
 
 function incPlyCounter() {
-    GS.ply_counter < GS.max_ply && GS.ply_counter++;
+    GS.ply_counter < GS.max_ply && GS.ply_counter++
 }
 
 function decPlyCounter() {
-    GS.ply_counter > 0 && GS.ply_counter--;
+    GS.ply_counter > 0 && GS.ply_counter--
 }
 
-function getPlyCounter() {
-    return GS.ply_counter;
+function incHandCounter() {
+    GS.hand_counter++
+    if (GS.hand_counter > GS.max_hands) {
+        GS.hand_counter = 0
+    }
+}
+
+function decHandCounter() {
+    GS.hand_counter && GS.hand_counter--
 }
 
 function connectUI() {
     const inc = document.getElementById("ply-inc");
     const inc2 = document.getElementById("ply-inc2");
-    const input = document.getElementById("ply-counter");
     const dec = document.getElementById("ply-dec");
     const dec2 = document.getElementById("ply-dec2");
+    const handInc = document.getElementById("hand-dec")
+    const handDec = document.getElementById("hand-dec")
     inc.addEventListener("click", () => {
         incPlyCounter();
-        input.value = getPlyCounter();
         parseJsonData(GS.json_data)
     });
     inc2.addEventListener("click", () => {
@@ -630,14 +642,10 @@ function connectUI() {
         incPlyCounter();
         incPlyCounter();
         incPlyCounter();
-        input.value = getPlyCounter();
         parseJsonData(GS.json_data)
     });
     dec.addEventListener("click", () => {
-        if (input.value > 0) {
-          decPlyCounter();
-        }
-        input.value = getPlyCounter();
+        decPlyCounter();
         parseJsonData(GS.json_data)
     });
     dec2.addEventListener("click", () => {
@@ -645,7 +653,14 @@ function connectUI() {
         decPlyCounter();
         decPlyCounter();
         decPlyCounter();
-        input.value = getPlyCounter();
+        parseJsonData(GS.json_data)
+    });
+    handInc.addEventListener("click", () => {
+        incHandCounter();
+        parseJsonData(GS.json_data)
+    });
+    handDec.addEventListener("click", () => {
+        decHandCounter();
         parseJsonData(GS.json_data)
     });
 }

@@ -83,7 +83,32 @@ h1{
     grid-area: ad-p0;
 }
 .grid-info {
-    grid-area: a-info;
+    grid-area: a-info; /* This goes inside the main grid here */
+    display: grid; /* and is also a sub-grid */
+    width: 200px;
+    height: 200px;
+/*     border: 1px solid black;*/
+    grid-template-columns: 40px 40px 40px 40px 40px;
+    grid-template-rows: repeat(6, 30px);
+    grid-template-areas:
+      "ai-p3 ai-p2 ai-p2   ai-p2 ai-p2"
+      "ai-p3 .    ai-round   .     ai-p1"
+      "ai-p3 .    ai-sticks  .     ai-p1"
+      "ai-p3 .    ai-honbas  .     ai-p1"
+      "ai-p3 .    ai-doras   .     ai-p1"
+      "ai-p0 ai-p0 ai-p0   ai-p0 ai-p1";
+}
+.info-round {
+    grid-area: ai-round;
+}
+.info-sticks {
+    grid-area: ai-sticks;
+}
+.info-honbas {
+    grid-area: ai-honbas;
+}
+.info-doras {
+    grid-area: ai-doras;
 }
 .rotate > img {
     transform: rotate(90deg);
@@ -100,4 +125,28 @@ h1{
     display: grid;
     grid-template-columns: 1fr;
     height:62px;
+}
+.controls {
+    display:grid;
+    grid-template-columns: repeat(2, 100px);
+    margin:10px;
+}
+.controls > * {
+    margin:2px;
+}
+#mortal-html-file {
+    grid-column: span 2;
+}
+.killer-call-div {
+    display:grid;
+    grid-template-columns: 200px;
+}
+.killer-call-bars {
+    width: 110px;
+    height: 110px;
+    background: darkblue;
+    margin: auto;
+}
+.killer-call-img {
+    margin: auto;
 }
