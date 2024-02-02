@@ -78,7 +78,10 @@ class GameLog {
         };
         
         let logIdx = 0
-        this.round = log[logIdx++]
+        this.rawRound = log[logIdx++]
+        this.roundWind = this.rawRound[0] % 4 + tm2t('e')
+        this.roundNum = this.rawRound[1]
+        this.roundSticks = this.rawRound[2]
         this.scores = log[logIdx++]
         this.dora = log[logIdx++]
         this.uradora = log[logIdx++]
@@ -87,7 +90,7 @@ class GameLog {
         this.calls = [[],[],[],[]]
         this.draws = []
         this.discards = []
-        for (let pnum of Array(4).keys()) {
+        for (let pnum=0; pnum<4; pnum++) {
             this.hands.push(Array.from(log[logIdx++]))
             this.draws.push(log[logIdx++])
             this.discards.push(log[logIdx++])
@@ -161,10 +164,20 @@ class UI {
     #getDiscard(pidx) { 
         return this.discards[pidx.pov()]
     }
-    reset(round, dora, uradora) {
-        this.round.replaceChildren('round', JSON.stringify(round))
-        this.doras.replaceChildren('dora ', JSON.stringify(dora))
-        this.honbas.replaceChildren('uradora ', JSON.stringify(uradora))
+    reset() {
+        this.round.replaceChildren(createTile(tenhou2str(GS.gl.roundWind)))
+        this.round.lastChild.setAttribute('width', 15)
+        this.round.lastChild.setAttribute('style', null)
+        this.round.append(GS.gl.roundNum)
+        this.doras.replaceChildren()
+        for (let i=0; i<5; i++) {
+            if (GS.gl.dora[i] == null) {
+                this.doras.append(createTile('back'))
+            } else {
+                this.doras.append(createTile(tenhou2str(GS.gl.dora[i])))
+            }
+            this.doras.lastChild.setAttribute('width', 15)
+        }
         for (let i=0; i<4; i++) {
             this.discards[i].replaceChildren()
         }
@@ -179,10 +192,10 @@ class UI {
             }
         }
         if (GS.gl.handOver) {
-            this.gridInfo.append(document.createElement('br'))
-            this.gridInfo.append('\nHand Over', document.createElement('br'))
-            this.gridInfo.append(`result ${GS.gl.result} winner ${GS.gl.winner} payer ${GS.gl.payer}`, document.createElement('br'))
-            this.gridInfo.append(JSON.stringify(GS.gl.scoreChanges, GS.gl.yakuStrings), document.createElement('br'))
+            this.sticks.replaceChildren()
+            this.sticks.append(`r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer}`, document.createElement('br'))
+            this.sticks.append('u', GS.gl.uradora, ' ')
+            this.sticks.append(JSON.stringify(GS.gl.scoreChanges, GS.gl.yakuStrings), document.createElement('br'))
         }
     }
     clearDiscardBars() {
@@ -507,7 +520,7 @@ function parseJsonData(data) {
     // Initialize whose turn it is, and pointers for current draws/discards for each player
     GS.mortalEvalIdx = 0
     let ply = new TurnNum(round[0], draws, discards)
-    GS.ui.reset(round, dora, uradora)
+    GS.ui.reset()
 
     while (ply.ply < GS.ply_counter) {
         //console.log(ply.ply, ply.pidx)
@@ -678,7 +691,6 @@ function parseMortalHtml() {
     let RiichiState = null
     let debug = false
     
-    let pid = null
     for (dtElement of GS.mortalHtmlDoc.querySelectorAll('dt')) {
         if (dtElement.textContent === 'player id') {
             GS.heroPidx = parseInt(dtElement.nextSibling.textContent)
@@ -689,6 +701,7 @@ function parseMortalHtml() {
     }
 
     GS.mortalEvals = []
+    let round = -1
     for (d of GS.mortalHtmlDoc.querySelectorAll('details')) {
         debug && console.log(d)
         let summary = d.querySelector('summary')
@@ -698,6 +711,8 @@ function parseMortalHtml() {
         }
         if (summary.textContent.includes("Turn 1 ")) {
             RiichiState = null // reset state
+            round++
+            console.log('round', round)
         }
         if (summary.textContent.includes("Turn")) {
             currTurn = summary.textContent

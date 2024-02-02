@@ -66,6 +66,9 @@ h1{
     justify-content:left;
     align-items:center;
 }
+.grid-discard{
+    padding:3px;
+}
 .grid-discard-p3 {
     grid-area: ad-p3;
     writing-mode: vertical-rl;
@@ -87,8 +90,8 @@ h1{
     display: grid; /* and is also a sub-grid */
     width: 200px;
     height: 200px;
-/*     border: 1px solid black;*/
-    grid-template-columns: 40px 40px 40px 40px 40px;
+    border: 1px solid black;
+    grid-template-columns: 30px 20px 100px 20px 30px;
     grid-template-rows: repeat(6, 30px);
     grid-template-areas:
       "ai-p3 ai-p2 ai-p2   ai-p2 ai-p2"
