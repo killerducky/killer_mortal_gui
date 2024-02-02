@@ -12,7 +12,7 @@ Wrap the image in a div the right size after translation and it'll be fine..
 }
 body{
 /*     background: radial-gradient(circle at 40% 20%, rgb(0, 111, 176) 10%, rgb(4, 50, 111) 50%, rgb(2, 35, 77) 150%); */
-    background: lightblue;
+    background: #2596be;
 }
 h1{
     background: deepskyblue;

@@ -134,7 +134,7 @@ class PIDX {
         return this.pidx
     }
     pov() {
-        return (GS.ui.povPidx + this.pidx) % 4
+        return (4 + this.pidx - GS.ui.povPidx) % 4
     }
 }
 
@@ -167,7 +167,7 @@ class UI {
     updateGridInfo(ply, hands, calls, drawnTile) {
         this.clearDiscardBars()
         if (GS.heroPidx == ply.pidx) {
-            this.gridInfo.append('mortalIdx ', GS.heroPidx, ' idx ', GS.mortalEvalIdx)
+            this.gridInfo.append('heroIdx ', GS.heroPidx, ' idx ', GS.mortalEvalIdx)
             if (GS.heroPidx == ply.pidx && (ply.ply%2)==1) {
                 this.gridInfo.append(' discarding')
                 this.updateDiscardBars(ply, hands, calls, drawnTile)
@@ -199,13 +199,13 @@ class UI {
         svgElement.setAttribute("padding", GS.C_db_height)
         console.log(evals)
         let heroDiscard = ply.getDiscard()
-        if (heroDiscard = 60) {
+        if (heroDiscard == 60) {
             heroDiscard = drawnTile[ply.pidx]
         }
         let match = true // did we discard what mortal would?
         //console.log(' upcoming discard: ', heroDiscard)
         if (evals['m_discard'] != evals['p_discard']) {
-            console.log(' mismatch!', evals['m_discard'], evals['p_discard'])
+            console.log(' mismatch!', evals['m_discard'], evals['p_discard'], heroDiscard)
             match = false
         }
         for (let i = -1; i < hands[ply.pidx].length; i++) {
@@ -213,13 +213,24 @@ class UI {
             let Pval = null
             if (i==-1) {
                 tile = drawnTile[ply.pidx]
+                if (tile == null) {
+                    //console.log('skip tile null')
+                    continue // on calls there was no drawnTile
+                }
+                console.log('tile', tile    )
             } else {
                 tile = hands[ply.pidx][i]
             }
             Pval = evals['Pvals'][tile]
+            if (Pval == null) {
+                console.log('missing Pval, probably because it is an illegal discard')
+                console.log(`tile=${tile} i=${i}`)
+                continue
+            }
             let slot = (i !== -1) ? i : hands[ply.pidx].length+1
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (tile == heroDiscard) {
+                console.log('slot ', slot, i, tile, heroDiscard)
                 let rect2 = document.createElementNS("http://www.w3.org/2000/svg", "rect")
                 rect2.setAttribute("x", xloc-GS.C_db_heroBarWidth/2)
                 rect2.setAttribute("y", 0)
@@ -231,6 +242,7 @@ class UI {
             }
             let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
             rect.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
+            //console.log('test', tile, i, Pval, Math.floor((1-Pval/100)*GS.C_db_height))
             rect.setAttribute("y", Math.floor((1-Pval/100)*GS.C_db_height))
             rect.setAttribute("width", GS.C_db_mortBarWidth)
             rect.setAttribute("height", Math.ceil((Pval/100)*GS.C_db_height))
@@ -240,9 +252,9 @@ class UI {
         discardBars.appendChild(svgElement);
     }
     updateHandInfo(hands, calls, drawnTile) {
-        for (let pnum of Array(4).keys()) {
+                for (let pnum of Array(4).keys()) {
             let objPnum = new PIDX(pnum)
-            this.addHandTiles(objPnum, [], true)
+                        this.addHandTiles(objPnum, [], true)
             for (let tileInt of hands[pnum]) {
                 this.addHandTiles(objPnum, [tenhou2str(tileInt)], false)
             }
@@ -376,8 +388,8 @@ class TurnNum {
     }
     getDraw() {
         let draw = this.draws[this.pidx][this.nextDrawIdx[this.pidx]]
-        if (typeof draw == "undefined") { 
-            GS.max_ply = this.ply
+        if (draw == null) {
+            console.log('undefined out of draws')
             return null
         }
         if (typeof draw == "string") {
@@ -497,6 +509,7 @@ function parseJsonData(data) {
         draw = ply.getDraw(draws)
         if (draw == null) {
             console.log("out of draws")
+            GS.max_ply = this.ply
             GS.gl.handOver = true
             break
         }
@@ -529,6 +542,7 @@ function parseJsonData(data) {
         let discard = ply.getDiscard()
         if (typeof discard == "undefined") {
             console.log("out of discards")
+            GS.max_ply = this.ply
             GS.gl.handOver = true
             break
         }
@@ -653,8 +667,8 @@ function parseMortalHtml() {
     for (dtElement of GS.mortalHtmlDoc.querySelectorAll('dt')) {
         if (dtElement.textContent === 'player id') {
             GS.heroPidx = parseInt(dtElement.nextSibling.textContent)
-            GS.ui.povPidx = 0
             GS.ui.povPidx = GS.heroPidx // TODO: UI for changing povPidx
+            console.log('heroPidx ', GS.ui.povPidx)
             break
         }
     }
