@@ -90,6 +90,7 @@ class GameLog {
         this.hands = []
         this.draws = []
         this.discards = []
+        this.discardPond = [[],[],[],[]]
         for (let pnum=0; pnum<4; pnum++) {
             this.hands.push(Array.from(log[logIdx++]))
             this.draws.push(log[logIdx++])
@@ -120,11 +121,10 @@ class GlobalState {
     constructor() {
         this.ui = new UI
         this.gl = null
+        this.ge = null
 
         this.ply_counter = 0
         this.hand_counter = 0
-        this.max_hands = 999
-        this.max_ply = 999
         this.mortalHtmlDoc = null
         this.json_data = null
         this.mortalEvals = []    // array of rounds -> array of decisions for that round
@@ -195,12 +195,10 @@ class UI {
             this.discards[i].replaceChildren()
         }
     }
-    updateGridInfo(ply, hands, calls, drawnTile) {
+    updateGridInfo(hands, calls, drawnTile) {
         this.clearDiscardBars()
         if (GS.heroPidx == ply.pidx) {
-            //this.gridInfo.append('heroIdx ', GS.heroPidx, ' idx ', GS.mortalEvalIdx)
             if (GS.heroPidx == ply.pidx && (ply.ply%2)==1) {
-                //this.gridInfo.append(' discarding')
                 this.updateDiscardBars(ply, hands, calls, drawnTile)
             }
         }
@@ -336,9 +334,16 @@ class UI {
         this.addHandTiles(pidx, ['Blank'], false)
         this.#getHand(pidx).lastChild.style.opacity = "0"
     }
+    updateDiscardPond() {
+        for (let pidx=0; pidx<4; pidx++) {
+            for (let tile of GS.gl.discardPond[pidx]) {
+                this.addDiscard(new PIDX(pidx), [tenhou2str(tile.tile)], tile.tsumogiri, tile.riichi)
+            }
+        }
+    }
     addDiscard(pidx, tileStrArray, tsumogiri, riichi) {
         this.addDiscardTiles(pidx, tileStrArray)
-        if (!tsumogiri) {
+        if (tsumogiri) {
             this.#getDiscard(pidx).lastChild.style.background = "lightgrey"
         }
         if (riichi) {
@@ -348,6 +353,16 @@ class UI {
     }
     lastDiscardWasCalled(pidx) {
         this.#getDiscard(pidx).lastChild.style.opacity = "0.5"
+    }
+}
+
+class Tile {
+    constructor(tile) {
+        this.tile = tile
+        this.tsumogiri = false
+        this.riichi = false
+        this.rotate = false
+        this.called = false
     }
 }
                 
@@ -424,7 +439,7 @@ class TurnNum {
     getDraw() {
         let draw = this.draws[this.pidx][this.nextDrawIdx[this.pidx]]
         if (draw == null) {
-            console.log('undefined out of draws')
+            //console.log('undefined out of draws')
             return null
         }
         if (typeof draw == "string") {
@@ -453,7 +468,7 @@ class TurnNum {
     getDiscard() {
         return this.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
     }
-    incPly(updateUI, selfKan) {
+    incPly(selfKan) {
         // even ply draw, odd ply discard
         // TODO: It's weird that we don't increment draw in the even ply?
         //       but for now it doesn't matter
@@ -464,12 +479,12 @@ class TurnNum {
             this.nextDrawIdx[this.pidx]++
             this.nextDiscardIdx[this.pidx]++
             if (!selfKan) {
-                this.pidx = this.whoIsNext(updateUI)
+                this.pidx = this.whoIsNext()
             }
         }
         this.ply++
     }
-    whoIsNext(updateUI) {
+    whoIsNext() {
         // To know who is next we have to look at the other three players draw arrays
         // and determine there were any calls to disrupt the normal turn order
         for (let tmpPidx=0; tmpPidx<4; tmpPidx++) {
@@ -488,9 +503,6 @@ class TurnNum {
                 // check if the non-numeric (e.g. 'p') is in the calculated offset spot
                 //if (draw[offset*2]<'0' || draw[offset*2]>'9' || (offset==2 && draw[offset*2]) {
                 if (isNaN(draw[offset*2]) || (offset==2 && isNaN(draw[(offset+1)*2]))) {
-                    if (updateUI) {
-                        GS.ui.lastDiscardWasCalled(new PIDX(this.pidx))
-                    }
                     return tmpPidx
                 }
             }
@@ -507,101 +519,51 @@ function removeFromArray(array, value) {
     array.splice(indexToRemove, 1)
 }
 
-function parseJsonData(data) {
+function updateState(data) {
     if (data == null) {
         console.log('no data to parse yet')
         return
     }
     GS.gl = new GameLog(data[GS.hand_counter]['log'][0])
-    //console.log(GS.gl)
-    const log = data[GS.hand_counter]['log'][0]
-
-    // Initialize whose turn it is, and pointers for current draws/discards for each player
-    GS.mortalEvalIdx = 0
-    let ply = new TurnNum()
-    GS.ui.reset()
-
-    while (ply.ply < GS.ply_counter) {
-        // console.log('ply, ply.pidx', ply.ply, ply.pidx)
-        draw = ply.getDraw(GS.gl.draws)
-        // console.log(draw)
-        if (draw == null) {
-            console.log("out of draws", ply.stringState())
-            GS.max_ply = ply.ply
-            GS.gl.handOver = true
-            break
-        }
-        if (draw[0] == 'pon') {
-            // console.log('pon ', draw, typeof(draw[2], draw[2]))
-            // console.log('calls', GS.gl.hands)
-            removeFromArray(GS.gl.hands[ply.pidx], draw[2])
-            removeFromArray(GS.gl.hands[ply.pidx], draw[2])
-            GS.gl.calls[ply.pidx].push(draw[2])
-            if (draw[1] == 0) { GS.gl.calls[ply.pidx].push('rotate')}
-            GS.gl.calls[ply.pidx].push(draw[2])
-            if (draw[1] == 1) { GS.gl.calls[ply.pidx].push('rotate')}
-            GS.gl.calls[ply.pidx].push(draw[2])
-            if (draw[1] == 2) { GS.gl.calls[ply.pidx].push('rotate')}
-            // console.log('calls', GS.gl.calls)
-        } else if (draw[0] == 'chi') {
-            removeFromArray(GS.gl.hands[ply.pidx], draw[2])
-            removeFromArray(GS.gl.hands[ply.pidx], draw[3])
-            GS.gl.calls[ply.pidx].push(draw[1])
-            GS.gl.calls[ply.pidx].push('rotate')
-            GS.gl.calls[ply.pidx].push(draw[2])
-            GS.gl.calls[ply.pidx].push(draw[3])
-        } else if (draw[0] == 'draw') {
-            GS.gl.drawnTile[ply.pidx] = draw[1]
-        } else {
-            throw new Error(`unknown draw ${draw}`)
-        }
-        for (tile of GS.gl.hands[ply.pidx]) {
-            if (!tile) {
-                console.log('error', GS.gl.hands)
+    for (let ply=0; ply <= GS.ply_counter; ply++) {
+        let event = GS.ge[GS.hand_counter][ply]
+        console.log('updateState ', 'ply', ply, 'GS.ply_counter', GS.ply_counter, event, GS.ge[GS.hand_counter].length)
+        if (event.type == 'draw') {
+            GS.gl.drawnTile[event.pidx] = event.draw
+        } else if (event.type == 'call') {
+            let dp = GS.gl.discardPond[event.fromIdxAbs]
+            dp[dp.length-1].called = true
+            GS.gl.calls[event.pidx].push(event.draw)
+            for (let tile of event.meldedTiles) {
+                removeFromArray(GS.gl.hands[event.pidx], tile)
+                GS.gl.calls[event.pidx].push(tile)
             }
         }
-        // console.log(`ply ${ply.ply} pidx ${ply.pidx} draw ${draw}`)
-        ply.incPly(true, false)
-        if (ply.ply >= GS.ply_counter) {
-            break
+        if (event.type == 'discard') {
+            let tsumogiri = event.discard==60
+            if (tsumogiri) {
+                let tile = new Tile(GS.gl.drawnTile[event.pidx])
+                tile.tsumogiri = true
+                GS.gl.discardPond[event.pidx].push(tile)
+                GS.gl.drawnTile[event.pidx] = null
+            } else {
+                let tile = new Tile(event.discard)
+                GS.gl.discardPond[event.pidx].push(tile)
+                removeFromArray(GS.gl.hands[event.pidx], event.discard)
+                // for calls there will not be a drawnTile
+                if (GS.gl.drawnTile[event.pidx]) {
+                    GS.gl.hands[event.pidx].push(GS.gl.drawnTile[event.pidx])
+                    GS.gl.hands[event.pidx].sort(tileSort)
+                    GS.gl.drawnTile[event.pidx] = null
+                }
+            }
         }
-        let discard = ply.getDiscard()
-        if (typeof discard == "undefined") {
-            console.log("out of discards")
-            console.log("out of draws", ply.stringState())
-            GS.max_ply = ply.ply
-            GS.gl.handOver = true
-            break
-        }
-        let riichi = false
-        if (discard[0] == 'r') {
-            riichi = true
-            discard = parseInt(discard.substring(1))
-        } else if (typeof discard != 'number') {
-            console.log(typeof discard, discard)
-            throw new Error('discard should be number')
-        }
-        //console.log(`ply ${ply.ply} pidx ${ply.pidx} discard ${discard}`)
-        let tsumogiri = discard==60
-        if (tsumogiri) {
-            discard = GS.gl.drawnTile[ply.pidx] // tsumogiri the drawn tile
-            GS.gl.drawnTile[ply.pidx] = null
-        } else if (draw[0] == 'draw') {
-            // normal draw and discard
-            removeFromArray(GS.gl.hands[ply.pidx], discard)
-            GS.gl.hands[ply.pidx].push(GS.gl.drawnTile[ply.pidx])
-            GS.gl.hands[ply.pidx].sort(tileSort)
-            GS.gl.drawnTile[ply.pidx] = null
-        } else {
-            // otherwise it was a call, no new tile, just discard
-            removeFromArray(GS.gl.hands[ply.pidx], discard)
-        }
-        GS.ui.addDiscard(new PIDX(ply.pidx), [tenhou2str(discard)], !tsumogiri, riichi)
-        ply.incPly(true, false)
     }
-
+    GS.ui.reset()
     GS.ui.updateHandInfo(GS.gl.hands, GS.gl.calls, GS.gl.drawnTile)
-    GS.ui.updateGridInfo(ply, GS.gl.hands, GS.gl.calls, GS.gl.drawnTile)
+    GS.ui.updateDiscardPond()
+    // TODO
+    // GS.ui.updateGridInfo(ply, GS.gl.hands, GS.gl.calls, GS.gl.drawnTile)
 }
 
 class GameEvent {
@@ -611,6 +573,7 @@ class GameEvent {
         if (this.type == 'call') {
             this.draw = args['draw']
             this.fromIdxRel = args['fromIdxRel']
+            this.fromIdxAbs = (4 + this.pidx - this.fromIdxRel - 1) % 4
             this.meldedTiles = args['meldedTiles']
         } else if (this.type == 'draw') {
             this.draw = args['draw']
@@ -643,17 +606,17 @@ class GameEvent {
 //     "121212a12" (3)
 //     (writes to discards)
 ///////////////////////////////////////////////////
-function preParseJsonData(data) {
-    let gameEvents = []
+function preParseTenhouLogs(data) {
+    GS.ge = []
     if (data == null) {
         console.log('no data to parse yet')
         return
     }
     for (round of data) {
-        console.log('round', round)
-        gameEvents.push([])
+        // console.log('round', round)
+        GS.ge.push([])
         GS.gl = new GameLog(round['log'][0])
-        console.log(GS.gl)
+        // console.log(GS.gl)
         let ply = new TurnNum()
         while (1) {
             draw = ply.getDraw(GS.gl.draws)
@@ -661,45 +624,45 @@ function preParseJsonData(data) {
                 break
             }
             if (draw[0] == 'draw') {
-                gameEvents[gameEvents.length-1].push(new GameEvent('draw', ply.pidx, {'draw':draw[1]}))
+                GS.ge[GS.ge.length-1].push(new GameEvent('draw', ply.pidx, {'draw':draw[1]}))
             } else {
                 let fromIdxRel = 1
                 if (draw[0] == 'pon') {
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[2], 'fromIdxRel':draw[1], 'meldedTiles':[draw[2], draw[2]]})
-                    gameEvents[gameEvents.length-1].push(ge)
+                    GS.ge[GS.ge.length-1].push(ge)
                 } else if (draw[0] == 'chi') {
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[1], 'fromIdxRel':0, 'meldedTiles':[draw[2], draw[3]]})
-                    gameEvents[gameEvents.length-1].push(ge)
+                    GS.ge[GS.ge.length-1].push(ge)
                 } else {
                     throw new Error('add code for open kan case', draw)
                 }
             }
-            ply.incPly(false, false)
+            ply.incPly(false)
             let discard = ply.getDiscard()
             if (typeof discard == "undefined") {
                 break
             }
             if (typeof discard == 'string' && discard.indexOf('k') != -1) {
-                gameEvents[gameEvents.length-1].push(new GameEvent('kakan', ply.pidx, {'discard':discard}))
+                GS.ge[GS.ge.length-1].push(new GameEvent('kakan', ply.pidx, {'discard':discard}))
                 // kakan and ankan mean we get another draw
-                ply.incPly(false, true)
+                ply.incPly(true)
             } else if (typeof discard == 'string' && discard.indexOf('a') != -1) {
-                gameEvents[gameEvents.length-1].push(new GameEvent('kakan', ply.pidx, {'discard':discard}))
-                ply.incPly(false, true)
+                GS.ge[GS.ge.length-1].push(new GameEvent('kakan', ply.pidx, {'discard':discard}))
+                ply.incPly(true)
             } else {
                 if (discard[0] == 'r') {
                     // split riichi into two events
-                    gameEvents[gameEvents.length-1].push(new GameEvent('riichi', ply.pidx))
+                    GS.ge[GS.ge.length-1].push(new GameEvent('riichi', ply.pidx))
                     discard = parseInt(discard.substring(1))
                     // let the next if statement handle the discard
                 }
                 if (typeof discard == 'number') {
-                    gameEvents[gameEvents.length-1].push(new GameEvent('discard', ply.pidx, {'discard':discard}))
+                    GS.ge[GS.ge.length-1].push(new GameEvent('discard', ply.pidx, {'discard':discard}))
                 } else {
                     console.log(typeof discard, discard)
                     throw new Error('discard should be number')
                 }
-                ply.incPly(false, false)
+                ply.incPly(false)
             }
         }
         let checkPlies = 0
@@ -709,7 +672,7 @@ function preParseJsonData(data) {
         }
         checkPlies == ply.ply || console.log('error', checkPlies, ply.stringState())
     }
-    console.log(gameEvents)
+    console.log(GS.ge)
 }
 
 function createTile(tileStr) {
@@ -743,7 +706,7 @@ function convertTileStr(str) {
 }
 
 function incPlyCounter() {
-    GS.ply_counter < GS.max_ply && GS.ply_counter++
+    GS.ply_counter < GS.ge[GS.hand_counter].length-1 && GS.ply_counter++
 }
 
 function decPlyCounter() {
@@ -756,7 +719,6 @@ function incHandCounter() {
         GS.hand_counter = 0
     }
     GS.ply_counter = 0
-    GS.max_ply = 999
 }
 
 function decHandCounter() {
@@ -765,7 +727,6 @@ function decHandCounter() {
         GS.hand_counter = GS.mortalEvals.length-1
     }
     GS.ply_counter = 0
-    GS.max_ply = 999
 }
 
 function connectUI() {
@@ -777,33 +738,33 @@ function connectUI() {
     const handDec = document.getElementById("hand-dec")
     inc.addEventListener("click", () => {
         incPlyCounter();
-        parseJsonData(GS.json_data)
+        updateState(GS.json_data)
     });
     inc2.addEventListener("click", () => {
         incPlyCounter();
         incPlyCounter();
         incPlyCounter();
         incPlyCounter();
-        parseJsonData(GS.json_data)
+        updateState(GS.json_data)
     });
     dec.addEventListener("click", () => {
         decPlyCounter();
-        parseJsonData(GS.json_data)
+        updateState(GS.json_data)
     });
     dec2.addEventListener("click", () => {
         decPlyCounter();
         decPlyCounter();
         decPlyCounter();
         decPlyCounter();
-        parseJsonData(GS.json_data)
+        updateState(GS.json_data)
     });
     handInc.addEventListener("click", () => {
         incHandCounter();
-        parseJsonData(GS.json_data)
+        updateState(GS.json_data)
     });
     handDec.addEventListener("click", () => {
         decHandCounter();
-        parseJsonData(GS.json_data)
+        updateState(GS.json_data)
     });
 }
 
@@ -815,8 +776,8 @@ function setMortalHtmlStr(data) {
     for (ta of GS.mortalHtmlDoc.querySelectorAll('textarea')) {
         GS.json_data.push(JSON.parse(ta.value))
     }
-    console.log('json_data logs', GS.json_data)
-    preParseJsonData(GS.json_data)
+    //console.log('json_data logs', GS.json_data)
+    preParseTenhouLogs(GS.json_data)
 }
 
 class MortalEvals {
@@ -964,7 +925,7 @@ function getJsonData() {
 const GS = new GlobalState
 function main() {
     getJsonData()
-    parseJsonData(GS.json_data)
+    updateState(GS.json_data)
     connectUI()
 }
 main()
