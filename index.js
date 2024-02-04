@@ -127,8 +127,6 @@ class GlobalState {
         this.hand_counter = 0
         this.mortalHtmlDoc = null
         this.json_data = null
-        this.mortalEvals = []    // array of rounds -> array of decisions for that round
-        this.mortalEvalIdx = 0   // index to current decision
         this.heroPidx = null   // player index mortal reviewed
 
         this.C_db_height = 60
@@ -195,16 +193,19 @@ class UI {
             this.discards[i].replaceChildren()
         }
     }
-    updateGridInfo(hands, calls, drawnTile) {
+    updateGridInfo() {
         this.clearDiscardBars()
-        if (GS.heroPidx == ply.pidx) {
-            if (GS.heroPidx == ply.pidx && (ply.ply%2)==1) {
-                this.updateDiscardBars(ply, hands, calls, drawnTile)
+        let mortalEval = GS.ge[GS.hand_counter][GS.ply_counter].mortalEval
+        if (mortalEval) {
+            if (mortalEval.type == 'Discard') {
+                this.updateDiscardBars()
+            } else {
+                console.log('TODO: mortal has an eval here: ', GS.ge[GS.hand_counter][GS.ply_counter])
             }
         }
-        if (GS.gl.handOver) {
-            console.log(`r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer}`, 'u', GS.gl.uradora, GS.gl.scoreChanges, GS.gl.yakuStrings)
-        }
+        //if (GS.gl.handOver) {
+        //   console.log(`r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer}`, 'u', GS.gl.uradora, GS.gl.scoreChanges, GS.gl.yakuStrings)
+        //}
     }
     clearDiscardBars() {
         const discardBars = document.getElementById("discard-bars")
@@ -215,54 +216,39 @@ class UI {
         svgElement.setAttribute("padding", GS.C_db_padding)
         discardBars.appendChild(svgElement);
     }
-    updateDiscardBars(ply, hands, calls, drawnTile) {
+    updateDiscardBars() {
+        let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
+        let mortalEval = gameEvent.mortalEval
         const discardBars = document.getElementById("discard-bars")
         discardBars.replaceChildren() // TODO don't recreate the svgElement twice every time
-        console.log(GS.mortalEvals, GS.hand_counter, GS.mortalEvalIdx)
-        let evals = GS.mortalEvals[GS.hand_counter][GS.mortalEvalIdx]
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         discardBars.appendChild(svgElement)
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
         svgElement.setAttribute("padding", GS.C_db_height)
-        let heroDiscard = ply.getDiscard()
-        console.log('updateDiscardBars', evals, heroDiscard)
-        if (heroDiscard == null) {
-            console.log('no more discards, round must be ending')
-            return
-        }
-        if (heroDiscard == 60) {
-            heroDiscard = drawnTile[ply.pidx]
-        }
-        let match = true // did we discard what mortal would?
-        //console.log(' upcoming discard: ', heroDiscard)
-        if (evals['m_discard'] != evals['p_discard']) {
-            console.log(' mismatch!', evals['m_discard'], evals['p_discard'], heroDiscard)
-            match = false
-        }
-        for (let i = -1; i < hands[ply.pidx].length; i++) {
+        let heroSlotFound = false
+        for (let i = -1; i < GS.gl.hands[gameEvent.pidx].length; i++) {
             let tile = null
             let Pval = null
             if (i==-1) {
-                tile = drawnTile[ply.pidx]
+                tile = GS.gl.drawnTile[gameEvent.pidx]
                 if (tile == null) {
                     //console.log('skip tile null')
                     continue // on calls there was no drawnTile
                 }
-                console.log('tile', tile    )
             } else {
-                tile = hands[ply.pidx][i]
+                tile = GS.gl.hands[gameEvent.pidx][i]
             }
-            Pval = evals['Pvals'][tile]
+            Pval = mortalEval['Pvals'][tile]
             if (Pval == null) {
                 console.log('missing Pval, probably because it is an illegal discard')
                 console.log(`tile=${tile} i=${i}`)
                 continue
             }
-            let slot = (i !== -1) ? i : hands[ply.pidx].length+1
+            let slot = (i !== -1) ? i : GS.gl.hands[gameEvent.pidx].length+1
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
-            if (tile == heroDiscard) {
-                // console.log('slot ', slot, i, tile, heroDiscard)
+            if (tile == mortalEval.p_action) {
+                heroSlotFound = true
                 let rect2 = document.createElementNS("http://www.w3.org/2000/svg", "rect")
                 rect2.setAttribute("x", xloc-GS.C_db_heroBarWidth/2)
                 rect2.setAttribute("y", 0)
@@ -274,12 +260,15 @@ class UI {
             }
             let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
             rect.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
-            //console.log('test', tile, i, Pval, Math.floor((1-Pval/100)*GS.C_db_height))
             rect.setAttribute("y", Math.floor((1-Pval/100)*GS.C_db_height))
             rect.setAttribute("width", GS.C_db_mortBarWidth)
             rect.setAttribute("height", Math.ceil((Pval/100)*GS.C_db_height))
             rect.setAttribute("fill", "blue")
             svgElement.appendChild(rect);
+        }
+        if (!heroSlotFound) {
+            console.log('!heroSlotFound', gameEvent)
+            throw new Error()
         }
     }
     updateHandInfo(hands, calls, drawnTile) {
@@ -328,8 +317,6 @@ class UI {
         this.#getHand(pidx).lastChild.style.transform = `rotate(${angle}deg)`
         this.#getHand(pidx).lastChild.style.margin = '6px'
     }
-
-    // TODO kinda hacky way to add a space
     addBlankSpace(pidx) {
         this.addHandTiles(pidx, ['Blank'], false)
         this.#getHand(pidx).lastChild.style.opacity = "0"
@@ -365,7 +352,13 @@ class Tile {
         this.called = false
     }
 }
-                
+             
+function mortalHashTile2tenhou(tileStr) {
+    tileStr = tileStr.replace('#pai-', '')
+    tileStr = tm2t(tileStr)
+    return tileStr
+}
+
 //take '2m' and return 2 + 10 etc.
 function tm2t(str) { 
     //tenhou's tile encoding:
@@ -423,7 +416,6 @@ function tileSort(a, b) {
     return a1-b1
 }
 
-// TODO: Need work on dividing stuff into classes
 class TurnNum {
     constructor() {
         this.draws = GS.gl.draws
@@ -470,12 +462,7 @@ class TurnNum {
     }
     incPly(selfKan) {
         // even ply draw, odd ply discard
-        // TODO: It's weird that we don't increment draw in the even ply?
-        //       but for now it doesn't matter
         if (this.ply%2==1) {
-            if (this.pidx == GS.heroPidx) {
-                GS.mortalEvalIdx++
-            }
             this.nextDrawIdx[this.pidx]++
             this.nextDiscardIdx[this.pidx]++
             if (!selfKan) {
@@ -527,7 +514,7 @@ function updateState(data) {
     GS.gl = new GameLog(data[GS.hand_counter]['log'][0])
     for (let ply=0; ply <= GS.ply_counter; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
-        console.log('updateState ', 'ply', ply, 'GS.ply_counter', GS.ply_counter, event, GS.ge[GS.hand_counter].length)
+        // console.log('updateState ', 'ply', ply, 'GS.ply_counter', GS.ply_counter, event, GS.ge[GS.hand_counter].length)
         if (event.type == 'draw') {
             GS.gl.drawnTile[event.pidx] = event.draw
         } else if (event.type == 'call') {
@@ -562,8 +549,7 @@ function updateState(data) {
     GS.ui.reset()
     GS.ui.updateHandInfo(GS.gl.hands, GS.gl.calls, GS.gl.drawnTile)
     GS.ui.updateDiscardPond()
-    // TODO
-    // GS.ui.updateGridInfo(ply, GS.gl.hands, GS.gl.calls, GS.gl.drawnTile)
+    GS.ui.updateGridInfo()
 }
 
 class GameEvent {
@@ -673,6 +659,25 @@ function preParseTenhouLogs(data) {
         checkPlies == ply.ply || console.log('error', checkPlies, ply.stringState())
     }
     console.log(GS.ge)
+    // decorate with mortalEval events
+    for (let roundNum=0; roundNum<GS.ge.length-1; roundNum++) {
+        mortalEvalIdx = 0
+        for (let event of GS.ge[roundNum]) {
+            if (mortalEvalIdx >= GS.mortalEvals[roundNum].length) {
+                break
+            }
+            // console.log('test event', event, 'mortalEval', GS.mortalEvals[roundNum][mortalEvalIdx])
+            if (event.type == 'draw' && event.pidx == GS.heroPidx && GS.mortalEvals[roundNum][mortalEvalIdx].type=='Discard') {
+                // console.log('event', event, 'mortalEval', GS.mortalEvals[roundNum][mortalEvalIdx])
+                event.mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
+                mortalEvalIdx++
+            } else if (event.type == 'discard' && event.pidx != GS.heroPidx && GS.mortalEvals[roundNum][mortalEvalIdx].type=='Call') {
+                // console.log('event', event, 'mortalEval', GS.mortalEvals[roundNum][mortalEvalIdx])
+                event.mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
+                mortalEvalIdx++
+            }
+        }
+    }
 }
 
 function createTile(tileStr) {
@@ -715,7 +720,7 @@ function decPlyCounter() {
 
 function incHandCounter() {
     GS.hand_counter++
-    if (GS.hand_counter >= GS.mortalEvals.length) {
+    if (GS.hand_counter >= GS.ge.length) {
         GS.hand_counter = 0
     }
     GS.ply_counter = 0
@@ -724,7 +729,7 @@ function incHandCounter() {
 function decHandCounter() {
     GS.hand_counter--
     if (GS.hand_counter < 0) {
-        GS.hand_counter = GS.mortalEvals.length-1
+        GS.hand_counter = GS.ge.length-1
     }
     GS.ply_counter = 0
 }
@@ -780,7 +785,7 @@ function setMortalHtmlStr(data) {
     preParseTenhouLogs(GS.json_data)
 }
 
-class MortalEvals {
+class MortalEval {
     constructor(currTurn) {
         this.currTurn = currTurn
         this.Pvals = {}
@@ -803,6 +808,7 @@ class MortalEvals {
 //<span class="role">Mortal: </span>
 //Skip
 //<tr><td>Skip</td><td><span class="int">0.</span><span class="frac">18420</span></td><td><span class="int">100.</span><span class="frac">00000</span></td></tr>
+//<tr><td><svg class="tile"><use class="face" href="#pai-s"></use></svg><svg class="tile"><use class="face" href="#pai-s"></use></svg> Pon</td><td><span class="int">-1.</span><span class="frac">68001</span></td><td><span class="int">0.</span><span class="frac">00000</span></td></tr>
 
 // Call example 2
 //<td><svg class="tile"><use class="face" href="#pai-s"></use></svg><svg class="tile"><use class="face" href="#pai-s"></use></svg> Pon</td>
@@ -818,7 +824,7 @@ function parseMortalHtml() {
     for (dtElement of GS.mortalHtmlDoc.querySelectorAll('dt')) {
         if (dtElement.textContent === 'player id') {
             GS.heroPidx = parseInt(dtElement.nextSibling.textContent)
-            GS.ui.povPidx = GS.heroPidx // TODO: UI for changing povPidx
+            GS.ui.povPidx = GS.heroPidx
             break
         }
     }
@@ -848,7 +854,7 @@ function parseMortalHtml() {
         if (roles.length == 0) {
             continue
         }
-        let evals = new MortalEvals(currTurn)
+        let evals = new MortalEval(currTurn)
         evals.p_action = roles[0].nextSibling.textContent
         if (evals.p_action.includes('Riichi')) {
             RiichiState = 'Discarding' // set flag so we process the Riichi discard next
@@ -867,6 +873,8 @@ function parseMortalHtml() {
             evals.p_action = roles[0].parentElement.querySelector('use').href.baseVal
             // Mortal is not wrapped, use next.next instead
             evals.m_action = roles[1].nextSibling.nextSibling.querySelector('use').href.baseVal
+            evals.p_action = mortalHashTile2tenhou(evals.p_action)
+            evals.m_action = mortalHashTile2tenhou(evals.m_action)
         } else {
             evals.p_action = roles[0].nextSibling.textContent
             evals.m_action = roles[1].nextSibling.textContent
@@ -885,13 +893,9 @@ function parseMortalHtml() {
                 // TODO: Chi/Pon etc has tiles in it
             } else {
                 let tile = tr.querySelector('use').href.baseVal
-                tile = tile.replace('#pai-', '')
-                tile = tm2t(tile)
+                tile = mortalHashTile2tenhou(tile)
                 evals.Pvals[tile] = Pval
             }
-        }
-        if (evals.type == 'Call') {
-            continue // TODO: rest of code does not support Calls yet
         }
         GS.mortalEvals[GS.mortalEvals.length-1].push(evals)
     }
