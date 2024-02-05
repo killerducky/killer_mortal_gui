@@ -21,7 +21,7 @@ Wrap the image in a div the right size after translation and it'll be fine..
     --color-main:   #007090;
     --color-accent: #005060;
     --color-accent2: #003040;
-    --color-text:    #80e0ff;
+    --color-text:    #40d0e0;
 }
 body{
     background: var(--color-main);
@@ -29,7 +29,17 @@ body{
     margin: auto;
     color: var(--color-text);
     line-height: 1.5;
+    /*
+    background: rgb(2,0,36);
+    background: radial-gradient(circle, rgba(2,0,36,1) 0%, rgba(9,17,121,1) 38%, rgba(0,39,255,1) 100%);
+    background: radial-gradient(circle, rgba(0,39,255,1) 0%, rgba(9,17,121,1) 60%, rgba(2,0,36,1) 100%);
+    background: radial-gradient(circle, #003040 0%, #007090 100%);
+    background: radial-gradient(circle, #007090 0%, #003040 100%);
+    https://cssgradient.io/
+    */
+    background: var(--color-main);
 }
+
 h1{
     background: var(--color-accent);
     text-align: center;
@@ -176,7 +186,7 @@ h1{
 .killer-call-bars {
     width: 110px;
     height: 90px;
-    background: var(--color-accent);;
+    background: var(--color-accent2);
     padding: 5px;
     margin: auto;
 }

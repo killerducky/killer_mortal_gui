@@ -719,9 +719,8 @@ function preParseTenhouLogs(data) {
         }
         checkPlies == ply.ply || console.log('error', checkPlies, ply.stringState())
     }
-    console.log(GS.ge)
     // merge in mortalEval events
-    for (let roundNum=0; roundNum<GS.ge.length-1; roundNum++) {
+    for (let roundNum=0; roundNum<GS.ge.length; roundNum++) {
         let mortalEvalIdx = 0
         for (let event of GS.ge[roundNum]) {
             if (mortalEvalIdx >= GS.mortalEvals[roundNum].length) {
@@ -745,6 +744,7 @@ function preParseTenhouLogs(data) {
             }
         }
     }
+    console.log('preParseTenhouLogs done', GS.ge)
 }
 
 function createTile(tileStr) {
@@ -815,7 +815,6 @@ function connectUI() {
     inc2.addEventListener("click", () => {
         do {
             incPlyCounter();
-            console.log(GS.ge[GS.hand_counter][GS.ply_counter])
         } while (!('mortalEval' in GS.ge[GS.hand_counter][GS.ply_counter]) && GS.ply_counter < GS.ge[GS.hand_counter].length-1)
         updateState()
     });
@@ -977,7 +976,7 @@ function parseMortalHtml() {
 
         GS.mortalEvals[GS.mortalEvals.length-1].push(evals)
     }
-    console.log('done parsing mortal ', GS.mortalEvals.length, GS.mortalEvals)
+    console.log('parseMortalHtml done', GS.mortalEvals)
 }
 
 function soften(pdfs) {
