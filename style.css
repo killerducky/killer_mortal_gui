@@ -177,6 +177,7 @@ h1{
     width: 110px;
     height: 90px;
     background: var(--color-accent);;
+    padding: 5px;
     margin: auto;
 }
 .killer-call-img {

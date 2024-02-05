@@ -129,6 +129,8 @@ class GlobalState {
         this.json_data = null
         this.heroPidx = null   // player index mortal reviewed
 
+        this.C_soft_T = 2
+
         this.C_db_height = 60
         this.C_db_totWidth = 605
         this.C_db_handPadding = 10
@@ -256,6 +258,8 @@ class UI {
             let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
             text.setAttribute("y", GS.C_db_height + 20)
+            let color = getComputedStyle(document.documentElement).getPropertyValue('--color-text')
+            text.setAttribute("fill", color)
             text.textContent = key
             svgElement.appendChild(text)
             slot++
@@ -288,6 +292,7 @@ class UI {
                 tile = GS.gl.hands[gameEvent.pidx][i]
             }
             Pval = mortalEval['Pvals'][tile]
+            Pval = mortalEval['Pvals_soft'][tile]
             if (Pval == null) {
                 console.log('missing Pval, probably because it is an illegal discard')
                 console.log(`tile=${tile} i=${i}`)
@@ -557,12 +562,12 @@ function removeFromArray(array, value) {
     array.splice(indexToRemove, 1)
 }
 
-function updateState(data) {
-    if (data == null) {
+function updateState() {
+    if (GS.json_data == null) {
         console.log('no data to parse yet')
         return
     }
-    GS.gl = new GameLog(data[GS.hand_counter]['log'][0])
+    GS.gl = new GameLog(GS.json_data[GS.hand_counter]['log'][0])
     for (let ply=0; ply <= GS.ply_counter; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
         if (event.type == 'draw') {
@@ -805,33 +810,33 @@ function connectUI() {
     const handDec = document.getElementById("hand-dec")
     inc.addEventListener("click", () => {
         incPlyCounter();
-        updateState(GS.json_data)
+        updateState()
     });
     inc2.addEventListener("click", () => {
         incPlyCounter();
         incPlyCounter();
         incPlyCounter();
         incPlyCounter();
-        updateState(GS.json_data)
+        updateState()
     });
     dec.addEventListener("click", () => {
         decPlyCounter();
-        updateState(GS.json_data)
+        updateState()
     });
     dec2.addEventListener("click", () => {
         decPlyCounter();
         decPlyCounter();
         decPlyCounter();
         decPlyCounter();
-        updateState(GS.json_data)
+        updateState()
     });
     handInc.addEventListener("click", () => {
         incHandCounter();
-        updateState(GS.json_data)
+        updateState()
     });
     handDec.addEventListener("click", () => {
         decHandCounter();
-        updateState(GS.json_data)
+        updateState()
     });
 }
 
@@ -965,9 +970,21 @@ function parseMortalHtml() {
                 evals.Pvals[tile] = Pval
             }
         }
+        let softmaxed = soften(Object.values(evals.Pvals))
+        evals.Pvals_soft = Object.keys(evals.Pvals).reduce((acc, key, index) => {
+            acc[key] = softmaxed[index];
+            return acc;
+        }, {});
+
         GS.mortalEvals[GS.mortalEvals.length-1].push(evals)
     }
     console.log('done parsing mortal ', GS.mortalEvals.length, GS.mortalEvals)
+}
+
+function soften(pdfs) {
+    const hotter = pdfs.map(x => Math.pow(x, 1/GS.C_soft_T))
+    const denom = hotter.reduce((a, b) => a + b)
+    return hotter.map(x => x/denom*100)
 }
 
 function getJsonData() {
@@ -978,7 +995,7 @@ function getJsonData() {
         label.innerHTML = "Choose Mortal File<br>" + mortalFilename
         data = LZString.decompressFromUTF16(data)
         setMortalHtmlStr(data)
-        updateState(GS.json_data)
+        updateState()
     }
 
     let fileInput = document.getElementById('mortal-html-file')
@@ -994,7 +1011,7 @@ function getJsonData() {
                 localStorage.setItem('mortalHtmlStr', data)
                 localStorage.setItem('mortalFilename', file.name)
                 setMortalHtmlStr(fr.result)
-                updateState(GS.json_data)
+                updateState()
             }
         } else {
             console.log('no file')
