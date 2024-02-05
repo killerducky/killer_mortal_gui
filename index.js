@@ -813,10 +813,10 @@ function connectUI() {
         updateState()
     });
     inc2.addEventListener("click", () => {
-        incPlyCounter();
-        incPlyCounter();
-        incPlyCounter();
-        incPlyCounter();
+        do {
+            incPlyCounter();
+            console.log(GS.ge[GS.hand_counter][GS.ply_counter])
+        } while (!('mortalEval' in GS.ge[GS.hand_counter][GS.ply_counter]) && GS.ply_counter < GS.ge[GS.hand_counter].length-1)
         updateState()
     });
     dec.addEventListener("click", () => {
@@ -824,10 +824,9 @@ function connectUI() {
         updateState()
     });
     dec2.addEventListener("click", () => {
-        decPlyCounter();
-        decPlyCounter();
-        decPlyCounter();
-        decPlyCounter();
+        do {
+            decPlyCounter();
+        } while (!('mortalEval' in GS.ge[GS.hand_counter][GS.ply_counter]) && GS.ply_counter > 0)
         updateState()
     });
     handInc.addEventListener("click", () => {
