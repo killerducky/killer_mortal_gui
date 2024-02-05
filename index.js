@@ -187,7 +187,7 @@ class UI {
             } else {
                 this.doras.append(createTile(tenhou2str(GS.gl.dora[i])))
             }
-            this.doras.lastChild.setAttribute('width', 15)
+            this.doras.lastChild.setAttribute('width', 20)
         }
         for (let i=0; i<4; i++) {
             this.discards[i].replaceChildren()
@@ -220,12 +220,7 @@ class UI {
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = gameEvent.mortalEval
         const discardBars = document.getElementById("discard-bars")
-        discardBars.replaceChildren() // TODO don't recreate the svgElement twice every time
-        let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        discardBars.appendChild(svgElement)
-        svgElement.setAttribute("width", GS.C_db_totWidth)
-        svgElement.setAttribute("height", GS.C_db_height)
-        svgElement.setAttribute("padding", GS.C_db_height)
+        let svgElement = discardBars.firstElementChild 
         let heroSlotFound = false
         for (let i = -1; i < GS.gl.hands[gameEvent.pidx].length; i++) {
             let tile = null
@@ -323,8 +318,12 @@ class UI {
     }
     updateDiscardPond() {
         for (let pidx=0; pidx<4; pidx++) {
+            let pidxObj = new PIDX(pidx)
             for (let tile of GS.gl.discardPond[pidx]) {
-                this.addDiscard(new PIDX(pidx), [tenhou2str(tile.tile)], tile.tsumogiri, tile.riichi)
+                this.addDiscard(pidxObj, [tenhou2str(tile.tile)], tile.tsumogiri, tile.riichi)
+                if (tile.called) {
+                    this.lastDiscardWasCalled(pidxObj)
+                }
             }
         }
     }
@@ -521,9 +520,15 @@ function updateState(data) {
             let dp = GS.gl.discardPond[event.fromIdxAbs]
             dp[dp.length-1].called = true
             GS.gl.calls[event.pidx].push(event.draw)
-            for (let tile of event.meldedTiles) {
-                removeFromArray(GS.gl.hands[event.pidx], tile)
-                GS.gl.calls[event.pidx].push(tile)
+            if (event.fromIdxRel == 0) {
+                GS.gl.calls[event.pidx].push('rotate')
+            }
+            for (let i=0; i<event.meldedTiles.length; i++) {
+                removeFromArray(GS.gl.hands[event.pidx], event.meldedTiles[i])
+                GS.gl.calls[event.pidx].push(event.meldedTiles[i])
+                if (event.fromIdxRel == i+1) {
+                    GS.gl.calls[event.pidx].push('rotate')
+                }
             }
         }
         if (event.type == 'discard') {
@@ -856,19 +861,15 @@ function parseMortalHtml() {
         }
         let evals = new MortalEval(currTurn)
         evals.p_action = roles[0].nextSibling.textContent
+        if (RiichiState == 'Discarding') {
+            RiichiState = 'Complete' // We are now processing the riichi discard set the state now
+        }
         if (evals.p_action.includes('Riichi')) {
             RiichiState = 'Discarding' // set flag so we process the Riichi discard next
         }
-        if (!evals.p_action.includes('Discard')) {
-            evals.type = 'Call' // Chi, Pon, Riichi
-        } else {
-            evals.type = 'Discard'
-        }
-        if (RiichiState === 'Discarding') {
-            RiichiState = 'Complete' // We are now processing the riichi discard set the state now
-        }
 
-        if (evals.type == 'Discard') {
+        if (evals.p_action.includes('Discard')) {
+            evals.type = 'Discard'
             // Player is wrapped nicely in a parent span
             evals.p_action = roles[0].parentElement.querySelector('use').href.baseVal
             // Mortal is not wrapped, use next.next instead
@@ -878,6 +879,14 @@ function parseMortalHtml() {
         } else {
             evals.p_action = roles[0].nextSibling.textContent
             evals.m_action = roles[1].nextSibling.textContent
+            let beforeAction = d.querySelector('li.tsumo').getAttribute('before')
+            if (beforeAction && !beforeAction.includes('Draw')) {
+                evals.type = 'Call' // Chi, Pon, Open Kan
+                evals.strFromRel = beforeAction.match(/^[^\W]+/)[0]
+                // console.log('from:', evals.strFromRel, d)
+            } else {
+                evals.type = 'Discard' // Riichi, Tsumo, Ankan, Kakan
+            }
         }
         let tbody = d.querySelector('tbody')
         for (let tr of tbody.querySelectorAll('tr')) {
@@ -887,7 +896,7 @@ function parseMortalHtml() {
             Qval = parseFloat(i[0].textContent + f[0].textContent)
             Pval = parseFloat(i[1].textContent + f[1].textContent)
 
-            if (evals.type == 'Call' || action == "Riichi") {
+            if (evals.type == 'Call' || action == "Riichi" || action == "Tsumo") {
                 evals.Pvals[action] = Pval
                 //console.log('action', action, tr.innerHTML)
                 // TODO: Chi/Pon etc has tiles in it

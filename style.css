@@ -91,7 +91,7 @@ h1{
     width: 200px;
     height: 200px;
     border: 1px solid black;
-    grid-template-columns: 30px 20px 100px 20px 30px;
+    grid-template-columns: 30px 5px 130px 5px 30px;
     grid-template-rows: repeat(6, 30px);
     grid-template-areas:
       "ai-p3 ai-p2 ai-p2   ai-p2 ai-p2"
