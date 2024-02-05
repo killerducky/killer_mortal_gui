@@ -137,6 +137,11 @@ h1{
 .controls > * {
     margin:2px;
 }
+/* div:has(> #mortal-html-file) {
+    grid-column: span 2;
+    background: lightgray;
+}
+*/
 #mortal-html-file {
     grid-column: span 2;
 }

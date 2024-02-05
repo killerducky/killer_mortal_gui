@@ -204,6 +204,7 @@ class UI {
         if (mortalEval) {
             if (mortalEval.type == 'Discard') {
                 this.updateDiscardBars()
+                this.updateCallBars()
             } else {
                 this.updateCallBars()
             }
@@ -227,8 +228,20 @@ class UI {
         let heroSlotFound = false
         let slot = 0
         for (const key in mortalEval.Pvals) {
+            if (!isNaN(key)) {
+                continue // skip tiles
+            }
             let Pval = mortalEval.Pvals[key]
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
+            if (key == mortalEval.p_action) {
+                let rect2 = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+                rect2.setAttribute("x", xloc-GS.C_db_heroBarWidth/2)
+                rect2.setAttribute("y", 0)
+                rect2.setAttribute("width", GS.C_db_heroBarWidth)
+                rect2.setAttribute("height", Math.ceil(1*GS.C_cb_height))
+                rect2.setAttribute("fill", "red")
+                svgElement.appendChild(rect2)
+            }
             let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
             rect.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
             rect.setAttribute("y", Math.floor((1-Pval/100)*GS.C_cb_height))
@@ -257,7 +270,7 @@ class UI {
         let mortalEval = gameEvent.mortalEval
         const discardBars = document.getElementById("discard-bars")
         let svgElement = discardBars.firstElementChild 
-        let heroSlotFound = false
+        let heroSlotFound = mortalEval.p_action == 'Riichi' && 'Riichi' in mortalEval.Pvals
         for (let i = -1; i < GS.gl.hands[gameEvent.pidx].length; i++) {
             let tile = null
             let Pval = null
@@ -286,7 +299,6 @@ class UI {
                 rect2.setAttribute("width", GS.C_db_heroBarWidth)
                 rect2.setAttribute("height", Math.ceil(1*GS.C_db_height))
                 rect2.setAttribute("fill", "red")
-                rect2.setAttribute("z-index", -1) // behind Mortal's Bar, but wider
                 svgElement.appendChild(rect2)
             }
             let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
@@ -303,17 +315,17 @@ class UI {
         }
     }
     updateHandInfo(hands, calls, drawnTile) {
-        for (let pnum of Array(4).keys()) {
+        for (let pnum=0; pnum<4; pnum++) {
             let objPnum = new PIDX(pnum)
             this.addHandTiles(objPnum, [], true)
             for (let tileInt of hands[pnum]) {
                 this.addHandTiles(objPnum, [tenhou2str(tileInt)], false)
             }
+            this.addBlankSpace(objPnum)
             if (drawnTile[pnum] != null) {
+                this.addHandTiles(objPnum, [tenhou2str(drawnTile[pnum])], false)
+            } else {
                 this.addBlankSpace(objPnum)
-                for (let tileInt of [drawnTile[pnum]]) {
-                    this.addHandTiles(objPnum, [tenhou2str(tileInt)], false)
-                }
             }
             if (calls[pnum].length > 0) {
                 this.addBlankSpace(objPnum)
@@ -549,7 +561,6 @@ function updateState(data) {
     GS.gl = new GameLog(data[GS.hand_counter]['log'][0])
     for (let ply=0; ply <= GS.ply_counter; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
-        // console.log('updateState ', 'ply', ply, 'GS.ply_counter', GS.ply_counter, event, GS.ge[GS.hand_counter].length)
         if (event.type == 'draw') {
             GS.gl.drawnTile[event.pidx] = event.draw
         } else if (event.type == 'call') {
@@ -702,17 +713,25 @@ function preParseTenhouLogs(data) {
     console.log(GS.ge)
     // merge in mortalEval events
     for (let roundNum=0; roundNum<GS.ge.length-1; roundNum++) {
-        mortalEvalIdx = 0
+        let mortalEvalIdx = 0
         for (let event of GS.ge[roundNum]) {
             if (mortalEvalIdx >= GS.mortalEvals[roundNum].length) {
                 break
             }
             let mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
             if (event.type == 'draw' && event.pidx == GS.heroPidx && mortalEval.type=='Discard') {
-                event.mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
+                event.mortalEval = mortalEval
+                // TODO: I think Mortal only puts a separate entry for Riichi discard if it disagrees with ours?
+/*                 if (mortalEval.p_action == "Riichi") {
+                    console.log('Riichi add second event')
+                    mortalEvalIdx++
+                    mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
+                    event.mortalEvalAfterRiichi = mortalEval
+                    console.log(event)
+                } */
                 mortalEvalIdx++
             } else if (event.type == 'discard' && ((GS.heroPidx + mortalEval.fromIdxRel)%4 == event.pidx) && mortalEval.type=='Call') {
-                event.mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
+                event.mortalEval = mortalEval
                 mortalEvalIdx++
             }
         }
@@ -952,18 +971,23 @@ function getJsonData() {
     if (data) {
         data = LZString.decompressFromUTF16(data)
         setMortalHtmlStr(data)
+        updateState(GS.json_data)
     }
 
     let fileInput = document.getElementById('mortal-html-file')
     fileInput.addEventListener('change', function(event) {
         let file = event.target.files[0]
         if (file) {
+            // let label = document.getElementById('mortal-html-label')
+            // console.log(label)
+            // label.innerHTML = file
             let fr = new FileReader()
             fr.readAsText(file)
             fr.onload = function() {
                 let data = LZString.compressToUTF16(fr.result)
                 localStorage.setItem('mortalHtmlStr', data)
                 setMortalHtmlStr(fr.result)
+                updateState(GS.json_data)
             }
         } else {
             console.log('no file')
@@ -974,7 +998,6 @@ function getJsonData() {
 const GS = new GlobalState
 function main() {
     getJsonData()
-    updateState(GS.json_data)
     connectUI()
 }
 main()
