@@ -8,14 +8,30 @@ Wrap the image in a div the right size after translation and it'll be fine..
 :root{
     --main-width: 700px;
     --main-height: 700px;
-    --neg-margin: -11px; 
+    --neg-margin: -11px;
+    /* green-yellow */
+    --color-main:   #306000;
+    --color-accent: #508000;
+    --color-text:    #b0ffa0;
+    /* blue-green, accent is the bright one */
+    --color-main:   #007090;
+    --color-text:    #005060;
+    --color-accent:  #60a0b0;
+    /* blue-green */
+    --color-main:   #007090;
+    --color-accent: #005060;
+    --color-accent2: #003040;
+    --color-text:    #80e0ff;
 }
 body{
-/*     background: radial-gradient(circle at 40% 20%, rgb(0, 111, 176) 10%, rgb(4, 50, 111) 50%, rgb(2, 35, 77) 150%); */
-    background: #2596be;
+    background: var(--color-main);
+    max-width: 1000px;
+    margin: auto;
+    color: var(--color-text);
 }
 h1{
-    background: deepskyblue;
+    background: var(--color-accent);
+    text-align: center;
 }
 .outer {
     display: grid;
@@ -36,12 +52,12 @@ h1{
 .grid-hand-p3{
     grid-area: ah-p3;
     writing-mode: vertical-rl;
-    background: deepskyblue;
+    background: var(--color-accent);
 }
 .grid-hand-p2{
     grid-area: ah-p2;
     transform: rotate(180deg);
-    background: deepskyblue;
+    background: var(--color-accent);;
     padding-top: 10px;
     padding-left: 10px;
 }
@@ -49,11 +65,11 @@ h1{
     grid-area: ah-p1;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    background: deepskyblue;
+    background: var(--color-accent);;
 }
 .grid-hand-p0-container{
     grid-area: ah-p0;
-    background: deepskyblue;
+    background: var(--color-accent);;
 }
 .grid-hand-p0{
     padding-top: 10px;
@@ -100,6 +116,7 @@ h1{
       "ai-p3 .    ai-honbas  .     ai-p1"
       "ai-p3 .    ai-doras   .     ai-p1"
       "ai-p0 ai-p0 ai-p0   ai-p0 ai-p1";
+    background: var(--color-accent);
 }
 .info-round {
     grid-area: ai-round;
@@ -131,31 +148,37 @@ h1{
 }
 .controls {
     display:grid;
-    grid-template-columns: repeat(2, 100px);
-    margin:10px;
+    grid-template-columns: repeat(2, 120px);
+    margin:auto;
+    margin-top:10px;
+    width:240px;
+    padding:10px;
+    background:var(--color-accent);
 }
 .controls > * {
     margin:2px;
+    padding:12px;
+    background:black;
+    background: var(--color-accent2);
+    color:var(--color-text);
 }
-/* div:has(> #mortal-html-file) {
-    grid-column: span 2;
-    background: lightgray;
-}
-*/
-#mortal-html-file {
+#mortal-file-div {
     grid-column: span 2;
 }
 .killer-call-div {
     display:grid;
     grid-template-columns: 200px;
+    width: 200px;
+    margin:auto;
+    margin-top: 200px;
 }
 .killer-call-bars {
     width: 110px;
     height: 90px;
-    background: deepskyblue;
+    background: var(--color-accent);;
     margin: auto;
-    padding: 10px;
 }
 .killer-call-img {
     margin: auto;
+    margin-top: 20px;
 }
