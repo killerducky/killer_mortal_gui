@@ -177,12 +177,16 @@ class UI {
         return this.discards[pidx.pov()]
     }
     reset() {
-        this.round.replaceChildren(createTile(tenhou2str(GS.gl.roundWind)))
-        this.round.lastChild.setAttribute('width', 15)
-        this.round.lastChild.setAttribute('style', null)
-        this.round.append(GS.gl.roundNum)
-        this.round.append(' ', GS.gl.rawRound)
-        this.honbas.replaceChildren(`Honbas ${GS.gl.honbas}`)
+        this.round.replaceChildren(['East', 'South', 'West', 'North'][GS.gl.roundWind-41])
+        this.round.append("-", GS.gl.roundNum)
+        if (GS.gl.honbas > 0) {
+            this.round.append("-", GS.gl.honbas)
+        }
+        if (GS.gl.sticks > 0) {
+            this.round.append(' +', GS.gl.sticks, "000")
+        }
+        // this.round.append('  raw:', GS.gl.rawRound)
+        // this.honbas.replaceChildren(`Honbas ${GS.gl.honbas}`)
         this.sticks.replaceChildren()
         this.doras.replaceChildren()
         for (let i=0; i<5; i++) {
@@ -969,6 +973,9 @@ function parseMortalHtml() {
 function getJsonData() {
     data = localStorage.getItem('mortalHtmlStr')
     if (data) {
+        mortalFilename = localStorage.getItem('mortalFilename')
+        let label = document.getElementById('mortal-html-label')
+        label.innerHTML = "Choose Mortal File<br>" + mortalFilename
         data = LZString.decompressFromUTF16(data)
         setMortalHtmlStr(data)
         updateState(GS.json_data)
@@ -978,14 +985,14 @@ function getJsonData() {
     fileInput.addEventListener('change', function(event) {
         let file = event.target.files[0]
         if (file) {
-            // let label = document.getElementById('mortal-html-label')
-            // console.log(label)
-            // label.innerHTML = file
+            let label = document.getElementById('mortal-html-label')
+            label.innerHTML = "Choose Mortal File<br>" + file.name
             let fr = new FileReader()
             fr.readAsText(file)
             fr.onload = function() {
                 let data = LZString.compressToUTF16(fr.result)
                 localStorage.setItem('mortalHtmlStr', data)
+                localStorage.setItem('mortalFilename', file.name)
                 setMortalHtmlStr(fr.result)
                 updateState(GS.json_data)
             }

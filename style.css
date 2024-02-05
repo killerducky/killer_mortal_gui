@@ -17,7 +17,7 @@ Wrap the image in a div the right size after translation and it'll be fine..
     --color-main:   #007090;
     --color-text:    #005060;
     --color-accent:  #60a0b0;
-    /* blue-green */
+    /* blue-green, accents go darker */
     --color-main:   #007090;
     --color-accent: #005060;
     --color-accent2: #003040;
@@ -28,6 +28,7 @@ body{
     max-width: 1000px;
     margin: auto;
     color: var(--color-text);
+    line-height: 1.5;
 }
 h1{
     background: var(--color-accent);
