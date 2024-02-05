@@ -136,6 +136,10 @@ class GlobalState {
         this.C_db_tileWidth = 34
         this.C_db_heroBarWidth = 16
         this.C_db_mortBarWidth = 10
+        this.C_cb_height = 60
+        this.C_cb_totHeight = 100
+        this.C_cb_totWidth = 100
+        this.C_cb_padding = 10
     }
 }
 
@@ -195,26 +199,58 @@ class UI {
     }
     updateGridInfo() {
         this.clearDiscardBars()
+        this.clearCallBars()
         let mortalEval = GS.ge[GS.hand_counter][GS.ply_counter].mortalEval
         if (mortalEval) {
             if (mortalEval.type == 'Discard') {
                 this.updateDiscardBars()
             } else {
-                console.log('TODO: mortal has an eval here: ', GS.ge[GS.hand_counter][GS.ply_counter])
+                this.updateCallBars()
             }
         }
         //if (GS.gl.handOver) {
         //   console.log(`r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer}`, 'u', GS.gl.uradora, GS.gl.scoreChanges, GS.gl.yakuStrings)
         //}
     }
+    clearCallBars() {
+        const callBars = document.querySelector('.killer-call-bars')
+        let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        svgElement.setAttribute("width", GS.C_cb_totWidth)
+        svgElement.setAttribute("height", GS.C_cb_totHeight)
+        callBars.replaceChildren(svgElement)
+    }
+    updateCallBars() {
+        let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
+        let mortalEval = gameEvent.mortalEval
+        const callBars = document.querySelector('.killer-call-bars')
+        let svgElement = callBars.firstElementChild
+        let heroSlotFound = false
+        let slot = 0
+        for (const key in mortalEval.Pvals) {
+            let Pval = mortalEval.Pvals[key]
+            let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
+            let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+            rect.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
+            rect.setAttribute("y", Math.floor((1-Pval/100)*GS.C_cb_height))
+            rect.setAttribute("width", GS.C_db_mortBarWidth)
+            rect.setAttribute("height", Math.ceil(Pval/100*GS.C_cb_height))
+            rect.setAttribute("fill", "blue")
+            svgElement.appendChild(rect);
+            let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
+            text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
+            text.setAttribute("y", GS.C_db_height + 20)
+            text.textContent = key
+            svgElement.appendChild(text)
+            slot++
+        }
+    }
     clearDiscardBars() {
         const discardBars = document.getElementById("discard-bars")
-        discardBars.replaceChildren()
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
         svgElement.setAttribute("padding", GS.C_db_padding)
-        discardBars.appendChild(svgElement);
+        discardBars.replaceChildren(svgElement)
     }
     updateDiscardBars() {
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
@@ -664,20 +700,18 @@ function preParseTenhouLogs(data) {
         checkPlies == ply.ply || console.log('error', checkPlies, ply.stringState())
     }
     console.log(GS.ge)
-    // decorate with mortalEval events
+    // merge in mortalEval events
     for (let roundNum=0; roundNum<GS.ge.length-1; roundNum++) {
         mortalEvalIdx = 0
         for (let event of GS.ge[roundNum]) {
             if (mortalEvalIdx >= GS.mortalEvals[roundNum].length) {
                 break
             }
-            // console.log('test event', event, 'mortalEval', GS.mortalEvals[roundNum][mortalEvalIdx])
-            if (event.type == 'draw' && event.pidx == GS.heroPidx && GS.mortalEvals[roundNum][mortalEvalIdx].type=='Discard') {
-                // console.log('event', event, 'mortalEval', GS.mortalEvals[roundNum][mortalEvalIdx])
+            let mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
+            if (event.type == 'draw' && event.pidx == GS.heroPidx && mortalEval.type=='Discard') {
                 event.mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
                 mortalEvalIdx++
-            } else if (event.type == 'discard' && event.pidx != GS.heroPidx && GS.mortalEvals[roundNum][mortalEvalIdx].type=='Call') {
-                // console.log('event', event, 'mortalEval', GS.mortalEvals[roundNum][mortalEvalIdx])
+            } else if (event.type == 'discard' && ((GS.heroPidx + mortalEval.fromIdxRel)%4 == event.pidx) && mortalEval.type=='Call') {
                 event.mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
                 mortalEvalIdx++
             }
@@ -883,7 +917,9 @@ function parseMortalHtml() {
             if (beforeAction && !beforeAction.includes('Draw')) {
                 evals.type = 'Call' // Chi, Pon, Open Kan
                 evals.strFromRel = beforeAction.match(/^[^\W]+/)[0]
-                // console.log('from:', evals.strFromRel, d)
+                const fromMap = {"Shimocha":1, "Toimen":2, "Kamicha":3}
+                console.assert(evals.strFromRel in fromMap)
+                evals.fromIdxRel = fromMap[evals.strFromRel]
             } else {
                 evals.type = 'Discard' // Riichi, Tsumo, Ankan, Kakan
             }

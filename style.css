@@ -146,9 +146,10 @@ h1{
 }
 .killer-call-bars {
     width: 110px;
-    height: 110px;
-    background: darkblue;
+    height: 90px;
+    background: deepskyblue;
     margin: auto;
+    padding: 10px;
 }
 .killer-call-img {
     margin: auto;
