@@ -586,16 +586,18 @@ function updateState() {
                     GS.gl.calls[event.pidx].push('rotate')
                 }
             }
-        }
-        if (event.type == 'discard') {
+        } else if (event.type == 'discard') {
+            let riichi = GS.ge[GS.hand_counter][ply-1].type == "riichi"
             let tsumogiri = event.discard==60
             if (tsumogiri) {
                 let tile = new Tile(GS.gl.drawnTile[event.pidx])
+                tile.riichi = riichi
                 tile.tsumogiri = true
                 GS.gl.discardPond[event.pidx].push(tile)
                 GS.gl.drawnTile[event.pidx] = null
             } else {
                 let tile = new Tile(event.discard)
+                tile.riichi = riichi
                 GS.gl.discardPond[event.pidx].push(tile)
                 removeFromArray(GS.gl.hands[event.pidx], event.discard)
                 // for calls there will not be a drawnTile
@@ -605,6 +607,13 @@ function updateState() {
                     GS.gl.drawnTile[event.pidx] = null
                 }
             }
+        } else if (event.type == 'riichi') {
+            // console.log('riichi', GS.ply_counter)
+        } else if (event.type == 'result') {
+            console.log('result: ', GS.gl.result, GS.gl.scoreChanges, GS.gl.winner, GS.gl.payer, GS.gl.yakuStrings)
+        } else {
+            console.log(event)
+            throw new Error('unknown type')
         }
     }
     GS.ui.reset()
@@ -632,6 +641,7 @@ class GameEvent {
             this.discard = args['discard']
         } else if (this.type == 'riichi') {
             // do nothing
+        } else if (this.type == 'result') {
         } else {
             throw new Error('invalid')
         }
@@ -712,6 +722,7 @@ function preParseTenhouLogs(data) {
                 ply.incPly(false)
             }
         }
+        GS.ge[GS.ge.length-1].push(new GameEvent('result', null))
         let checkPlies = 0
         for (i=0; i<4; i++) {
             checkPlies += GS.gl.draws[i].length
@@ -730,13 +741,13 @@ function preParseTenhouLogs(data) {
             if (event.type == 'draw' && event.pidx == GS.heroPidx && mortalEval.type=='Discard') {
                 event.mortalEval = mortalEval
                 // TODO: I think Mortal only puts a separate entry for Riichi discard if it disagrees with ours?
-/*                 if (mortalEval.p_action == "Riichi") {
+                if (mortalEval.p_action == "Riichi") {
                     console.log('Riichi add second event')
                     mortalEvalIdx++
                     mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
                     event.mortalEvalAfterRiichi = mortalEval
                     console.log(event)
-                } */
+                }
                 mortalEvalIdx++
             } else if (event.type == 'discard' && ((GS.heroPidx + mortalEval.fromIdxRel)%4 == event.pidx) && mortalEval.type=='Call') {
                 event.mortalEval = mortalEval
@@ -911,7 +922,7 @@ function parseMortalHtml() {
             currTurn = summary.textContent
         }
         if (RiichiState === 'Complete') {
-            continue // skip if we riiched a previous turn
+            // continue // skip if we riiched a previous turn
             // TODO: Post-riichi Kans
         }
 
@@ -946,8 +957,11 @@ function parseMortalHtml() {
                 const fromMap = {"Shimocha":1, "Toimen":2, "Kamicha":3}
                 console.assert(evals.strFromRel in fromMap)
                 evals.fromIdxRel = fromMap[evals.strFromRel]
+            } else if (evals.p_action == "Tsumo") {
+                evals.type = 'Tsumo'
+                console.log('tsumo', evals)
             } else {
-                evals.type = 'Discard' // Riichi, Tsumo, Ankan, Kakan
+                evals.type = 'Discard' // Riichi, Ankan, Kakan
             }
         }
         let tbody = d.querySelector('tbody')
