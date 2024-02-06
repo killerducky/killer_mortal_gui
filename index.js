@@ -296,6 +296,8 @@ class UI {
             if (Pval == null) {
                 console.log('missing Pval, probably because it is an illegal discard')
                 console.log(`tile=${tile} i=${i}`)
+                console.log(GS.ge[GS.hand_counter])
+                console.log('ply', GS.ply_counter)
                 continue
             }
             let slot = (i !== -1) ? i : GS.gl.hands[gameEvent.pidx].length+1
@@ -501,6 +503,20 @@ class TurnNum {
                 //console.log('pon', idx, draw)
                 return ['pon', idx, draw]
             }
+            //   daiminkan: (open kan)
+            //     kamicha   "m39393939" (0)
+            //     toimen    "39m393939" (1)
+            //     shimocha  "222222m22" (3)
+            //     (writes to draws; 0 to discards)
+            idx = draw.indexOf('m')
+            if (idx !== -1) {
+                idx = idx/2
+                if (idx==3) { 
+                    idx=2 // special case for shimocha
+                }
+                draw = parseInt(draw[7]+draw[8]) // no matter where 'm' is, the last two digits are the ponned tile
+                return ['openkan', idx, draw]
+            }
             let chiIdx = draw.indexOf('c')
             if (chiIdx !== -1) {
                 let t0 = parseInt(draw[1]+draw[2])
@@ -516,13 +532,17 @@ class TurnNum {
     getDiscard() {
         return this.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
     }
-    incPly(selfKan) {
+    incPly(selfKan, openKan) {
         // even ply draw, odd ply discard
         if (this.ply%2==1) {
             this.nextDrawIdx[this.pidx]++
             this.nextDiscardIdx[this.pidx]++
             if (!selfKan) {
                 this.pidx = this.whoIsNext()
+            }
+            if (openKan) {
+                console.log('openkan')
+                this.nextDiscardIdx[this.pidx]++
             }
         }
         this.ply++
@@ -586,6 +606,27 @@ function updateState() {
                     GS.gl.calls[event.pidx].push('rotate')
                 }
             }
+        } else if (event.type == 'kakan') {
+            // kakan = added kan
+            console.assert(event.meldedTiles.length==1)
+            // Put the drawn tile into hand first, then remove whatever tile we are going to kakan
+            GS.gl.hands[event.pidx].push(GS.gl.drawnTile[event.pidx])
+            GS.gl.hands[event.pidx].sort(tileSort)
+            GS.gl.drawnTile[event.pidx] = null
+            for (let i=0; i<event.meldedTiles.length; i++) {
+                removeFromArray(GS.gl.hands[event.pidx], event.meldedTiles[i])
+                GS.gl.calls[event.pidx].push(event.meldedTiles[i])
+                GS.gl.calls[event.pidx].push('rotate')
+            }
+        } else if (event.type == 'ankan') {
+            console.assert(event.meldedTiles.length==4)
+            for (let i=0; i<event.meldedTiles.length; i++) {
+                removeFromArray(GS.gl.hands[event.pidx], event.meldedTiles[i])
+                GS.gl.calls[event.pidx].push(event.meldedTiles[i])
+                if (event.fromIdxRel == i+1) {
+                    GS.gl.calls[event.pidx].push('rotate')
+                }
+            }
         } else if (event.type == 'discard') {
             let riichi = GS.ge[GS.hand_counter][ply-1].type == "riichi"
             let tsumogiri = event.discard==60
@@ -636,9 +677,11 @@ class GameEvent {
         } else if (this.type == 'discard') {
             this.discard = args['discard']
         } else if (this.type == 'ankan') {
-            this.discard = args['discard']
+            this.meldedTiles = args['meldedTiles']
         } else if (this.type == 'kakan') {
-            this.discard = args['discard']
+            this.fromIdxRel = args['fromIdxRel']
+            this.fromIdxAbs = (4 + this.pidx - this.fromIdxRel - 1) % 4
+            this.meldedTiles = args['meldedTiles']
         } else if (this.type == 'riichi') {
             // do nothing
         } else if (this.type == 'result') {
@@ -683,29 +726,39 @@ function preParseTenhouLogs(data) {
             if (draw[0] == 'draw') {
                 GS.ge[GS.ge.length-1].push(new GameEvent('draw', ply.pidx, {'draw':draw[1]}))
             } else {
-                let fromIdxRel = 1
                 if (draw[0] == 'pon') {
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[2], 'fromIdxRel':draw[1], 'meldedTiles':[draw[2], draw[2]]})
                     GS.ge[GS.ge.length-1].push(ge)
+                } else if (draw[0] == 'openkan') {
+                    let ge = new GameEvent('call', ply.pidx, {'draw':draw[2], 'fromIdxRel':draw[1], 'meldedTiles':[draw[2], draw[2], draw[2]]})
                 } else if (draw[0] == 'chi') {
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[1], 'fromIdxRel':0, 'meldedTiles':[draw[2], draw[3]]})
                     GS.ge[GS.ge.length-1].push(ge)
                 } else {
-                    throw new Error('add code for open kan case', draw)
+                    throw new Error('?', draw)
                 }
             }
-            ply.incPly(false)
+            // ply.incPly(draw[0] == 'openkan', draw[0] == 'openkan')
+            ply.incPly(false, false)
             let discard = ply.getDiscard()
             if (typeof discard == "undefined") {
                 break
             }
             if (typeof discard == 'string' && discard.indexOf('k') != -1) {
-                GS.ge[GS.ge.length-1].push(new GameEvent('kakan', ply.pidx, {'discard':discard}))
+                fromIdxRel = discard.indexOf('k')/2
+                let mt = parseInt(discard[7]+discard[8])
+                GS.ge[GS.ge.length-1].push(new GameEvent(
+                    'kakan', ply.pidx, {'fromIdxRel':fromIdxRel, 'meldedTiles':[mt]}
+                ))
                 // kakan and ankan mean we get another draw
-                ply.incPly(true)
+                // kakan writes 0 to discard, and there is a chance someone Rons for Robbing a Kan
+                ply.incPly(true, false)
             } else if (typeof discard == 'string' && discard.indexOf('a') != -1) {
-                GS.ge[GS.ge.length-1].push(new GameEvent('kakan', ply.pidx, {'discard':discard}))
-                ply.incPly(true)
+                let mt = parseInt(discard[7]+discard[8])
+                GS.ge[GS.ge.length-1].push(new GameEvent(
+                    'ankan', ply.pidx, {'meldedTiles':[mt, mt, mt, mt]}))
+                // kakan and ankan mean we get another draw
+                ply.incPly(true, false)
             } else {
                 if (discard[0] == 'r') {
                     // split riichi into two events
@@ -719,7 +772,7 @@ function preParseTenhouLogs(data) {
                     console.log(typeof discard, discard)
                     throw new Error('discard should be number')
                 }
-                ply.incPly(false)
+                ply.incPly(false, false)
             }
         }
         GS.ge[GS.ge.length-1].push(new GameEvent('result', null))
@@ -739,6 +792,8 @@ function preParseTenhouLogs(data) {
             }
             let mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
             if (event.type == 'draw' && event.pidx == GS.heroPidx && mortalEval.type=='Discard') {
+                // TODO: I think the only reason we check mortalEval.type=='Discard' is because there is Tsumo also
+                // probably could add that also.
                 event.mortalEval = mortalEval
                 // TODO: I think Mortal only puts a separate entry for Riichi discard if it disagrees with ours?
                 if (mortalEval.p_action == "Riichi") {
@@ -748,6 +803,10 @@ function preParseTenhouLogs(data) {
                     event.mortalEvalAfterRiichi = mortalEval
                     console.log(event)
                 }
+                mortalEvalIdx++
+            } else if (event.type == 'call' && event.pidx == GS.heroPidx) {
+                console.assert(mortalEval.type == 'Discard')
+                event.mortalEval = mortalEval
                 mortalEvalIdx++
             } else if (event.type == 'discard' && ((GS.heroPidx + mortalEval.fromIdxRel)%4 == event.pidx) && mortalEval.type=='Call') {
                 event.mortalEval = mortalEval
@@ -852,12 +911,13 @@ function connectUI() {
 function setMortalHtmlStr(data) {
     const parser = new DOMParser()
     GS.mortalHtmlDoc = parser.parseFromString(data, 'text/html')
+    GS.ply_counter = 0 // TODO where does it make sense to reset this stuff?
+    GS.hand_counter = 0
     parseMortalHtml()
     GS.json_data = []
     for (ta of GS.mortalHtmlDoc.querySelectorAll('textarea')) {
         GS.json_data.push(JSON.parse(ta.value))
     }
-    //console.log('json_data logs', GS.json_data)
     preParseTenhouLogs(GS.json_data)
 }
 
