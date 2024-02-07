@@ -369,6 +369,16 @@ class UI {
     rotateLastTile(pidx) {
         let angle = (pidx.pov() * 90 + 90) % 360
         this.#getHand(pidx).lastChild.style.transform = `rotate(${angle}deg)`
+        if (pidx.pov() == 1 || pidx.pov() == 3) {
+            this.#getHand(pidx).lastChild.style.marginBottom = '-5px'
+            this.#getHand(pidx).lastChild.style.marginTop = '5px'
+            this.#getHand(pidx).lastChild.style.transform += pidx.pov()==1 ? ' translate(6px,0px)' : ' translate(-6px,0px)'
+        } else {
+            this.#getHand(pidx).lastChild.style.marginRight = '5px'
+            this.#getHand(pidx).lastChild.style.marginLeft = '5px'
+            this.#getHand(pidx).lastChild.style.marginBottom = '0px'
+            this.#getHand(pidx).lastChild.style.transform += pidx.pov()==2 ? ' translate(-6px,0px)' : ' translate(6px,0px)'
+        }
     }
     addBlankSpace(pidx) {
         this.addHandTiles(pidx, ['Blank'], false)

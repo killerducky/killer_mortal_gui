@@ -52,8 +52,8 @@ h1{
     display: grid;
     width: var(--main-width);
     height: calc(var(--main-height) + 50px);
-    grid-template-columns: 95px 155px 200px 155px 95px;
-    grid-template-rows: 95px 155px 200px 155px 145px;
+    grid-template-columns: 95px 145px 220px 145px 95px;
+    grid-template-rows: 95px 145px 220px 145px 145px;
     grid-template-areas: "ah-p3 ah-p2 ah-p2   ah-p2 ah-p2"
                          "ah-p3 .     ad-p2   .     ah-p1"
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"
@@ -64,14 +64,14 @@ h1{
     grid-area: ah-p3;
     writing-mode: vertical-rl;
     background: var(--color-accent);
-    padding-right: 20px;
+    padding-right: 30px;
     padding-top: 10px;
 }
 .grid-hand-p2{
     grid-area: ah-p2;
     transform: rotate(180deg);
     background: var(--color-accent);;
-    padding-top: 20px;
+    padding-top: 30px;
     padding-left: 10px;
 }
 .grid-hand-p1{
@@ -79,15 +79,13 @@ h1{
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     background: var(--color-accent);;
-    padding-right: 20px;
+    padding-right: 30px;
     padding-top: 10px;
 }
 .grid-hand-p0-container{
     grid-area: ah-p0;
     background: var(--color-accent);;
-}
-.grid-hand-p0-container{
-    padding-top: 10px;
+    padding-top: 20px;
 }
 .grid-hand-p0{
     padding-left: 10px;
@@ -101,6 +99,7 @@ h1{
 }
 .grid-discard{
     padding:3px;
+    margin:auto;
 }
 .grid-discard-p3 {
     grid-area: ad-p3;
@@ -124,6 +123,7 @@ h1{
     width: 200px;
     height: 200px;
     border: 1px solid black;
+    margin: auto;
     grid-template-columns: 30px 5px 130px 5px 30px;
     grid-template-rows: repeat(6, 30px);
     grid-template-areas:
