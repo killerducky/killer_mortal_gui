@@ -532,13 +532,13 @@ class TurnNum {
     getDiscard() {
         return this.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
     }
-    incPly(selfKan, openKan) {
+    incPly(discard, selfKan, openKan) {
         // even ply draw, odd ply discard
-        if (this.ply%2==1) {
+        if (discard !== null) {
             this.nextDrawIdx[this.pidx]++
             this.nextDiscardIdx[this.pidx]++
             if (!selfKan) {
-                this.pidx = this.whoIsNext()
+                this.pidx = this.whoIsNext(discard)
             }
             if (openKan) {
                 console.log('openkan')
@@ -547,12 +547,15 @@ class TurnNum {
         }
         this.ply++
     }
-    whoIsNext() {
+    whoIsNext(discard) {
         // To know who is next we have to look at the other three players draw arrays
         // and determine there were any calls to disrupt the normal turn order
         for (let tmpPidx=0; tmpPidx<4; tmpPidx++) {
-            if (tmpPidx == this.pidx) {
-                continue // cannot call own tile
+            let offset = (4 + tmpPidx - this.pidx - 1) % 4
+            if (tmpPidx == this.pidx || offset == 0) {
+                // cannot call own tile
+                // if offset is zero it will be our turn next unless someone else is doing e.g. pon
+                continue
             }
             let draw = this.draws[tmpPidx][this.nextDrawIdx[tmpPidx]]
             if (typeof draw == 'string') {
@@ -562,11 +565,15 @@ class TurnNum {
                 // p212121 p0 pon from their kami/left     p3   idx/2=0   (4+0-3)%4 = 1-1 = 0
                 // 21p2121 p0 pon from their toimen/cross  p2   idx/2=1   (4+0-2)%4 = 2-1 = 1
                 // 2121p21 p0 pon from their shimo/right   p1   idx/2=2   (4+0-1)%4 = 3-1 = 2
-                let offset = (4 + tmpPidx - this.pidx) % 4 - 1
                 // check if the non-numeric (e.g. 'p') is in the calculated offset spot
                 //if (draw[offset*2]<'0' || draw[offset*2]>'9' || (offset==2 && draw[offset*2]) {
                 if (isNaN(draw[offset*2]) || (offset==2 && isNaN(draw[(offset+1)*2]))) {
-                    return tmpPidx
+                    if (parseInt(draw[0]+draw[1])==discard) {
+                        return tmpPidx
+                    } else {
+                        console.log('We will call from them, but it must be later, not now!')
+                        console.log(draw, discard, tmpPidx, GS.gl.rawRound)
+                    }
                 }
             }
         }
@@ -620,6 +627,9 @@ function updateState() {
             }
         } else if (event.type == 'ankan') {
             console.assert(event.meldedTiles.length==4)
+            GS.gl.hands[event.pidx].push(GS.gl.drawnTile[event.pidx])
+            GS.gl.hands[event.pidx].sort(tileSort)
+            GS.gl.drawnTile[event.pidx] = null
             for (let i=0; i<event.meldedTiles.length; i++) {
                 removeFromArray(GS.gl.hands[event.pidx], event.meldedTiles[i])
                 GS.gl.calls[event.pidx].push(event.meldedTiles[i])
@@ -690,6 +700,36 @@ class GameEvent {
         }
     }
 }
+
+class Draw {
+    constructor(callStr) {
+        this.idx = callStr.search(/[a-z]/)
+        if (this.idx==-1) {
+            this.type = 'draw'
+            this.drawnTile = parseInt(callStr)
+            console.assert(!isNaN(callStr))
+        } else {
+            this.type = callStr[this.idx]
+            this.calledTile = parseInt(callStr[this.idx+1] + callStr[this.idx+2])
+            this.idx = Math.min(this.idx/2, 2)
+            this.meldedTiles = callStr.replace(/[a-z]/, '').match(/../g).map(x => parseInt(x))
+        }
+    }
+}
+/* 
+function parseCallStr(callStr) {
+    console.log(new Draw(callStr))
+}
+
+parseCallStr("m39393939")
+parseCallStr("39m393939")
+parseCallStr("222222m22")
+parseCallStr("k37373737")
+parseCallStr("31k313131")
+parseCallStr("3737k3737")
+parseCallStr("c111213")
+parseCallStr("11")
+ */
 ///////////////////////////////////////////////////
 // kan naki:
 //   daiminkan: (open kan)
@@ -717,12 +757,20 @@ function preParseTenhouLogs(data) {
         GS.ge.push([])
         GS.gl = new GameLog(round['log'][0])
         // console.log(GS.gl)
+        let debug = false
         let ply = new TurnNum()
         while (1) {
-            draw = ply.getDraw(GS.gl.draws)
+            let draw = ply.getDraw(GS.gl.draws)
             if (draw == null) {
                 break
             }
+            if (GS.ge.length == 7 && GS.ge[GS.ge.length-1].length >= 40) {
+                // debug = true
+            }
+            if (GS.gl.rawRound[0] == 1 && GS.gl.rawRound[1] == 1 && GS.ge[GS.ge.length-1].length >= 14) {
+                //debug = true
+            }
+            debug && console.log('draw', ply, draw)
             if (draw[0] == 'draw') {
                 GS.ge[GS.ge.length-1].push(new GameEvent('draw', ply.pidx, {'draw':draw[1]}))
             } else {
@@ -738,9 +786,10 @@ function preParseTenhouLogs(data) {
                     throw new Error('?', draw)
                 }
             }
-            // ply.incPly(draw[0] == 'openkan', draw[0] == 'openkan')
-            ply.incPly(false, false)
+            ply.incPly(null, draw[0] == 'openkan', draw[0] == 'openkan')
+            // ply.incPly(false, false)
             let discard = ply.getDiscard()
+            debug && console.log('disc', ply, discard)
             if (typeof discard == "undefined") {
                 break
             }
@@ -752,13 +801,13 @@ function preParseTenhouLogs(data) {
                 ))
                 // kakan and ankan mean we get another draw
                 // kakan writes 0 to discard, and there is a chance someone Rons for Robbing a Kan
-                ply.incPly(true, false)
+                ply.incPly(mt, true, false)
             } else if (typeof discard == 'string' && discard.indexOf('a') != -1) {
                 let mt = parseInt(discard[7]+discard[8])
                 GS.ge[GS.ge.length-1].push(new GameEvent(
                     'ankan', ply.pidx, {'meldedTiles':[mt, mt, mt, mt]}))
                 // kakan and ankan mean we get another draw
-                ply.incPly(true, false)
+                ply.incPly(mt, true, false)
             } else {
                 if (discard[0] == 'r') {
                     // split riichi into two events
@@ -772,7 +821,10 @@ function preParseTenhouLogs(data) {
                     console.log(typeof discard, discard)
                     throw new Error('discard should be number')
                 }
-                ply.incPly(false, false)
+                if (discard == 60) {
+                    discard = draw[1]
+                }
+                ply.incPly(discard, false, false)
             }
         }
         GS.ge[GS.ge.length-1].push(new GameEvent('result', null))
@@ -795,13 +847,17 @@ function preParseTenhouLogs(data) {
                 // TODO: I think the only reason we check mortalEval.type=='Discard' is because there is Tsumo also
                 // probably could add that also.
                 event.mortalEval = mortalEval
-                // TODO: I think Mortal only puts a separate entry for Riichi discard if it disagrees with ours?
                 if (mortalEval.p_action == "Riichi") {
-                    console.log('Riichi add second event')
                     mortalEvalIdx++
                     mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
-                    event.mortalEvalAfterRiichi = mortalEval
-                    console.log(event)
+                    if (mortalEval) {
+                        if (mortalEval.type == "Discard") {
+                            event.mortalEvalAfterRiichi = mortalEval
+                            console.log('mortal disagreed with riichi discard', event)
+                        } else {
+                            console.log('error probably a Kan after riichi?', mortalEval)
+                        }
+                    } 
                 }
                 mortalEvalIdx++
             } else if (event.type == 'call' && event.pidx == GS.heroPidx) {
@@ -830,9 +886,11 @@ function createTile(tileStr) {
     return tileImg
 }
 
+// Input: 123m456s789p1112z Output: 1m2m3m4s5s6s7p8p9p1z1z1z2z
 function convertTileStr(str) {
     let output = []
     let suit = ''
+    // go backwards so we know what suit each number is
     for (i=str.length-1; i>=0; i--) {
         if (!isNaN(str[i])) {
             if (suit === '') {
