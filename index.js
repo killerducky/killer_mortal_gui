@@ -300,7 +300,7 @@ class UI {
                 console.log('ply', GS.ply_counter)
                 continue
             }
-            let slot = (i !== -1) ? i : GS.gl.hands[gameEvent.pidx].length+1 - 0.5
+            let slot = (i !== -1) ? i : GS.gl.hands[gameEvent.pidx].length+1
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (tile == mortalEval.p_action) {
                 heroSlotFound = true
@@ -369,12 +369,10 @@ class UI {
     rotateLastTile(pidx) {
         let angle = (pidx.pov() * 90 + 90) % 360
         this.#getHand(pidx).lastChild.style.transform = `rotate(${angle}deg)`
-        this.#getHand(pidx).lastChild.style.margin = '6px'
     }
     addBlankSpace(pidx) {
         this.addHandTiles(pidx, ['Blank'], false)
         this.#getHand(pidx).lastChild.style.opacity = "0"
-        this.#getHand(pidx).lastChild.style.width = "12px"
     }
     updateDiscardPond() {
         for (let pidx=0; pidx<4; pidx++) {

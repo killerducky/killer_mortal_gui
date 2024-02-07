@@ -8,7 +8,7 @@ Wrap the image in a div the right size after translation and it'll be fine..
 :root{
     --main-width: 700px;
     --main-height: 700px;
-    --neg-margin: -11px;
+    --neg-margin: -10px;
     /* green-yellow */
     --color-main:   #306000;
     --color-accent: #508000;
@@ -64,12 +64,14 @@ h1{
     grid-area: ah-p3;
     writing-mode: vertical-rl;
     background: var(--color-accent);
+    padding-right: 20px;
+    padding-top: 10px;
 }
 .grid-hand-p2{
     grid-area: ah-p2;
     transform: rotate(180deg);
     background: var(--color-accent);;
-    padding-top: 10px;
+    padding-top: 20px;
     padding-left: 10px;
 }
 .grid-hand-p1{
@@ -77,13 +79,17 @@ h1{
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     background: var(--color-accent);;
+    padding-right: 20px;
+    padding-top: 10px;
 }
 .grid-hand-p0-container{
     grid-area: ah-p0;
     background: var(--color-accent);;
 }
-.grid-hand-p0{
+.grid-hand-p0-container{
     padding-top: 10px;
+}
+.grid-hand-p0{
     padding-left: 10px;
 }
 .grid-discard{
@@ -143,8 +149,8 @@ h1{
 }
 .rotate > img {
     transform: rotate(90deg);
+    /* Adjust so these rotated tiles are next to each other */
     margin-bottom: var(--neg-margin);
-    margin-right: 13px; /* TODO */
 }
 .grid-hand > img {
     width:30px;
