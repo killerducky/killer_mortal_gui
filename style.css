@@ -149,6 +149,7 @@ h1{
 }
 .result {
     padding: 10px;
+    height: 200px;
 }
 .gi-p0 {
     grid-area: ai-p0;
@@ -204,7 +205,6 @@ h1{
     grid-template-columns: 200px;
     width: 200px;
     margin:auto;
-    margin-top: 200px;
 }
 .killer-call-bars {
     width: 110px;

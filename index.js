@@ -217,7 +217,6 @@ class UI {
     }
     #relativeToHeroStr(pidx) {
         let relIdx = (4 + GS.heroPidx - pidx) % 4
-        console.log(pidx, relIdx)
         return ['Self', 'Left', 'Cross', 'Right'][relIdx]
     }
     updateGridInfo() {
@@ -249,7 +248,6 @@ class UI {
             } else if (GS.gl.result == '流し満貫') {
                 this.result.append('Nagashi Mangan (wow!) TODO test this')
             }
-            this.result.append(document.createElement("br"))
             this.result.append(document.createElement("br"))
             this.result.append(`raw: r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer} `, 'u', GS.gl.uradora, ' ', GS.gl.scoreChanges, ' ', GS.gl.yakuStrings)
         }
@@ -583,7 +581,7 @@ class TurnNum {
             if (!selfKan) {
                 this.pidx = this.whoIsNext(discard)
             } else {
-                console.log('self kan so extra turn')
+                // console.log('self kan so extra turn')
             }
             if (openKan) {
                 console.log('openkan')
@@ -614,18 +612,17 @@ class TurnNum {
                 // p212121 p0 pon from their kami/left     p3   idx/2=0   (4+0-3)%4 = 1-1 = 0
                 // 21p2121 p0 pon from their toimen/cross  p2   idx/2=1   (4+0-2)%4 = 2-1 = 1
                 // 2121p21 p0 pon from their shimo/right   p1   idx/2=2   (4+0-1)%4 = 3-1 = 2
+                // if (fancyDrawClass.type=='m') {
+                    // console.log('open kan incoming', fancyDrawClass, offset)
+                    // }
                 // check if the non-numeric (e.g. 'p') is in the calculated offset spot
-                //if (draw[offset*2]<'0' || draw[offset*2]>'9' || (offset==2 && draw[offset*2]) {
-                if (fancyDrawClass.type=='m') {
-                    console.log('open kan incoming', fancyDrawClass, offset)
-                }
                 if (fancyDrawClass.idx == offset) {
                     if (parseInt(draw[0]+draw[1])==discard) {
                         return tmpPidx
                     } else {
-                        console.log('We will call from them, but it must be later, not now!')
-                        console.log(draw, discard, tmpPidx, GS.gl.rawRound)
-                        console.log(fancyDrawClass)
+                        // console.log('We will call from them, but it must be later, not now!')
+                        // console.log(draw, discard, tmpPidx, GS.gl.rawRound)
+                        // console.log(fancyDrawClass)
                     }
                 }
             }
@@ -812,6 +809,7 @@ function preParseTenhouLogs(data) {
         GS.gl = new GameLog(round['log'][0])
         // console.log(GS.gl)
         let debug = false
+        let openkans = 0
         let ply = new TurnNum()
         while (1) {
             let draw = ply.getDraw(GS.gl.draws)
@@ -832,7 +830,6 @@ function preParseTenhouLogs(data) {
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[2], 'fromIdxRel':draw[1], 'meldedTiles':[draw[2], draw[2]]})
                     GS.ge[GS.ge.length-1].push(ge)
                 } else if (draw[0] == 'openkan') {
-                    console.log('add openkan')
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[2], 'fromIdxRel':draw[1], 'meldedTiles':[draw[2], draw[2], draw[2]]})
                     GS.ge[GS.ge.length-1].push(ge)
                 } else if (draw[0] == 'chi') {
@@ -844,6 +841,7 @@ function preParseTenhouLogs(data) {
             }
             ply.incPly(null, draw[0] == 'openkan', draw[0] == 'openkan')
             if (draw[0] == 'openkan') {
+                openkans++
                 // skip discard, loop back around to draw again
                 continue
             }
@@ -893,7 +891,8 @@ function preParseTenhouLogs(data) {
             checkPlies += GS.gl.draws[i].length
             checkPlies += GS.gl.discards[i].length
         }
-        checkPlies == ply.ply || console.log('error', checkPlies, ply.stringState())
+        // openkans have an extra 0 in the discard array that is just skipped
+        checkPlies == ply.ply + openkans || console.log('error', checkPlies, ply.stringState())
     }
     // merge in mortalEval events
     for (let roundNum=0; roundNum<GS.ge.length; roundNum++) {
@@ -915,7 +914,7 @@ function preParseTenhouLogs(data) {
                             event.mortalEvalAfterRiichi = mortalEval
                             console.log('mortal disagreed with riichi discard', event)
                         } else {
-                            console.log('error probably a Kan after riichi?', mortalEval)
+                            console.log('TODO: Add Ron/Tsumo/Kan after riichi', mortalEval)
                         }
                     } 
                 }
@@ -1137,7 +1136,6 @@ function parseMortalHtml() {
                 evals.fromIdxRel = fromMap[evals.strFromRel]
             } else if (evals.p_action == "Tsumo") {
                 evals.type = 'Tsumo'
-                console.log('tsumo', evals)
             } else {
                 evals.type = 'Discard' // Riichi, Ankan, Kakan
             }
