@@ -147,6 +147,23 @@ h1{
 .info-doras {
     grid-area: ai-doras;
 }
+.result {
+    padding: 10px;
+}
+.gi-p0 {
+    grid-area: ai-p0;
+    padding: 10px;
+    margin: auto;
+}
+.gi-p1 {
+    grid-area: ai-p1;
+}
+.gi-p2 {
+    grid-area: ai-p2;
+}
+.gi-p3 {
+    grid-area: ai-p3;
+}
 .rotate > img {
     transform: rotate(90deg);
     /* Adjust so these rotated tiles are next to each other */

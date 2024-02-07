@@ -81,7 +81,7 @@ class GameLog {
         this.rawRound = log[logIdx++]
         this.roundWind = Math.floor(this.rawRound[0]/4) + tm2t('e')
         this.dealerIdx = this.rawRound[0] % 4
-        this.roundNum = this.dealerIdx + 1
+        this.roundNum = this.dealerIdx
         this.honbas = this.rawRound[1]
         this.roundSticks = this.rawRound[2]
         this.scores = log[logIdx++]
@@ -142,6 +142,8 @@ class GlobalState {
         this.C_cb_totHeight = 100
         this.C_cb_totWidth = 100
         this.C_cb_padding = 10
+
+        this.C_windStr = ['East', 'South', 'West', 'North']
     }
 }
 
@@ -161,16 +163,19 @@ class UI {
     constructor() {
         this.hands = []
         this.discards = []
+        this.pInfo = []
         this.gridInfo = document.querySelector('.grid-info')
         this.povPidx = 0
         for (let pnum of Array(4).keys()) {
             this.hands.push(document.querySelector(`.grid-hand-p${pnum}`))
             this.discards.push(document.querySelector(`.grid-discard-p${pnum}`))
+            this.pInfo.push(document.querySelector(`.gi-p${pnum}`))
         }
         this.round = document.querySelector('.info-round')
         this.sticks = document.querySelector('.info-sticks')
         this.honbas = document.querySelector('.info-honbas')
         this.doras = document.querySelector('.info-doras')
+        this.result = document.querySelector('.result')
     }
     #getHand(pidx) { 
         return this.hands[pidx.pov()] 
@@ -179,8 +184,8 @@ class UI {
         return this.discards[pidx.pov()]
     }
     reset() {
-        this.round.replaceChildren(['East', 'South', 'West', 'North'][GS.gl.roundWind-41])
-        this.round.append("-", GS.gl.roundNum)
+        this.round.replaceChildren(GS.C_windStr[GS.gl.roundWind-41])
+        this.round.append("-", GS.gl.roundNum+1)
         if (GS.gl.honbas > 0) {
             this.round.append("-", GS.gl.honbas)
         }
@@ -191,6 +196,7 @@ class UI {
         // this.honbas.replaceChildren(`Honbas ${GS.gl.honbas}`)
         this.sticks.replaceChildren()
         this.doras.replaceChildren()
+        this.result.replaceChildren()
         for (let i=0; i<5; i++) {
             if (GS.gl.dora[i] == null) {
                 this.doras.append(createTile('back'))
@@ -199,9 +205,20 @@ class UI {
             }
             this.doras.lastChild.setAttribute('width', 20)
         }
-        for (let i=0; i<4; i++) {
-            this.discards[i].replaceChildren()
+        for (let pidx=0; pidx<4; pidx++) {
+            this.discards[pidx].replaceChildren()
+            if (pidx == GS.heroPidx) {
+                let pidxObj = new PIDX(pidx)
+                let seatWind = (4 + GS.heroPidx - GS.gl.roundNum) % 4
+                this.pInfo[pidxObj.pov()].replaceChildren(GS.C_windStr[seatWind])
+                this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx])
+            }
         }
+    }
+    #relativeToHeroStr(pidx) {
+        let relIdx = (4 + GS.heroPidx - pidx) % 4
+        console.log(pidx, relIdx)
+        return ['Self', 'Left', 'Cross', 'Right'][relIdx]
     }
     updateGridInfo() {
         this.clearDiscardBars()
@@ -215,9 +232,27 @@ class UI {
                 this.updateCallBars()
             }
         }
-        //if (GS.gl.handOver) {
-        //   console.log(`r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer}`, 'u', GS.gl.uradora, GS.gl.scoreChanges, GS.gl.yakuStrings)
-        //}
+        if (GS.gl.handOver) {
+            if (GS.gl.result == '和了') {
+                if (GS.gl.winner == GS.gl.payer) {
+                    this.result.append(`Tsumo ${this.#relativeToHeroStr(GS.gl.winner)}`)
+                } else {
+                    this.result.append(`Ron `)
+                    this.result.append(document.createElement("br"))
+                    this.result.append(`Winner ${this.#relativeToHeroStr(GS.gl.winner)} +${GS.gl.scoreChanges[GS.gl.winner]}`)
+                    this.result.append(document.createElement("br"))
+                    this.result.append(`Loser ${this.#relativeToHeroStr(GS.gl.payer)} ${GS.gl.scoreChanges[GS.gl.payer]}`)
+                    this.result.append(document.createElement("br"))
+                }
+            } else if (GS.gl.result == '流局') {
+                this.result.append('Draw')
+            } else if (GS.gl.result == '流し満貫') {
+                this.result.append('Nagashi Mangan (wow!) TODO test this')
+            }
+            this.result.append(document.createElement("br"))
+            this.result.append(document.createElement("br"))
+            this.result.append(`raw: r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer} `, 'u', GS.gl.uradora, ' ', GS.gl.scoreChanges, ' ', GS.gl.yakuStrings)
+        }
     }
     clearCallBars() {
         const callBars = document.querySelector('.killer-call-bars')
@@ -679,6 +714,7 @@ function updateState() {
         } else if (event.type == 'riichi') {
             // console.log('riichi', GS.ply_counter)
         } else if (event.type == 'result') {
+            GS.gl.handOver = true
             console.log('result: ', GS.gl.result, GS.gl.scoreChanges, GS.gl.winner, GS.gl.payer, GS.gl.yakuStrings)
         } else {
             console.log(event)
