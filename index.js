@@ -300,7 +300,7 @@ class UI {
                 console.log('ply', GS.ply_counter)
                 continue
             }
-            let slot = (i !== -1) ? i : GS.gl.hands[gameEvent.pidx].length+1
+            let slot = (i !== -1) ? i : GS.gl.hands[gameEvent.pidx].length+1 - 0.5
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (tile == mortalEval.p_action) {
                 heroSlotFound = true
@@ -374,6 +374,7 @@ class UI {
     addBlankSpace(pidx) {
         this.addHandTiles(pidx, ['Blank'], false)
         this.#getHand(pidx).lastChild.style.opacity = "0"
+        this.#getHand(pidx).lastChild.style.width = "12px"
     }
     updateDiscardPond() {
         for (let pidx=0; pidx<4; pidx++) {
@@ -533,17 +534,21 @@ class TurnNum {
         return this.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
     }
     incPly(discard, selfKan, openKan) {
-        // even ply draw, odd ply discard
         if (discard !== null) {
             this.nextDrawIdx[this.pidx]++
             this.nextDiscardIdx[this.pidx]++
             if (!selfKan) {
                 this.pidx = this.whoIsNext(discard)
+            } else {
+                console.log('self kan so extra turn')
             }
             if (openKan) {
                 console.log('openkan')
                 this.nextDiscardIdx[this.pidx]++
             }
+        } else if (selfKan) {
+            this.nextDrawIdx[this.pidx]++
+            this.nextDiscardIdx[this.pidx]++
         }
         this.ply++
     }
@@ -559,6 +564,7 @@ class TurnNum {
             }
             let draw = this.draws[tmpPidx][this.nextDrawIdx[tmpPidx]]
             if (typeof draw == 'string') {
+                let fancyDrawClass = new Draw(draw)
                 // The call string encodes who they called from by putting e.g. 'p' in idx=0,2,4
                 // See if the timing is correct by comparing caller idx to current discarder idx
                 //        tmp                             this             v-- extra 4+ because e.g. -1%4 = -1 (we want 3)
@@ -567,12 +573,16 @@ class TurnNum {
                 // 2121p21 p0 pon from their shimo/right   p1   idx/2=2   (4+0-1)%4 = 3-1 = 2
                 // check if the non-numeric (e.g. 'p') is in the calculated offset spot
                 //if (draw[offset*2]<'0' || draw[offset*2]>'9' || (offset==2 && draw[offset*2]) {
-                if (isNaN(draw[offset*2]) || (offset==2 && isNaN(draw[(offset+1)*2]))) {
+                if (fancyDrawClass.type=='m') {
+                    console.log('open kan incoming', fancyDrawClass, offset)
+                }
+                if (fancyDrawClass.idx == offset) {
                     if (parseInt(draw[0]+draw[1])==discard) {
                         return tmpPidx
                     } else {
                         console.log('We will call from them, but it must be later, not now!')
                         console.log(draw, discard, tmpPidx, GS.gl.rawRound)
+                        console.log(fancyDrawClass)
                     }
                 }
             }
@@ -778,7 +788,9 @@ function preParseTenhouLogs(data) {
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[2], 'fromIdxRel':draw[1], 'meldedTiles':[draw[2], draw[2]]})
                     GS.ge[GS.ge.length-1].push(ge)
                 } else if (draw[0] == 'openkan') {
+                    console.log('add openkan')
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[2], 'fromIdxRel':draw[1], 'meldedTiles':[draw[2], draw[2], draw[2]]})
+                    GS.ge[GS.ge.length-1].push(ge)
                 } else if (draw[0] == 'chi') {
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[1], 'fromIdxRel':0, 'meldedTiles':[draw[2], draw[3]]})
                     GS.ge[GS.ge.length-1].push(ge)
@@ -787,6 +799,10 @@ function preParseTenhouLogs(data) {
                 }
             }
             ply.incPly(null, draw[0] == 'openkan', draw[0] == 'openkan')
+            if (draw[0] == 'openkan') {
+                // skip discard, loop back around to draw again
+                continue
+            }
             // ply.incPly(false, false)
             let discard = ply.getDiscard()
             debug && console.log('disc', ply, discard)
