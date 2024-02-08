@@ -83,7 +83,8 @@ class GameLog {
         this.dealerIdx = this.rawRound[0] % 4
         this.roundNum = this.dealerIdx
         this.honbas = this.rawRound[1]
-        this.roundSticks = this.rawRound[2]
+        this.prevRoundSticks = this.rawRound[2]
+        this.thisRoundSticks = [0,0,0,0]
         this.scores = log[logIdx++]
         this.dora = log[logIdx++]
         this.uradora = log[logIdx++]
@@ -136,12 +137,16 @@ class GlobalState {
         this.C_db_handPadding = 10
         this.C_db_padding = 15
         this.C_db_tileWidth = 34
-        this.C_db_heroBarWidth = 16
+        this.C_db_heroBarWidth = 20
         this.C_db_mortBarWidth = 10
         this.C_cb_height = 60
         this.C_cb_totHeight = 100
         this.C_cb_totWidth = 100
         this.C_cb_padding = 10
+
+        this.C_colorText = getComputedStyle(document.documentElement).getPropertyValue('--color-text')
+        this.C_colorBarMortal = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-mortal')
+        this.C_colorBarHero = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-hero')
 
         this.C_windStr = ['East', 'South', 'West', 'North']
     }
@@ -172,7 +177,7 @@ class UI {
             this.pInfo.push(document.querySelector(`.gi-p${pnum}`))
         }
         this.round = document.querySelector('.info-round')
-        this.sticks = document.querySelector('.info-sticks')
+        this.prevRoundSticks = document.querySelector('.info-sticks')
         this.honbas = document.querySelector('.info-honbas')
         this.doras = document.querySelector('.info-doras')
         this.result = document.querySelector('.result')
@@ -189,12 +194,12 @@ class UI {
         if (GS.gl.honbas > 0) {
             this.round.append("-", GS.gl.honbas)
         }
-        if (GS.gl.sticks > 0) {
-            this.round.append(' +', GS.gl.sticks, "000")
+        if (GS.gl.prevRoundSticks > 0) {
+            this.round.append(' +', GS.gl.prevRoundSticks, "000")
         }
         // this.round.append('  raw:', GS.gl.rawRound)
         // this.honbas.replaceChildren(`Honbas ${GS.gl.honbas}`)
-        this.sticks.replaceChildren()
+        this.prevRoundSticks.replaceChildren()
         this.doras.replaceChildren()
         this.result.replaceChildren()
         for (let i=0; i<5; i++) {
@@ -217,7 +222,8 @@ class UI {
     }
     #relativeToHeroStr(pidx) {
         let relIdx = (4 + GS.heroPidx - pidx) % 4
-        return ['Self', 'Left', 'Cross', 'Right'][relIdx]
+        return ['Hero', 'Kamicha', 'Toimen', 'Shimocha'][relIdx]
+        // return ['Self', 'Left', 'Cross', 'Right'][relIdx]
     }
     updateGridInfo() {
         this.clearDiscardBars()
@@ -234,22 +240,70 @@ class UI {
         if (GS.gl.handOver) {
             if (GS.gl.result == '和了') {
                 if (GS.gl.winner == GS.gl.payer) {
-                    this.result.append(`Tsumo ${this.#relativeToHeroStr(GS.gl.winner)}`)
+                    this.result.append(`Tsumo`)
+                    this.result.append(document.createElement("br"))
+                    let table = document.createElement("table")
+                    this.result.append(table)
+                    let tr = table.insertRow()
+                    let cell = tr.insertCell()
+                    cell.textContent = `${this.#relativeToHeroStr(GS.gl.winner)}`
+                    cell = tr.insertCell()
+                    cell.textContent = `${GS.gl.scoreChanges[GS.gl.winner]-GS.gl.thisRoundSticks[GS.gl.winner]*1000}`
+                    for (let pidx=0; pidx<4; pidx++) {
+                        if (pidx != GS.gl.winner) {
+                            tr = table.insertRow()
+                            cell = tr.insertCell()
+                            cell.textContent = `${this.#relativeToHeroStr(pidx)}`
+                            cell = tr.insertCell()
+                            cell.textContent = `${GS.gl.scoreChanges[pidx]-GS.gl.thisRoundSticks[pidx]*1000}`
+                        }
+                    }
+                    if (GS.gl.prevRoundSticks) {
+                        tr = table.insertRow()
+                        cell = tr.insertCell()
+                        cell.textContent = 'Prev Sticks'
+                        cell = tr.insertCell()
+                        cell.textContent = `-${GS.gl.prevRoundSticks*1000}`
+                    }
                 } else {
-                    this.result.append(`Ron `)
+                    this.result.append(`Ron`)
                     this.result.append(document.createElement("br"))
-                    this.result.append(`Winner ${this.#relativeToHeroStr(GS.gl.winner)} +${GS.gl.scoreChanges[GS.gl.winner]}`)
+                    this.result.append(`${this.#relativeToHeroStr(GS.gl.winner)} ${GS.gl.scoreChanges[GS.gl.winner]-GS.gl.thisRoundSticks[GS.gl.winner]*1000}`)
                     this.result.append(document.createElement("br"))
-                    this.result.append(`Loser ${this.#relativeToHeroStr(GS.gl.payer)} ${GS.gl.scoreChanges[GS.gl.payer]}`)
+                    this.result.append(`${this.#relativeToHeroStr(GS.gl.payer)} ${GS.gl.scoreChanges[GS.gl.payer]-GS.gl.thisRoundSticks[GS.gl.payer]*1000}`)
                     this.result.append(document.createElement("br"))
                 }
             } else if (GS.gl.result == '流局') {
                 this.result.append('Draw')
+                this.result.append(document.createElement("br"))
+                let table = document.createElement("table")
+                this.result.append(table)
+                let newPotSticks = 0
+                let tr, cell
+                for (let pidx=0; pidx<4; pidx++) {
+                    if (GS.gl.scoreChanges[pidx]) {
+                        tr = table.insertRow()
+                        cell = tr.insertCell()
+                        cell.textContent = `${this.#relativeToHeroStr(pidx)}`
+                        cell = tr.insertCell()
+                        cell.textContent = `${GS.gl.scoreChanges[pidx]-GS.gl.thisRoundSticks[pidx]*1000}`
+                    }
+                    newPotSticks += GS.gl.thisRoundSticks[pidx]
+                }
+                if (newPotSticks) {
+                    tr = table.insertRow()
+                    cell = tr.insertCell()
+                    cell.textContent = 'New Sticks'
+                    cell = tr.insertCell()
+                    cell.textContent = `${newPotSticks*1000}`
+                }
             } else if (GS.gl.result == '流し満貫') {
                 this.result.append('Nagashi Mangan (wow!) TODO test this')
+            } else if (GS.gl.result == '九種九牌') {
+                this.result.append('Nine Terminal Draw')
             }
             this.result.append(document.createElement("br"))
-            this.result.append(`raw: r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer} `, 'u', GS.gl.uradora, ' ', GS.gl.scoreChanges, ' ', GS.gl.yakuStrings)
+            console.log(`raw result: r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer} `, 'u', GS.gl.uradora, ' ', GS.gl.scoreChanges, ' ', GS.gl.yakuStrings)
         }
     }
     clearCallBars() {
@@ -278,7 +332,7 @@ class UI {
                 rect2.setAttribute("y", 0)
                 rect2.setAttribute("width", GS.C_db_heroBarWidth)
                 rect2.setAttribute("height", Math.ceil(1*GS.C_cb_height))
-                rect2.setAttribute("fill", "red")
+                rect2.setAttribute("fill", GS.C_colorBarHero)
                 svgElement.appendChild(rect2)
             }
             let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
@@ -286,13 +340,12 @@ class UI {
             rect.setAttribute("y", Math.floor((1-Pval/100)*GS.C_cb_height))
             rect.setAttribute("width", GS.C_db_mortBarWidth)
             rect.setAttribute("height", Math.ceil(Pval/100*GS.C_cb_height))
-            rect.setAttribute("fill", "blue")
+            rect.setAttribute("fill", GS.C_colorBarMortal)
             svgElement.appendChild(rect);
             let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
             text.setAttribute("y", GS.C_db_height + 20)
-            let color = getComputedStyle(document.documentElement).getPropertyValue('--color-text')
-            text.setAttribute("fill", color)
+            text.setAttribute("fill", GS.C_colorText)
             text.textContent = key
             svgElement.appendChild(text)
             slot++
@@ -342,7 +395,7 @@ class UI {
                 rect2.setAttribute("y", 0)
                 rect2.setAttribute("width", GS.C_db_heroBarWidth)
                 rect2.setAttribute("height", Math.ceil(1*GS.C_db_height))
-                rect2.setAttribute("fill", "red")
+                rect2.setAttribute("fill", GS.C_colorBarHero)
                 svgElement.appendChild(rect2)
             }
             let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
@@ -350,7 +403,7 @@ class UI {
             rect.setAttribute("y", Math.floor((1-Pval/100)*GS.C_db_height))
             rect.setAttribute("width", GS.C_db_mortBarWidth)
             rect.setAttribute("height", Math.ceil((Pval/100)*GS.C_db_height))
-            rect.setAttribute("fill", "blue")
+            rect.setAttribute("fill", GS.C_colorBarMortal)
             svgElement.appendChild(rect);
         }
         if (!heroSlotFound) {
@@ -689,6 +742,10 @@ function updateState() {
             }
         } else if (event.type == 'discard') {
             let riichi = GS.ge[GS.hand_counter][ply-1].type == "riichi"
+            // If riichi and the tile passed
+            if (riichi && GS.ge[GS.hand_counter][ply+1].type != 'result') {
+                GS.gl.thisRoundSticks[event.pidx]++
+            }
             let tsumogiri = event.discard==60
             if (tsumogiri) {
                 let tile = new Tile(GS.gl.drawnTile[event.pidx])

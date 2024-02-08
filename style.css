@@ -18,10 +18,21 @@ Wrap the image in a div the right size after translation and it'll be fine..
     --color-text:    #005060;
     --color-accent:  #60a0b0;
     /* blue-green, accents go darker */
-    --color-main:   #007090;
+    --color-main:   #006888;
     --color-accent: #005060;
     --color-accent2: #003040;
+    --color-accent3: #004050;
     --color-text:    #40d0e0;
+    /* Mortal yellow, Hero dark red */
+    --color-bar-mortal: #b0b000;
+    --color-bar-hero: #600000;
+    /* Mortal orange, Hero red-orange*/
+    --color-bar-mortal: #f43a09;
+    --color-bar-hero: #c0b517;
+    /* Mortal purple, Hero dark blue */
+    --color-bar-mortal: #9000b0;
+    --color-bar-hero: #3000b0;
+
 }
 body{
     background: var(--color-main);
@@ -209,7 +220,7 @@ h1{
 .killer-call-bars {
     width: 110px;
     height: 90px;
-    background: var(--color-accent2);
+    background: var(--color-accent3);
     padding: 5px;
     margin: auto;
 }
