@@ -216,7 +216,7 @@ class UI {
                 let pidxObj = new PIDX(pidx)
                 let seatWind = (4 + GS.heroPidx - GS.gl.roundNum) % 4
                 this.pInfo[pidxObj.pov()].replaceChildren(GS.C_windStr[seatWind])
-                this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx])
+                this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx]-GS.gl.thisRoundSticks[pidx]*1000)
             }
         }
     }
@@ -303,7 +303,6 @@ class UI {
                 this.result.append('Nine Terminal Draw')
             }
             this.result.append(document.createElement("br"))
-            console.log(`raw result: r${GS.gl.result} w${GS.gl.winner} p${GS.gl.payer} `, 'u', GS.gl.uradora, ' ', GS.gl.scoreChanges, ' ', GS.gl.yakuStrings)
         }
     }
     clearCallBars() {
