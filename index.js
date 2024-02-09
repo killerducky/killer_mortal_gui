@@ -100,7 +100,7 @@ class GameLog {
         }
         this.resultArray = log[logIdx++]
         this.result = this.resultArray[0]
-        this.scoreChanges = this.resultArray[1]
+        this.scoreChanges = this.resultArray[1] || [0,0,0,0]
         if (this.resultArray.length > 2) {
             this.winner = this.resultArray[2][0]
             this.payer = this.resultArray[2][1]
@@ -195,7 +195,7 @@ class UI {
             this.round.append("-", GS.gl.honbas)
         }
         if (GS.gl.prevRoundSticks > 0) {
-            this.round.append(' +', GS.gl.prevRoundSticks, "000")
+            this.round.append(' +', GS.gl.prevRoundSticks*1000)
         }
         // this.round.append('  raw:', GS.gl.rawRound)
         // this.honbas.replaceChildren(`Honbas ${GS.gl.honbas}`)
@@ -221,8 +221,8 @@ class UI {
         }
     }
     #relativeToHeroStr(pidx) {
-        let relIdx = (4 + GS.heroPidx - pidx) % 4
-        return ['Hero', 'Kamicha', 'Toimen', 'Shimocha'][relIdx]
+        let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
+        return ['Hero', 'Kamicha', 'Toimen', 'Shimocha', 'Pot'][relIdx]
         // return ['Self', 'Left', 'Cross', 'Right'][relIdx]
     }
     updateGridInfo() {
@@ -232,77 +232,52 @@ class UI {
         if (mortalEval) {
             if (mortalEval.type == 'Discard') {
                 this.updateDiscardBars()
-                this.updateCallBars()
+                this.updateCallBars() // For calls such as Kan or Riichi instead of discarding
             } else {
                 this.updateCallBars()
             }
         }
         if (GS.gl.handOver) {
+            let scoreChangesPlusSticks = GS.gl.scoreChanges.concat([0])
+            for (let pidx=0; pidx<4; pidx++) {
+                scoreChangesPlusSticks[pidx] -= GS.gl.thisRoundSticks[pidx]*1000
+            }
+            console.log(GS.gl.thisRoundSticks, scoreChangesPlusSticks, GS.gl.scoreChanges)
+            if (GS.gl.result == '和了') {
+                // If there was a winner, they get the prevRoundSticks
+                scoreChangesPlusSticks[4] = -GS.gl.prevRoundSticks*1000
+            } else {
+                // If no winner, pot "wins" the sticks
+                console.log(GS.gl.prevRoundSticks)
+                scoreChangesPlusSticks[4] += sum(GS.gl.thisRoundSticks)*1000
+            }
+            console.log(GS.gl.thisRoundSticks, scoreChangesPlusSticks, GS.gl.scoreChanges)
+            console.assert(sum(scoreChangesPlusSticks)==0)
             if (GS.gl.result == '和了') {
                 if (GS.gl.winner == GS.gl.payer) {
                     this.result.append(`Tsumo`)
                     this.result.append(document.createElement("br"))
-                    let table = document.createElement("table")
-                    this.result.append(table)
-                    let tr = table.insertRow()
-                    let cell = tr.insertCell()
-                    cell.textContent = `${this.#relativeToHeroStr(GS.gl.winner)}`
-                    cell = tr.insertCell()
-                    cell.textContent = `${GS.gl.scoreChanges[GS.gl.winner]-GS.gl.thisRoundSticks[GS.gl.winner]*1000}`
-                    for (let pidx=0; pidx<4; pidx++) {
-                        if (pidx != GS.gl.winner) {
-                            tr = table.insertRow()
-                            cell = tr.insertCell()
-                            cell.textContent = `${this.#relativeToHeroStr(pidx)}`
-                            cell = tr.insertCell()
-                            cell.textContent = `${GS.gl.scoreChanges[pidx]-GS.gl.thisRoundSticks[pidx]*1000}`
-                        }
-                    }
-                    if (GS.gl.prevRoundSticks) {
-                        tr = table.insertRow()
-                        cell = tr.insertCell()
-                        cell.textContent = 'Prev Sticks'
-                        cell = tr.insertCell()
-                        cell.textContent = `-${GS.gl.prevRoundSticks*1000}`
-                    }
                 } else {
                     this.result.append(`Ron`)
-                    this.result.append(document.createElement("br"))
-                    this.result.append(`${this.#relativeToHeroStr(GS.gl.winner)} ${GS.gl.scoreChanges[GS.gl.winner]-GS.gl.thisRoundSticks[GS.gl.winner]*1000}`)
-                    this.result.append(document.createElement("br"))
-                    this.result.append(`${this.#relativeToHeroStr(GS.gl.payer)} ${GS.gl.scoreChanges[GS.gl.payer]-GS.gl.thisRoundSticks[GS.gl.payer]*1000}`)
                     this.result.append(document.createElement("br"))
                 }
             } else if (GS.gl.result == '流局') {
                 this.result.append('Draw')
                 this.result.append(document.createElement("br"))
-                let table = document.createElement("table")
-                this.result.append(table)
-                let newPotSticks = 0
-                let tr, cell
-                for (let pidx=0; pidx<4; pidx++) {
-                    if (GS.gl.scoreChanges[pidx]) {
-                        tr = table.insertRow()
-                        cell = tr.insertCell()
-                        cell.textContent = `${this.#relativeToHeroStr(pidx)}`
-                        cell = tr.insertCell()
-                        cell.textContent = `${GS.gl.scoreChanges[pidx]-GS.gl.thisRoundSticks[pidx]*1000}`
-                    }
-                    newPotSticks += GS.gl.thisRoundSticks[pidx]
-                }
-                if (newPotSticks) {
-                    tr = table.insertRow()
-                    cell = tr.insertCell()
-                    cell.textContent = 'New Sticks'
-                    cell = tr.insertCell()
-                    cell.textContent = `${newPotSticks*1000}`
-                }
             } else if (GS.gl.result == '流し満貫') {
                 this.result.append('Nagashi Mangan (wow!) TODO test this')
             } else if (GS.gl.result == '九種九牌') {
                 this.result.append('Nine Terminal Draw')
             }
-            this.result.append(document.createElement("br"))
+            let table = document.createElement("table")
+            this.result.append(table)
+            for (let pidx=0; pidx<4+1; pidx++) {
+                let tr = table.insertRow()
+                let cell = tr.insertCell()
+                cell.textContent = `${this.#relativeToHeroStr(pidx)}`
+                cell = tr.insertCell()
+                cell.textContent = `${scoreChangesPlusSticks[pidx]}`
+            }
         }
     }
     clearCallBars() {
@@ -317,7 +292,6 @@ class UI {
         let mortalEval = gameEvent.mortalEval
         const callBars = document.querySelector('.killer-call-bars')
         let svgElement = callBars.firstElementChild
-        let heroSlotFound = false
         let slot = 0
         for (const key in mortalEval.Pvals) {
             if (!isNaN(key)) {
@@ -362,8 +336,11 @@ class UI {
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = gameEvent.mortalEval
         const discardBars = document.getElementById("discard-bars")
-        let svgElement = discardBars.firstElementChild 
-        let heroSlotFound = mortalEval.p_action == 'Riichi' && 'Riichi' in mortalEval.Pvals
+        let svgElement = discardBars.firstElementChild
+        let heroSlotFound = typeof mortalEval.p_action == 'string' && (
+            (mortalEval.p_action == 'Riichi' && 'Riichi' in mortalEval.Pvals) ||
+            (mortalEval.p_action == 'Kan' && 'Kan' in mortalEval.Pvals)
+        )
         for (let i = -1; i < GS.gl.hands[gameEvent.pidx].length; i++) {
             let tile = null
             let Pval = null
@@ -493,6 +470,10 @@ class UI {
     lastDiscardWasCalled(pidx) {
         this.#getDiscard(pidx).lastChild.style.opacity = "0.5"
     }
+}
+
+function sum(a) {
+    return a.reduce((a,b)=>a+b) // javascript really doesn't have this by default?
 }
 
 class Tile {
@@ -860,11 +841,8 @@ function preParseTenhouLogs(data) {
         return
     }
     for (round of data) {
-        // console.log('round', round)
         GS.ge.push([])
         GS.gl = new GameLog(round['log'][0])
-        // console.log(GS.gl)
-        let debug = false
         let openkans = 0
         let ply = new TurnNum()
         while (1) {
@@ -872,13 +850,6 @@ function preParseTenhouLogs(data) {
             if (draw == null) {
                 break
             }
-            if (GS.ge.length == 7 && GS.ge[GS.ge.length-1].length >= 40) {
-                // debug = true
-            }
-            if (GS.gl.rawRound[0] == 1 && GS.gl.rawRound[1] == 1 && GS.ge[GS.ge.length-1].length >= 14) {
-                //debug = true
-            }
-            debug && console.log('draw', ply, draw)
             if (draw[0] == 'draw') {
                 GS.ge[GS.ge.length-1].push(new GameEvent('draw', ply.pidx, {'draw':draw[1]}))
             } else {
@@ -901,9 +872,7 @@ function preParseTenhouLogs(data) {
                 // skip discard, loop back around to draw again
                 continue
             }
-            // ply.incPly(false, false)
             let discard = ply.getDiscard()
-            debug && console.log('disc', ply, discard)
             if (typeof discard == "undefined") {
                 break
             }
@@ -950,6 +919,7 @@ function preParseTenhouLogs(data) {
         // openkans have an extra 0 in the discard array that is just skipped
         checkPlies == ply.ply + openkans || console.log('error', checkPlies, ply.stringState())
     }
+    
     // merge in mortalEval events
     for (let roundNum=0; roundNum<GS.ge.length; roundNum++) {
         let mortalEvalIdx = 0
@@ -1164,7 +1134,8 @@ function parseMortalHtml() {
             continue
         }
         let evals = new MortalEval(currTurn)
-        evals.p_action = roles[0].nextSibling.textContent
+        // TODO: This is probably not going to be the final value of evals.p_action!
+        evals.p_action = roles[0].nextSibling.textContent.trim()
         if (RiichiState == 'Discarding') {
             RiichiState = 'Complete' // We are now processing the riichi discard set the state now
         }
@@ -1174,6 +1145,7 @@ function parseMortalHtml() {
 
         if (evals.p_action.includes('Discard')) {
             evals.type = 'Discard'
+            // replace evals.p_action with the actual tile discarded
             // Player is wrapped nicely in a parent span
             evals.p_action = roles[0].parentElement.querySelector('use').href.baseVal
             // Mortal is not wrapped, use next.next instead
@@ -1181,11 +1153,15 @@ function parseMortalHtml() {
             evals.p_action = mortalHashTile2tenhou(evals.p_action)
             evals.m_action = mortalHashTile2tenhou(evals.m_action)
         } else {
-            evals.p_action = roles[0].nextSibling.textContent
-            evals.m_action = roles[1].nextSibling.textContent
+            // TODO this isn't right for all cases but m_action isn't really used anyways...
+            evals.m_action = roles[1].nextSibling.textContent.trim()
             let beforeAction = d.querySelector('li.tsumo').getAttribute('before')
             if (beforeAction && !beforeAction.includes('Draw')) {
+                // if (evals.p_action != "Skip") {
+                //     console.log(roles[1].parentElement.textContent)
+                // }
                 evals.type = 'Call' // Chi, Pon, Open Kan
+                evals.p_action = roles[0].parentElement.textContent.replace(/Player:/, '').trim()
                 evals.strFromRel = beforeAction.match(/^[^\W]+/)[0]
                 const fromMap = {"Shimocha":1, "Toimen":2, "Kamicha":3}
                 console.assert(evals.strFromRel in fromMap)
@@ -1204,7 +1180,7 @@ function parseMortalHtml() {
             Qval = parseFloat(i[0].textContent + f[0].textContent)
             Pval = parseFloat(i[1].textContent + f[1].textContent)
 
-            if (evals.type == 'Call' || action == "Riichi" || action == "Tsumo") {
+            if (evals.type == 'Call' || action == "Riichi" || action == "Tsumo" || action == "Kan") {
                 evals.Pvals[action] = Pval
                 //console.log('action', action, tr.innerHTML)
                 // TODO: Chi/Pon etc has tiles in it

@@ -6,8 +6,8 @@ Wrap the image in a div the right size after translation and it'll be fine..
 */
 
 :root{
-    --main-width: 700px;
-    --main-height: 700px;
+    --main-width: 750px;
+    --main-height: 800px;
     --neg-margin: -10px;
     /* green-yellow */
     --color-main:   #306000;
@@ -36,7 +36,7 @@ Wrap the image in a div the right size after translation and it'll be fine..
 }
 body{
     background: var(--color-main);
-    max-width: 1000px;
+    max-width: 1100px;
     margin: auto;
     color: var(--color-text);
     line-height: 1.5;
@@ -57,14 +57,14 @@ h1{
 }
 .outer {
     display: grid;
-    grid-template-columns: 700px 1fr;
+    grid-template-columns: var(--main-width) 1fr;
 }
 .grid-main{
     display: grid;
     width: var(--main-width);
-    height: calc(var(--main-height) + 50px);
-    grid-template-columns: 95px 145px 220px 145px 95px;
-    grid-template-rows: 95px 145px 220px 145px 145px;
+    height: var(--main-height);
+    grid-template-columns: 95px 170px 220px 170px 95px;
+    grid-template-rows: 95px 170px 220px 170px 145px;
     grid-template-areas: "ah-p3 ah-p2 ah-p2   ah-p2 ah-p2"
                          "ah-p3 .     ad-p2   .     ah-p1"
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"
