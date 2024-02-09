@@ -94,7 +94,7 @@ h1{
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     background: var(--color-accent);;
-    padding-right: 30px;
+    padding-right: 40px;
     padding-top: 10px;
 }
 .grid-hand-p0-container{

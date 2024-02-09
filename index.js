@@ -687,15 +687,24 @@ function updateState() {
             // kakan = added kan
             console.assert(event.kanTile.meldedTiles.length==1)
             GS.gl.thisRoundExtraDoras++
-            // Put the drawn tile into hand first, then remove whatever tile we are going to kakan
+            // Put the drawn tile into hand first, then remove the tile we are going to kakan
             GS.gl.hands[event.pidx].push(GS.gl.drawnTile[event.pidx])
             GS.gl.hands[event.pidx].sort(tileSort)
             GS.gl.drawnTile[event.pidx] = null
-            for (let i=0; i<event.kanTile.meldedTiles.length; i++) {
-                removeFromArray(GS.gl.hands[event.pidx], event.kanTile.meldedTiles[i])
-                GS.gl.calls[event.pidx].push(event.kanTile.meldedTiles[i])
-                GS.gl.calls[event.pidx].push('rotate')
+            removeFromArray(GS.gl.hands[event.pidx], event.kanTile.meldedTiles[0])
+            let rotatedIdx = null
+            for (let i=1; i<GS.gl.calls[event.pidx].length; i++) {
+                if (GS.gl.calls[event.pidx][i]=='rotate' && fuzzyCompareTile(GS.gl.calls[event.pidx][i-1], event.kanTile.meldedTiles[0])) {
+                    rotatedIdx = i
+                    break
+                }
             }
+            if (rotatedIdx === null) {
+                console.log(event)
+                console.log(GS.gl.calls[event.pidx])
+                throw new Error('Cannot find meld to kakan to')
+            }
+            GS.gl.calls[event.pidx].splice(rotatedIdx+1, 0, event.kanTile.meldedTiles[0], 'rotate', 'float')
         } else if (event.type == 'ankan') {
             console.assert(event.meldedTiles.length==4)
             GS.gl.thisRoundExtraDoras++
@@ -805,7 +814,6 @@ class NewTile {
                 } else {
                     this.meldedTiles.splice(this.fromIdxRel, 1)
                 }
-
             }
         }
     }
