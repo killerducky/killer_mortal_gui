@@ -228,7 +228,8 @@ class UI {
     updateGridInfo() {
         this.clearDiscardBars()
         this.clearCallBars()
-        let mortalEval = GS.ge[GS.hand_counter][GS.ply_counter].mortalEval
+        let event = GS.ge[GS.hand_counter][GS.ply_counter]
+        let mortalEval = event.mortalEval
         if (mortalEval) {
             if (mortalEval.type == 'Discard') {
                 this.updateDiscardBars()
@@ -238,21 +239,6 @@ class UI {
             }
         }
         if (GS.gl.handOver) {
-            let scoreChangesPlusSticks = GS.gl.scoreChanges.concat([0])
-            for (let pidx=0; pidx<4; pidx++) {
-                scoreChangesPlusSticks[pidx] -= GS.gl.thisRoundSticks[pidx]*1000
-            }
-            console.log(GS.gl.thisRoundSticks, scoreChangesPlusSticks, GS.gl.scoreChanges)
-            if (GS.gl.result == '和了') {
-                // If there was a winner, they get the prevRoundSticks
-                scoreChangesPlusSticks[4] = -GS.gl.prevRoundSticks*1000
-            } else {
-                // If no winner, pot "wins" the sticks
-                console.log(GS.gl.prevRoundSticks)
-                scoreChangesPlusSticks[4] += sum(GS.gl.thisRoundSticks)*1000
-            }
-            console.log(GS.gl.thisRoundSticks, scoreChangesPlusSticks, GS.gl.scoreChanges)
-            console.assert(sum(scoreChangesPlusSticks)==0)
             if (GS.gl.result == '和了') {
                 if (GS.gl.winner == GS.gl.payer) {
                     this.result.append(`Tsumo`)
@@ -276,7 +262,7 @@ class UI {
                 let cell = tr.insertCell()
                 cell.textContent = `${this.#relativeToHeroStr(pidx)}`
                 cell = tr.insertCell()
-                cell.textContent = `${scoreChangesPlusSticks[pidx]}`
+                cell.textContent = `${event.scoreChangesPlusSticks[pidx]}`
             }
         }
     }
@@ -841,7 +827,8 @@ function preParseTenhouLogs(data) {
         return
     }
     for (round of data) {
-        GS.ge.push([])
+        let currGeList = []
+        GS.ge.push(currGeList)
         GS.gl = new GameLog(round['log'][0])
         let openkans = 0
         let ply = new TurnNum()
@@ -851,17 +838,17 @@ function preParseTenhouLogs(data) {
                 break
             }
             if (draw[0] == 'draw') {
-                GS.ge[GS.ge.length-1].push(new GameEvent('draw', ply.pidx, {'draw':draw[1]}))
+                currGeList.push(new GameEvent('draw', ply.pidx, {'draw':draw[1]}))
             } else {
                 if (draw[0] == 'pon') {
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[2], 'fromIdxRel':draw[1], 'meldedTiles':[draw[2], draw[2]]})
-                    GS.ge[GS.ge.length-1].push(ge)
+                    currGeList.push(ge)
                 } else if (draw[0] == 'openkan') {
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[2], 'fromIdxRel':draw[1], 'meldedTiles':[draw[2], draw[2], draw[2]]})
-                    GS.ge[GS.ge.length-1].push(ge)
+                    currGeList.push(ge)
                 } else if (draw[0] == 'chi') {
                     let ge = new GameEvent('call', ply.pidx, {'draw':draw[1], 'fromIdxRel':0, 'meldedTiles':[draw[2], draw[3]]})
-                    GS.ge[GS.ge.length-1].push(ge)
+                    currGeList.push(ge)
                 } else {
                     throw new Error('?', draw)
                 }
@@ -879,7 +866,7 @@ function preParseTenhouLogs(data) {
             if (typeof discard == 'string' && discard.indexOf('k') != -1) {
                 fromIdxRel = discard.indexOf('k')/2
                 let mt = parseInt(discard[7]+discard[8])
-                GS.ge[GS.ge.length-1].push(new GameEvent(
+                currGeList.push(new GameEvent(
                     'kakan', ply.pidx, {'fromIdxRel':fromIdxRel, 'meldedTiles':[mt]}
                 ))
                 // kakan and ankan mean we get another draw
@@ -887,19 +874,19 @@ function preParseTenhouLogs(data) {
                 ply.incPly(mt, true, false)
             } else if (typeof discard == 'string' && discard.indexOf('a') != -1) {
                 let mt = parseInt(discard[7]+discard[8])
-                GS.ge[GS.ge.length-1].push(new GameEvent(
+                currGeList.push(new GameEvent(
                     'ankan', ply.pidx, {'meldedTiles':[mt, mt, mt, mt]}))
                 // kakan and ankan mean we get another draw
                 ply.incPly(mt, true, false)
             } else {
                 if (discard[0] == 'r') {
                     // split riichi into two events
-                    GS.ge[GS.ge.length-1].push(new GameEvent('riichi', ply.pidx))
+                    currGeList.push(new GameEvent('riichi', ply.pidx))
                     discard = parseInt(discard.substring(1))
                     // let the next if statement handle the discard
                 }
                 if (typeof discard == 'number') {
-                    GS.ge[GS.ge.length-1].push(new GameEvent('discard', ply.pidx, {'discard':discard}))
+                    currGeList.push(new GameEvent('discard', ply.pidx, {'discard':discard}))
                 } else {
                     console.log(typeof discard, discard)
                     throw new Error('discard should be number')
@@ -910,7 +897,29 @@ function preParseTenhouLogs(data) {
                 ply.incPly(discard, false, false)
             }
         }
-        GS.ge[GS.ge.length-1].push(new GameEvent('result', null))
+
+        let result = new GameEvent('result', null)
+        for (let tmpPly=1; tmpPly<currGeList.length; tmpPly++) {
+            let riichi = currGeList[tmpPly-1].type == "riichi"
+            // If riichi and the tile passed
+            if (riichi && currGeList[tmpPly+1].type != 'result') {
+                GS.gl.thisRoundSticks[currGeList[tmpPly].pidx]++
+            }
+        }
+        result.scoreChangesPlusSticks = GS.gl.scoreChanges.concat([0])
+        for (let pidx=0; pidx<4; pidx++) {
+            result.scoreChangesPlusSticks[pidx] -= GS.gl.thisRoundSticks[pidx]*1000
+        }
+        if (GS.gl.result == '和了') {
+            // If there was a winner, they get the prevRoundSticks
+            result.scoreChangesPlusSticks[4] = -GS.gl.prevRoundSticks*1000
+        } else {
+            // If no winner, pot "wins" the sticks
+            result.scoreChangesPlusSticks[4] += sum(GS.gl.thisRoundSticks)*1000
+        }
+        console.assert(sum(result.scoreChangesPlusSticks)==0)
+        currGeList.push(result)
+
         let checkPlies = 0
         for (i=0; i<4; i++) {
             checkPlies += GS.gl.draws[i].length
