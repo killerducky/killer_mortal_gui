@@ -140,12 +140,11 @@ h1{
     border: 1px solid black;
     margin: auto;
     grid-template-columns: 30px 5px 130px 5px 30px;
-    grid-template-rows: repeat(6, 30px);
+    grid-template-rows: repeat(5, 40px);
     grid-template-areas:
       "ai-p3 ai-p2 ai-p2   ai-p2 ai-p2"
       "ai-p3 .    ai-round   .     ai-p1"
       "ai-p3 .    ai-sticks  .     ai-p1"
-      "ai-p3 .    ai-honbas  .     ai-p1"
       "ai-p3 .    ai-doras   .     ai-p1"
       "ai-p0 ai-p0 ai-p0   ai-p0 ai-p1";
     background: var(--color-accent);
@@ -156,9 +155,6 @@ h1{
 .info-sticks {
     grid-area: ai-sticks;
 }
-.info-honbas {
-    grid-area: ai-honbas;
-}
 .info-doras {
     grid-area: ai-doras;
 }
@@ -168,17 +164,23 @@ h1{
 }
 .gi-p0 {
     grid-area: ai-p0;
-    padding: 10px;
     margin: auto;
 }
 .gi-p1 {
     grid-area: ai-p1;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    margin: auto;
 }
 .gi-p2 {
     grid-area: ai-p2;
+    transform: rotate(180deg);
+    margin: auto;
 }
 .gi-p3 {
     grid-area: ai-p3;
+    writing-mode: vertical-rl;
+    margin: auto;
 }
 .rotate > img {
     transform: rotate(90deg);

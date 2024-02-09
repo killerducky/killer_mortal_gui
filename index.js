@@ -85,6 +85,7 @@ class GameLog {
         this.honbas = this.rawRound[1]
         this.prevRoundSticks = this.rawRound[2]
         this.thisRoundSticks = [0,0,0,0]
+        this.thisRoundExtraDoras = 0
         this.scores = log[logIdx++]
         this.dora = log[logIdx++]
         this.uradora = log[logIdx++]
@@ -179,7 +180,6 @@ class UI {
         }
         this.round = document.querySelector('.info-round')
         this.prevRoundSticks = document.querySelector('.info-sticks')
-        this.honbas = document.querySelector('.info-honbas')
         this.doras = document.querySelector('.info-doras')
         this.result = document.querySelector('.result')
     }
@@ -203,22 +203,12 @@ class UI {
         this.prevRoundSticks.replaceChildren()
         this.doras.replaceChildren()
         this.result.replaceChildren()
-        for (let i=0; i<5; i++) {
-            if (GS.gl.dora[i] == null) {
-                this.doras.append(createTile('back'))
-            } else {
-                this.doras.append(createTile(tenhou2str(GS.gl.dora[i])))
-            }
-            this.doras.lastChild.setAttribute('width', 20)
-        }
         for (let pidx=0; pidx<4; pidx++) {
             this.discards[pidx].replaceChildren()
-            if (pidx == GS.heroPidx) {
-                let pidxObj = new PIDX(pidx)
-                let seatWind = (4 + GS.heroPidx - GS.gl.roundNum) % 4
-                this.pInfo[pidxObj.pov()].replaceChildren(GS.C_windStr[seatWind])
-                this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx]-GS.gl.thisRoundSticks[pidx]*1000)
-            }
+            let pidxObj = new PIDX(pidx)
+            let seatWind = (4 + pidx - GS.gl.roundNum) % 4
+            this.pInfo[pidxObj.pov()].replaceChildren(GS.C_windStr[seatWind])
+            this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx]-GS.gl.thisRoundSticks[pidx]*1000)
         }
     }
     #relativeToHeroStr(pidx) {
@@ -238,6 +228,14 @@ class UI {
             } else {
                 this.updateCallBars()
             }
+        }
+        for (let i=0; i<5; i++) {
+            if (GS.gl.dora[i] == null || i > GS.gl.thisRoundExtraDoras) {
+                this.doras.append(createTile('back'))
+            } else {
+                this.doras.append(createTile(tenhou2str(GS.gl.dora[i])))
+            }
+            this.doras.lastChild.setAttribute('width', 20)
         }
         if (GS.gl.handOver) {
             if (GS.gl.result == '和了') {
@@ -647,6 +645,10 @@ function updateState() {
             let dp = GS.gl.discardPond[event.draw.fromIdxAbs]
             dp[dp.length-1].called = true
             GS.gl.calls[event.pidx].push(event.draw.newTile)
+            if (event.draw.type == 'm') {
+                GS.gl.thisRoundExtraDoras++ // openkan
+                console.log(event)
+            }
             if (event.draw.fromIdxRel == 0) {
                 GS.gl.calls[event.pidx].push('rotate')
             }
@@ -660,6 +662,7 @@ function updateState() {
         } else if (event.type == 'kakan') {
             // kakan = added kan
             console.assert(event.kanTile.meldedTiles.length==1)
+            GS.gl.thisRoundExtraDoras++
             // Put the drawn tile into hand first, then remove whatever tile we are going to kakan
             GS.gl.hands[event.pidx].push(GS.gl.drawnTile[event.pidx])
             GS.gl.hands[event.pidx].sort(tileSort)
@@ -671,6 +674,7 @@ function updateState() {
             }
         } else if (event.type == 'ankan') {
             console.assert(event.meldedTiles.length==4)
+            GS.gl.thisRoundExtraDoras++
             GS.gl.hands[event.pidx].push(GS.gl.drawnTile[event.pidx])
             GS.gl.hands[event.pidx].sort(tileSort)
             GS.gl.drawnTile[event.pidx] = null
