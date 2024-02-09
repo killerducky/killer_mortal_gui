@@ -392,6 +392,10 @@ class UI {
                 for (let tileInt of calls[pnum]) {
                     if (tileInt == 'rotate') {
                         this.rotateLastTile(objPnum)
+                    } else if (tileInt == 'float') {
+                        this.floatLastTile(objPnum)
+                    } else if (tileInt == 'back') {
+                        this.addHandTiles(objPnum, [tileInt], false)
                     } else {
                         this.addHandTiles(objPnum, [tenhou2str(tileInt)], false)
                     }
@@ -427,6 +431,23 @@ class UI {
             this.#getHand(pidx).lastChild.style.marginLeft = '5px'
             this.#getHand(pidx).lastChild.style.marginBottom = '0px'
             this.#getHand(pidx).lastChild.style.transform += pidx.pov()==2 ? ' translate(-6px,0px)' : ' translate(6px,0px)'
+        }
+    }
+    floatLastTile(pidx) {
+        if (pidx.pov() == 0) {
+            this.#getHand(pidx).lastChild.style.marginLeft = '-39px'
+            this.#getHand(pidx).lastChild.style.transform += ' translate(-34px,0px)'
+        } else if (pidx.pov() == 1) {
+            this.#getHand(pidx).lastChild.style.marginTop = '-39px'
+            this.#getHand(pidx).lastChild.style.transform += ' translate(-34px,0px)'
+        } else if (pidx.pov() == 2) {
+            this.#getHand(pidx).lastChild.style.marginLeft = '-39px'
+            this.#getHand(pidx).lastChild.style.transform += ' translate(34px,0px)'
+        } else if (pidx.pov() == 3) {
+            this.#getHand(pidx).lastChild.style.marginTop = '-39px'
+            this.#getHand(pidx).lastChild.style.transform += ' translate(34px,0px)'
+        } else {
+            console.log('error ', pidx)
         }
     }
     addBlankSpace(pidx) {
@@ -644,19 +665,22 @@ function updateState() {
         } else if (event.type == 'call') {
             let dp = GS.gl.discardPond[event.draw.fromIdxAbs]
             dp[dp.length-1].called = true
-            GS.gl.calls[event.pidx].push(event.draw.newTile)
             if (event.draw.type == 'm') {
                 GS.gl.thisRoundExtraDoras++ // openkan
-                console.log(event)
             }
-            if (event.draw.fromIdxRel == 0) {
-                GS.gl.calls[event.pidx].push('rotate')
-            }
-            for (let i=0; i<event.draw.meldedTiles.length; i++) {
-                removeFromArray(GS.gl.hands[event.pidx], event.draw.meldedTiles[i])
-                GS.gl.calls[event.pidx].push(event.draw.meldedTiles[i])
-                if (event.draw.fromIdxRel == i+1) {
+            let allMeldedTiles = [event.draw.newTile].concat(event.draw.meldedTiles)
+            for (let i=0; i<allMeldedTiles.length; i++) {
+                if (i>0) {
+                    removeFromArray(GS.gl.hands[event.pidx], allMeldedTiles[i])
+                }
+                GS.gl.calls[event.pidx].push(allMeldedTiles[i])
+                if (event.draw.fromIdxRel == i) {
                     GS.gl.calls[event.pidx].push('rotate')
+                }
+                if (event.draw.type == 'm' && event.draw.fromIdxRel+1 == i) {
+                    console.log(event, i)
+                    GS.gl.calls[event.pidx].push('rotate')
+                    GS.gl.calls[event.pidx].push('float')
                 }
             }
         } else if (event.type == 'kakan') {
@@ -680,9 +704,14 @@ function updateState() {
             GS.gl.drawnTile[event.pidx] = null
             for (let i=0; i<event.meldedTiles.length; i++) {
                 removeFromArray(GS.gl.hands[event.pidx], event.meldedTiles[i])
-                GS.gl.calls[event.pidx].push(event.meldedTiles[i])
-                if (event.fromIdxRel == i+1) {
+                if (i==0 || i==3) {
+                    GS.gl.calls[event.pidx].push('back')
+                } else {
+                    GS.gl.calls[event.pidx].push(event.meldedTiles[i])
                     GS.gl.calls[event.pidx].push('rotate')
+                    if (i==2) {
+                        GS.gl.calls[event.pidx].push('float')
+                    }
                 }
             }
         } else if (event.type == 'discard') {
