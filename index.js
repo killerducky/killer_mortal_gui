@@ -659,15 +659,14 @@ function updateState() {
             }
         } else if (event.type == 'kakan') {
             // kakan = added kan
-            console.log("shouldn't this be a call type?")
-            console.assert(event.meldedTiles.length==1)
+            console.assert(event.kanTile.meldedTiles.length==1)
             // Put the drawn tile into hand first, then remove whatever tile we are going to kakan
             GS.gl.hands[event.pidx].push(GS.gl.drawnTile[event.pidx])
             GS.gl.hands[event.pidx].sort(tileSort)
             GS.gl.drawnTile[event.pidx] = null
-            for (let i=0; i<event.meldedTiles.length; i++) {
-                removeFromArray(GS.gl.hands[event.pidx], event.meldedTiles[i])
-                GS.gl.calls[event.pidx].push(event.meldedTiles[i])
+            for (let i=0; i<event.kanTile.meldedTiles.length; i++) {
+                removeFromArray(GS.gl.hands[event.pidx], event.kanTile.meldedTiles[i])
+                GS.gl.calls[event.pidx].push(event.kanTile.meldedTiles[i])
                 GS.gl.calls[event.pidx].push('rotate')
             }
         } else if (event.type == 'ankan') {
@@ -737,7 +736,7 @@ class GameEvent {
         } else if (this.type == 'ankan') {
             this.meldedTiles = args['meldedTiles']
         } else if (this.type == 'kakan') {
-            this.draw = args['draw']
+            this.kanTile = args['kanTile']
         } else if (this.type == 'riichi') {
             // do nothing
         } else if (this.type == 'result') {
@@ -836,9 +835,7 @@ function preParseTenhouLogs(data) {
             discard = new NewTile(discard)
             if (discard.type == 'k') {
                 console.assert(discard.meldedTiles.length==1)
-                currGeList.push(new GameEvent(
-                    'kakan', ply.pidx, {'fromIdxRel':discard.idx, 'meldedTiles':discard.meldedTiles}
-                ))
+                currGeList.push(new GameEvent('kakan', ply.pidx, {'kanTile':discard}))
                 kakanCnt++
                 // kakan and ankan mean we get another draw
                 // kakan writes 0 to discard, and there is a chance someone Rons for Robbing a Kan
@@ -868,6 +865,7 @@ function preParseTenhouLogs(data) {
         }
 
         let result = new GameEvent('result', null)
+        currGeList.push(result)
         for (let tmpPly=1; tmpPly<currGeList.length; tmpPly++) {
             let riichi = currGeList[tmpPly-1].type == "riichi"
             // If riichi and the tile passed
@@ -887,7 +885,6 @@ function preParseTenhouLogs(data) {
             result.scoreChangesPlusSticks[4] += sum(GS.gl.thisRoundSticks)*1000
         }
         console.assert(sum(result.scoreChangesPlusSticks)==0)
-        currGeList.push(result)
 
         let checkPlies = 0
         for (i=0; i<4; i++) {
