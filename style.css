@@ -238,7 +238,7 @@ h1{
     text-align: right;
     border: 1px solid black;
     border-collapse: collapse;
-    padding: 0.3rem;
+    padding: 0.4rem;
 }
 .controls > *:hover {
     background:black;

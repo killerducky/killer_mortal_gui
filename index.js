@@ -503,6 +503,7 @@ class UI {
         for (let pidx=0; pidx<4+1; pidx++) {
             cell = tr.insertCell()
             cell.textContent = `${this.#relativeToHeroStr(pidx)}`
+            cell = tr.insertCell()
         }
         for (let currGeList of GS.ge) {
             GS.gl = new GameLog(GS.json_data[hand_counter]['log'][0])
@@ -512,6 +513,8 @@ class UI {
             cell = tr.insertCell()
             cell.textContent = this.roundStr()
             for (let pidx=0; pidx<4+1; pidx++) {
+                cell = tr.insertCell()
+                cell.textContent = pidx==4 ? GS.gl.prevRoundSticks : `${GS.gl.scores[pidx]}`
                 cell = tr.insertCell()
                 cell.textContent = `${result.scoreChangesPlusSticks[pidx]}`
             }
