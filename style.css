@@ -219,6 +219,27 @@ h1{
     border-color:black;
     border-width:2px;
 }
+.info-round {
+    background: var(--color-accent2);
+    color:var(--color-text);
+    border-style:outset;
+    border-color:black;
+    border-width:2px;
+}
+/* .info-round-modal {
+    border: 0;
+    box-shadow: 0 0 1em rgb(0 0 0 / .9);
+    box-shadow: 0 0 1em rgb(255 255 255 / .5);
+} */
+.info-round-modal::backdrop {
+    background: rgb(0 0 0 / .3);
+}
+.info-round-table table, th, td {
+    text-align: right;
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 0.3rem;
+}
 .controls > *:hover {
     background:black;
 }

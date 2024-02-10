@@ -183,12 +183,22 @@ class UI {
         this.prevRoundSticks = document.querySelector('.info-sticks')
         this.doras = document.querySelector('.info-doras')
         this.result = document.querySelector('.result')
+        this.infoRoundModal = document.querySelector('.info-round-table')
     }
     #getHand(pidx) { 
         return this.hands[pidx.pov()] 
     }
     #getDiscard(pidx) { 
         return this.discards[pidx.pov()]
+    }
+    roundStr() {
+        console.log(GS.gl)
+        let str = GS.C_windStr[GS.gl.roundWind-41]
+        str += "-" + (GS.gl.roundNum+1)
+        if (GS.gl.honbas > 0) {
+            str += "-" + GS.gl.honbas
+        }
+        return str
     }
     reset() {
         this.round.replaceChildren(GS.C_windStr[GS.gl.roundWind-41])
@@ -199,8 +209,6 @@ class UI {
         if (GS.gl.prevRoundSticks > 0) {
             this.round.append(' +', GS.gl.prevRoundSticks*1000)
         }
-        // this.round.append('  raw:', GS.gl.rawRound)
-        // this.honbas.replaceChildren(`Honbas ${GS.gl.honbas}`)
         this.prevRoundSticks.replaceChildren()
         this.doras.replaceChildren()
         this.result.replaceChildren()
@@ -484,6 +492,31 @@ class UI {
     }
     lastDiscardWasCalled(pidx) {
         this.#getDiscard(pidx).lastChild.style.opacity = "0.5"
+    }
+    updateResultsTable() {
+        let table = document.createElement("table")
+        this.infoRoundModal.replaceChildren(table)
+        let hand_counter = 0
+        let tr = table.insertRow()
+        let cell = tr.insertCell()
+        cell.textContent = 'Round'
+        for (let pidx=0; pidx<4+1; pidx++) {
+            cell = tr.insertCell()
+            cell.textContent = `${this.#relativeToHeroStr(pidx)}`
+        }
+        for (let currGeList of GS.ge) {
+            GS.gl = new GameLog(GS.json_data[hand_counter]['log'][0])
+            let result = currGeList.splice(-1)[0]
+            
+            tr = table.insertRow()
+            cell = tr.insertCell()
+            cell.textContent = this.roundStr()
+            for (let pidx=0; pidx<4+1; pidx++) {
+                cell = tr.insertCell()
+                cell.textContent = `${result.scoreChangesPlusSticks[pidx]}`
+            }
+            hand_counter++
+        }
     }
 }
 
@@ -839,102 +872,96 @@ class NewTile {
 //     "121212a12" (3)
 //     (writes to discards)
 ///////////////////////////////////////////////////
-function preParseTenhouLogs(data) {
-    GS.ge = []
-    if (data == null) {
-        console.log('no data to parse yet')
-        return
-    }
-    for (round of data) {
-        let currGeList = []
-        GS.ge.push(currGeList)
-        GS.gl = new GameLog(round['log'][0])
-        let openkanCnt = 0
-        let kakanCnt = 0
-        let ply = new TurnNum()
-        while (1) {
-            let draw = ply.getDraw(GS.gl.draws)
-            if (draw == null) {
-                break
-            }
-            if (draw.type == 'draw') {
-                currGeList.push(new GameEvent('draw', ply.pidx, {'draw':draw.newTile}))
-            } else {
-                let ge = new GameEvent('call', ply.pidx, {'draw':draw})
-                currGeList.push(ge)
-            }
-            ply.incPly(null, draw.type == 'm', draw.type == 'm')
-            if (draw.type == 'm') {
-                openkanCnt++
-                // skip discard, loop back around to draw again
-                continue
-            }
-            let discard = ply.getDiscard()
-            if (discard === null) {
-                break
-            }
-            if (discard.type == 'k') {
-                console.assert(discard.meldedTiles.length==1)
-                currGeList.push(new GameEvent('kakan', ply.pidx, {'kanTile':discard}))
-                kakanCnt++
-                // kakan and ankan mean we get another draw
-                // kakan writes 0 to discard, and there is a chance someone Rons for Robbing a Kan
-                ply.incPly(discard.newTile, true, false)
-            } else if (discard.type == 'a') {
-                currGeList.push(new GameEvent('ankan', ply.pidx, {'meldedTiles':discard.meldedTiles}))
-                // kakan and ankan mean we get another draw
-                ply.incPly(discard.newTile, true, false)
-            } else {
-                if (discard.type == 'r') {
-                    // split riichi into two events
-                    currGeList.push(new GameEvent('riichi', ply.pidx))
-                    // let the next if statement handle the discard
-                }
-                if (typeof discard.newTile == 'number') {
-                    currGeList.push(new GameEvent('discard', ply.pidx, {'discard':discard.newTile}))
-                } else {
-                    console.log(typeof discard, discard)
-                    throw new Error('discard.newTile should be number')
-                }
-                if (discard.newTile == 60) {
-                    discard.newTile = draw.newTile
-                }
-                ply.incPly(discard.newTile, false, false)
-            }
-        }
 
-        let result = new GameEvent('result', null)
-        currGeList.push(result)
-        for (let tmpPly=1; tmpPly<currGeList.length; tmpPly++) {
-            let riichi = currGeList[tmpPly-1].type == "riichi"
-            // If riichi and the tile passed
-            if (riichi && currGeList[tmpPly+1].type != 'result') {
-                GS.gl.thisRoundSticks[currGeList[tmpPly].pidx]++
-            }
+function parseOneTenhouRound() {
+    let currGeList = []
+    GS.ge.push(currGeList)
+    GS.gl = new GameLog(round['log'][0])
+    GS.gl = new GameLog(round['log'][0])
+    let openkanCnt = 0
+    let kakanCnt = 0
+    let ply = new TurnNum()
+
+    while (1) {
+        let draw = ply.getDraw(GS.gl.draws)
+        if (draw == null) {
+            break
         }
-        result.scoreChangesPlusSticks = GS.gl.scoreChanges.concat([0])
-        for (let pidx=0; pidx<4; pidx++) {
-            result.scoreChangesPlusSticks[pidx] -= GS.gl.thisRoundSticks[pidx]*1000
-        }
-        if (GS.gl.result == '和了') {
-            // If there was a winner, they get the prevRoundSticks
-            result.scoreChangesPlusSticks[4] = -GS.gl.prevRoundSticks*1000
+        if (draw.type == 'draw') {
+            currGeList.push(new GameEvent('draw', ply.pidx, {'draw':draw.newTile}))
         } else {
-            // If no winner, pot "wins" the sticks
-            result.scoreChangesPlusSticks[4] += sum(GS.gl.thisRoundSticks)*1000
+            let ge = new GameEvent('call', ply.pidx, {'draw':draw})
+            currGeList.push(ge)
         }
-        console.assert(sum(result.scoreChangesPlusSticks)==0)
-
-        let checkPlies = 0
-        for (i=0; i<4; i++) {
-            checkPlies += GS.gl.draws[i].length
-            checkPlies += GS.gl.discards[i].length
+        ply.incPly(null, draw.type == 'm', draw.type == 'm')
+        if (draw.type == 'm') {
+            openkanCnt++
+            // skip discard, loop back around to draw again
+            continue
         }
-        // openkans have an extra 0 in the discard array that is just skipped
-        checkPlies == ply.ply + openkanCnt || console.log('checkPlies mismatch', checkPlies, ply.stringState(), openkanCnt, kakanCnt, result, GS.gl.thisRoundSticks)
+        let discard = ply.getDiscard()
+        if (discard === null) {
+            break
+        }
+        if (discard.type == 'k') {
+            console.assert(discard.meldedTiles.length==1)
+            currGeList.push(new GameEvent('kakan', ply.pidx, {'kanTile':discard}))
+            kakanCnt++
+            // kakan and ankan mean we get another draw
+            // kakan writes 0 to discard, and there is a chance someone Rons for Robbing a Kan
+            ply.incPly(discard.newTile, true, false)
+        } else if (discard.type == 'a') {
+            currGeList.push(new GameEvent('ankan', ply.pidx, {'meldedTiles':discard.meldedTiles}))
+            // kakan and ankan mean we get another draw
+            ply.incPly(discard.newTile, true, false)
+        } else {
+            if (discard.type == 'r') {
+                // split riichi into two events
+                currGeList.push(new GameEvent('riichi', ply.pidx))
+                // let the next if statement handle the discard
+            }
+            if (typeof discard.newTile == 'number') {
+                currGeList.push(new GameEvent('discard', ply.pidx, {'discard':discard.newTile}))
+            } else {
+                console.log(typeof discard, discard)
+                throw new Error('discard.newTile should be number')
+            }
+            if (discard.newTile == 60) {
+                discard.newTile = draw.newTile
+            }
+            ply.incPly(discard.newTile, false, false)
+        }
     }
-    
-    // merge in mortalEval events
+    return [openkanCnt, kakanCnt, ply, currGeList]
+}
+
+function addResult(currGeList) {
+    let result = new GameEvent('result', null)
+    currGeList.push(result)
+
+    for (let tmpPly=1; tmpPly<currGeList.length; tmpPly++) {
+        let riichi = currGeList[tmpPly-1].type == "riichi"
+        // If riichi and the tile passed
+        if (riichi && currGeList[tmpPly+1].type != 'result') {
+            GS.gl.thisRoundSticks[currGeList[tmpPly].pidx]++
+        }
+    }
+    result.scoreChangesPlusSticks = GS.gl.scoreChanges.concat([0])
+    for (let pidx=0; pidx<4; pidx++) {
+        result.scoreChangesPlusSticks[pidx] -= GS.gl.thisRoundSticks[pidx]*1000
+    }
+    if (GS.gl.result == '和了') {
+        // If there was a winner, they get the prevRoundSticks
+        result.scoreChangesPlusSticks[4] = -GS.gl.prevRoundSticks*1000
+    } else {
+        // If no winner, pot "wins" the sticks
+        result.scoreChangesPlusSticks[4] += sum(GS.gl.thisRoundSticks)*1000
+    }
+    console.assert(sum(result.scoreChangesPlusSticks)==0)
+}
+
+
+function mergeMortalEvents() {
     for (let roundNum=0; roundNum<GS.ge.length; roundNum++) {
         let mortalEvalIdx = 0
         for (let event of GS.ge[roundNum]) {
@@ -969,6 +996,35 @@ function preParseTenhouLogs(data) {
             }
         }
     }
+}
+
+function checkPlies(openkanCnt, kakanCnt, ply, currGeList) {
+    let checkPlies = 0
+    for (i=0; i<4; i++) {
+        checkPlies += GS.gl.draws[i].length
+        checkPlies += GS.gl.discards[i].length
+    }
+    // openkans have an extra 0 in the discard array that is just skipped
+    checkPlies == ply.ply + openkanCnt || console.log('checkPlies mismatch', checkPlies, ply.stringState(), openkanCnt, kakanCnt, result, GS.gl.thisRoundSticks)
+}
+
+function preParseTenhouLogs(data) {
+    GS.ge = []
+    if (data == null) {
+        console.log('no data to parse yet')
+        return
+    }
+    for (round of data) {
+        let currGeList
+        let openkanCnt
+        let kakanCnt
+        let ply
+        [openkanCnt, kakanCnt, ply, currGeList] = parseOneTenhouRound()
+        addResult(currGeList)
+        checkPlies(openkanCnt, kakanCnt, ply, currGeList)
+    }
+    mergeMortalEvents()
+    GS.ui.updateResultsTable()
     console.log('preParseTenhouLogs done', GS.ge)
 }
 
@@ -1036,6 +1092,9 @@ function connectUI() {
     const handInc = document.getElementById("hand-inc")
     const handDec = document.getElementById("hand-dec")
     const showHands =  document.getElementById("show-hands")
+    const infoRound = document.querySelector('.info-round')
+    const closeModal = document.querySelector('.info-round-close')
+    const infoRoundModal = document.querySelector('.info-round-modal')
     inc.addEventListener("click", () => {
         incPlyCounter();
         updateState()
@@ -1067,6 +1126,12 @@ function connectUI() {
     showHands.addEventListener("click", () => {
         GS.showHands = !GS.showHands
         updateState()
+    })
+    infoRound.addEventListener("click", () => {
+        infoRoundModal.showModal()
+    })
+    closeModal.addEventListener("click", () => {
+        infoRoundModal.close()
     })
 }
 
@@ -1222,7 +1287,8 @@ function parseMortalHtml() {
 
 function soften(pdfs) {
     const hotter = pdfs.map(x => Math.pow(x, 1/GS.C_soft_T))
-    const denom = hotter.reduce((a, b) => a + b)
+    // const denom = hotter.reduce((a, b) => a + b)
+    const denom = Math.max(...hotter)
     return hotter.map(x => x/denom*100)
 }
 
