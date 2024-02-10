@@ -107,6 +107,7 @@ h1{
 }
 .grid-discard{
     line-height: 0;
+    margin:5px;
 }
 .grid-discard-p3 {
     grid-area: ad-p3;
@@ -212,9 +213,14 @@ h1{
 .controls > * {
     margin:2px;
     padding:12px;
-    background:black;
     background: var(--color-accent2);
     color:var(--color-text);
+    border-style:outset;
+    border-color:black;
+    border-width:2px;
+}
+.controls > *:hover {
+    background:black;
 }
 #mortal-file-div {
     grid-column: span 2;

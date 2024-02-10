@@ -130,6 +130,7 @@ class GlobalState {
         this.mortalHtmlDoc = null
         this.json_data = null
         this.heroPidx = null   // player index mortal reviewed
+        this.showHands = false
 
         this.C_soft_T = 2
 
@@ -379,7 +380,11 @@ class UI {
             let objPidx = new PIDX(pnum)
             this.addHandTiles(objPidx, [], true)
             for (let tileInt of hands[pnum]) {
-                this.addHandTiles(objPidx, [tenhou2str(tileInt)], false)
+                if (GS.showHands || pnum==GS.heroPidx) {
+                    this.addHandTiles(objPidx, [tenhou2str(tileInt)], false)
+                } else {
+                    this.addHandTiles(objPidx, ['back'], false)
+                }
             }
             this.addBlankSpace(objPidx)
             if (drawnTile[pnum] != null) {
@@ -1030,6 +1035,7 @@ function connectUI() {
     const dec2 = document.getElementById("ply-dec2");
     const handInc = document.getElementById("hand-inc")
     const handDec = document.getElementById("hand-dec")
+    const showHands =  document.getElementById("show-hands")
     inc.addEventListener("click", () => {
         incPlyCounter();
         updateState()
@@ -1058,6 +1064,10 @@ function connectUI() {
         decHandCounter();
         updateState()
     });
+    showHands.addEventListener("click", () => {
+        GS.showHands = !GS.showHands
+        updateState()
+    })
 }
 
 function setMortalHtmlStr(data) {
