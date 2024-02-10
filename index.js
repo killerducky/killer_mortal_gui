@@ -566,8 +566,6 @@ function fuzzyCompareTile(t1, t2) {
 
 class TurnNum {
     constructor() {
-        this.draws = GS.gl.draws
-        this.discards = GS.gl.discards
         this.ply = 0
         this.pidx = GS.gl.dealerIdx
         this.nextDiscardIdx = [0,0,0,0]
@@ -577,7 +575,7 @@ class TurnNum {
         return `TurnNum: ${this.ply} ${this.pidx} ${this.nextDiscardIdx} ${this.nextDrawIdx}`
     }
     getDraw() {
-        let draw = this.draws[this.pidx][this.nextDrawIdx[this.pidx]]
+        let draw = GS.gl.draws[this.pidx][this.nextDrawIdx[this.pidx]]
         if (draw == null) {
             //console.log('undefined out of draws')
             return null
@@ -585,7 +583,11 @@ class TurnNum {
         return new NewTile(draw)
     }
     getDiscard() {
-        return this.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
+        let discard = GS.gl.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
+        if (typeof discard == "undefined") {
+            return null
+        }
+        return new NewTile(discard)
     }
     incPly(discard, selfKan, openKan) {
         if (discard !== null) {
@@ -612,11 +614,10 @@ class TurnNum {
         for (let tmpPidx=0; tmpPidx<4; tmpPidx++) {
             let offset = (4 + tmpPidx - this.pidx - 1) % 4
             if (tmpPidx == this.pidx || offset == 0) {
-                // cannot call own tile
-                // if offset is zero it will be our turn next unless someone else is doing e.g. pon
+                // cannot call own tile. if offset is zero it will be our turn next unless someone else is doing e.g. pon
                 continue
             }
-            let draw = this.draws[tmpPidx][this.nextDrawIdx[tmpPidx]]
+            let draw = GS.gl.draws[tmpPidx][this.nextDrawIdx[tmpPidx]]
             if (typeof draw == 'string') {
                 let fancyDrawClass = new NewTile(draw)
                 // The call string encodes who they called from by putting e.g. 'p' in idx=0,2,4
@@ -625,10 +626,6 @@ class TurnNum {
                 // p212121 p0 pon from their kami/left     p3   idx/2=0   (4+0-3)%4 = 1-1 = 0
                 // 21p2121 p0 pon from their toimen/cross  p2   idx/2=1   (4+0-2)%4 = 2-1 = 1
                 // 2121p21 p0 pon from their shimo/right   p1   idx/2=2   (4+0-1)%4 = 3-1 = 2
-                // if (fancyDrawClass.type=='m') {
-                    // console.log('open kan incoming', fancyDrawClass, offset)
-                    // }
-                // check if the non-numeric (e.g. 'p') is in the calculated offset spot
                 if (fancyDrawClass.fromIdxRel == offset) {
                     if (fuzzyCompareTile(fancyDrawClass.newTile, discard)) {
                         return tmpPidx
@@ -848,11 +845,7 @@ function preParseTenhouLogs(data) {
         let openkanCnt = 0
         let kakanCnt = 0
         let ply = new TurnNum()
-        let debug = false
         while (1) {
-            if (GS.ge.length==4 && ply.ply>77) {
-                debug = true
-            }
             let draw = ply.getDraw(GS.gl.draws)
             if (draw == null) {
                 break
@@ -870,10 +863,9 @@ function preParseTenhouLogs(data) {
                 continue
             }
             let discard = ply.getDiscard()
-            if (typeof discard == "undefined") {
+            if (discard === null) {
                 break
             }
-            discard = new NewTile(discard)
             if (discard.type == 'k') {
                 console.assert(discard.meldedTiles.length==1)
                 currGeList.push(new GameEvent('kakan', ply.pidx, {'kanTile':discard}))
@@ -882,8 +874,7 @@ function preParseTenhouLogs(data) {
                 // kakan writes 0 to discard, and there is a chance someone Rons for Robbing a Kan
                 ply.incPly(discard.newTile, true, false)
             } else if (discard.type == 'a') {
-                currGeList.push(new GameEvent(
-                    'ankan', ply.pidx, {'meldedTiles':discard.meldedTiles}))
+                currGeList.push(new GameEvent('ankan', ply.pidx, {'meldedTiles':discard.meldedTiles}))
                 // kakan and ankan mean we get another draw
                 ply.incPly(discard.newTile, true, false)
             } else {
@@ -896,7 +887,7 @@ function preParseTenhouLogs(data) {
                     currGeList.push(new GameEvent('discard', ply.pidx, {'discard':discard.newTile}))
                 } else {
                     console.log(typeof discard, discard)
-                    throw new Error('discard should be number')
+                    throw new Error('discard.newTile should be number')
                 }
                 if (discard.newTile == 60) {
                     discard.newTile = draw.newTile
@@ -934,7 +925,6 @@ function preParseTenhouLogs(data) {
         }
         // openkans have an extra 0 in the discard array that is just skipped
         checkPlies == ply.ply + openkanCnt || console.log('error', checkPlies, ply.stringState(), openkanCnt, kakanCnt, result, GS.gl.thisRoundSticks)
-        // console.log('yo', checkPlies, ply.stringState(), openkanCnt, kakanCnt, result, GS.gl.thisRoundSticks)
     }
     
     // merge in mortalEval events
@@ -959,7 +949,7 @@ function preParseTenhouLogs(data) {
                         } else {
                             console.log('TODO: Add Ron/Tsumo/Kan after riichi', mortalEval)
                         }
-                    } 
+                    }
                 }
                 mortalEvalIdx++
             } else if (event.type == 'call' && event.pidx == GS.heroPidx) {
