@@ -79,7 +79,7 @@ h1{
     grid-area: ah-p3;
     writing-mode: vertical-rl;
     background: var(--color-accent);
-    padding-right: 30px;
+    padding-right: 40px;
     padding-top: 10px;
 }
 .grid-hand-p2{
@@ -113,24 +113,27 @@ h1{
     align-items:center;
 }
 .grid-discard{
-    padding:3px;
     margin:auto;
 }
 .grid-discard-p3 {
     grid-area: ad-p3;
     writing-mode: vertical-rl;
+    margin-right:0px;
 }
 .grid-discard-p2 {
     grid-area: ad-p2;
     transform: rotate(180deg);
+    margin-bottom:0px;
 }
 .grid-discard-p1 {
     grid-area: ad-p1;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
+    margin-left:0px;
 }
 .grid-discard-p0 {
     grid-area: ad-p0;
+    margin-top:0px;
 }
 .grid-info {
     grid-area: a-info; /* This goes inside the main grid here */

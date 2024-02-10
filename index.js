@@ -376,28 +376,28 @@ class UI {
     }
     updateHandInfo(hands, calls, drawnTile) {
         for (let pnum=0; pnum<4; pnum++) {
-            let objPnum = new PIDX(pnum)
-            this.addHandTiles(objPnum, [], true)
+            let objPidx = new PIDX(pnum)
+            this.addHandTiles(objPidx, [], true)
             for (let tileInt of hands[pnum]) {
-                this.addHandTiles(objPnum, [tenhou2str(tileInt)], false)
+                this.addHandTiles(objPidx, [tenhou2str(tileInt)], false)
             }
-            this.addBlankSpace(objPnum)
+            this.addBlankSpace(objPidx)
             if (drawnTile[pnum] != null) {
-                this.addHandTiles(objPnum, [tenhou2str(drawnTile[pnum])], false)
+                this.addHandTiles(objPidx, [tenhou2str(drawnTile[pnum])], false)
             } else {
-                this.addBlankSpace(objPnum)
+                this.addBlankSpace(objPidx)
             }
             if (calls[pnum].length > 0) {
-                this.addBlankSpace(objPnum)
+                this.addBlankSpace(objPidx)
                 for (let tileInt of calls[pnum]) {
                     if (tileInt == 'rotate') {
-                        this.rotateLastTile(objPnum)
+                        this.rotateLastTile(objPidx, 'hand')
                     } else if (tileInt == 'float') {
-                        this.floatLastTile(objPnum)
+                        this.floatLastTile(objPidx)
                     } else if (tileInt == 'back') {
-                        this.addHandTiles(objPnum, [tileInt], false)
+                        this.addHandTiles(objPidx, [tileInt], false)
                     } else {
-                        this.addHandTiles(objPnum, [tenhou2str(tileInt)], false)
+                        this.addHandTiles(objPidx, [tenhou2str(tileInt)], false)
                     }
                 }
             }
@@ -419,18 +419,19 @@ class UI {
             this.#getDiscard(pidx).appendChild(createTile(tileStrArray[i]))
         }   
     }
-    rotateLastTile(pidx) {
-        let angle = (pidx.pov() * 90 + 90) % 360
-        this.#getHand(pidx).lastChild.style.transform = `rotate(${angle}deg)`
-        if (pidx.pov() == 1 || pidx.pov() == 3) {
-            this.#getHand(pidx).lastChild.style.marginBottom = '-5px'
-            this.#getHand(pidx).lastChild.style.marginTop = '5px'
-            this.#getHand(pidx).lastChild.style.transform += pidx.pov()==1 ? ' translate(6px,0px)' : ' translate(-6px,0px)'
+    rotateLastTile(objPidx, type) {
+        let div = (type=='hand') ? this.#getHand(objPidx) : this.#getDiscard(objPidx)
+        let angle = (objPidx.pov() * 90 + 90) % 360
+        div.lastChild.style.transform = `rotate(${angle}deg)`
+        if (objPidx.pov() == 1 || objPidx.pov() == 3) {
+            div.lastChild.style.marginBottom = '-5px'
+            div.lastChild.style.marginTop = '5px'
+            div.lastChild.style.transform += objPidx.pov()==1 ? ' translate(6px,0px)' : ' translate(-6px,0px)'
         } else {
-            this.#getHand(pidx).lastChild.style.marginRight = '5px'
-            this.#getHand(pidx).lastChild.style.marginLeft = '5px'
-            this.#getHand(pidx).lastChild.style.marginBottom = '0px'
-            this.#getHand(pidx).lastChild.style.transform += pidx.pov()==2 ? ' translate(-6px,0px)' : ' translate(6px,0px)'
+            div.lastChild.style.marginRight = '5px'
+            div.lastChild.style.marginLeft = '5px'
+            div.lastChild.style.marginBottom = '0px'
+            div.lastChild.style.transform += objPidx.pov()==2 ? ' translate(-6px,0px)' : ' translate(6px,0px)'
         }
     }
     floatLastTile(pidx) {
@@ -471,8 +472,9 @@ class UI {
             this.#getDiscard(pidx).lastChild.style.background = GS.C_colorTsumogiri
         }
         if (riichi) {
-            let angle = (pidx.pov() * 90 + 90) % 360
-            this.#getDiscard(pidx).lastChild.style.transform = `rotate(${angle}deg`
+            // let angle = (pidx.pov() * 90 + 90) % 360
+            // this.#getDiscard(pidx).lastChild.style.transform = `rotate(${angle}deg`
+            this.rotateLastTile(pidx, 'discard')
         }
     }
     lastDiscardWasCalled(pidx) {
@@ -924,7 +926,7 @@ function preParseTenhouLogs(data) {
             checkPlies += GS.gl.discards[i].length
         }
         // openkans have an extra 0 in the discard array that is just skipped
-        checkPlies == ply.ply + openkanCnt || console.log('error', checkPlies, ply.stringState(), openkanCnt, kakanCnt, result, GS.gl.thisRoundSticks)
+        checkPlies == ply.ply + openkanCnt || console.log('checkPlies mismatch', checkPlies, ply.stringState(), openkanCnt, kakanCnt, result, GS.gl.thisRoundSticks)
     }
     
     // merge in mortalEval events
