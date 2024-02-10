@@ -106,19 +106,18 @@ h1{
     padding-left: 10px;
 }
 .grid-discard{
-    display:grid;
-    grid-template-columns: repeat(6, 34px);
-    grid-template-rows: repeat(3, 44px);
-    justify-content:left;
-    align-items:center;
-}
-.grid-discard{
-    margin:auto;
+    line-height: 0;
 }
 .grid-discard-p3 {
     grid-area: ad-p3;
     writing-mode: vertical-rl;
     margin-right:0px;
+}
+.grid-discard-p1 > * {
+    margin-left:10px;
+}
+.grid-discard-p3 > * {
+    margin-left:10px;
 }
 .grid-discard-p2 {
     grid-area: ad-p2;
@@ -136,8 +135,8 @@ h1{
     margin-top:0px;
 }
 .grid-info {
-    grid-area: a-info; /* This goes inside the main grid here */
-    display: grid; /* and is also a sub-grid */
+    grid-area: a-info;
+    display: grid;
     width: 200px;
     height: 200px;
     border: 1px solid black;
