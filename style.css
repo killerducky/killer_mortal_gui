@@ -37,13 +37,13 @@ Wrap the image in a div the right size after translation and it'll be fine..
     /* Analagous to main: split one way bluer, other way greener */
     --color-bar-mortal: hsl(210, 90%, 55%);
     --color-bar-hero: hsl(170, 90%, 55%);
-    /* Analagous to main: -> green-yellow -> yellow */
-    --color-bar-mortal: hsl(120, 73%, 55%);
-    --color-bar-hero: hsl(70, 87%, 55%);
     /* Mortal orange, Hero grey-yellow */
     --color-bar-hero: hsl(70, 60%, 30%);
     --color-bar-mortal: hsl(30, 87%, 55%);
     --color-bar-mortal: hsl(20, 87%, 57%);
+    /* Analagous to main: -> green-yellow -> yellow */
+    --color-bar-mortal: hsl(120, 81%, 34%);
+    --color-bar-hero: hsl(70, 72%, 48%);
     /* Discard background */
     --color-tsumogiri: hsl(30, 11%, 78%);
 }
@@ -171,8 +171,22 @@ h1{
     grid-area: ai-doras;
 }
 .result {
+    margin: auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding-left: 10px;
+    padding-left: 10px;
+    width: 260px;
+    height: 150px;
+    background: var(--color-accent);
+}
+.result > * {
     padding: 10px;
-    height: 200px;
+}
+.result table, th, td {
+    text-align: right;
+    border-collapse: collapse;
+    padding: 0.4rem;
 }
 .gi-p0 {
     grid-area: ai-p0;
@@ -282,3 +296,7 @@ button:hover {
     margin: auto;
     margin-top: 20px;
 }
+/* svg {
+    filter: drop-shadow(3px 0px 2px rgb(0 0 0 / 0.4)) url(#inset-shadow);
+    box-shadow: 0 0 15px 6px inset rgba(255,0,96,0.8);
+} */

@@ -265,13 +265,16 @@ class UI {
             }
             let table = document.createElement("table")
             this.result.append(table)
+            let tr
             for (let pidx=0; pidx<4+1; pidx++) {
-                let tr = table.insertRow()
+                if (pidx%2==0) { tr = table.insertRow() }
                 let cell = tr.insertCell()
                 cell.textContent = `${this.#relativeToHeroStr(pidx)}`
                 cell = tr.insertCell()
                 cell.textContent = `${event.scoreChangesPlusSticks[pidx]}`
             }
+        } else {
+            this.result.append('(Result hidden)')
         }
     }
     clearCallBars() {
@@ -294,21 +297,13 @@ class UI {
             let Pval = mortalEval.Pvals[key]
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (key == mortalEval.p_action) {
-                let rect2 = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-                rect2.setAttribute("x", xloc-GS.C_db_heroBarWidth/2)
-                rect2.setAttribute("y", 0)
-                rect2.setAttribute("width", GS.C_db_heroBarWidth)
-                rect2.setAttribute("height", Math.ceil(1*GS.C_cb_height))
-                rect2.setAttribute("fill", GS.C_colorBarHero)
-                svgElement.appendChild(rect2)
+                svgElement.appendChild(this.createRect(
+                    xloc-GS.C_db_heroBarWidth/2, 0, GS.C_db_heroBarWidth, 1*GS.C_cb_height, GS.C_colorBarHero
+                ))
             }
-            let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-            rect.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
-            rect.setAttribute("y", Math.floor((1-Pval/100)*GS.C_cb_height))
-            rect.setAttribute("width", GS.C_db_mortBarWidth)
-            rect.setAttribute("height", Math.ceil(Pval/100*GS.C_cb_height))
-            rect.setAttribute("fill", GS.C_colorBarMortal)
-            svgElement.appendChild(rect);
+            svgElement.appendChild(this.createRect(
+                xloc-GS.C_db_mortBarWidth/2, (1-Pval/100)*GS.C_cb_height, GS.C_db_mortBarWidth, Pval/100*GS.C_cb_height, GS.C_colorBarMortal
+            ));
             let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
             text.setAttribute("y", GS.C_db_height + 20)
@@ -326,6 +321,15 @@ class UI {
         svgElement.setAttribute("padding", GS.C_db_padding)
         discardBars.replaceChildren(svgElement)
     }
+    createRect(x, y, width, height, fill) {
+        let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+        rect.setAttribute("x", x)
+        rect.setAttribute("y", y)
+        rect.setAttribute("width", width)
+        rect.setAttribute("height", height)
+        rect.setAttribute("fill", fill)
+        return rect
+    }
     updateDiscardBars() {
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = gameEvent.mortalEval
@@ -336,19 +340,11 @@ class UI {
             (mortalEval.p_action == 'Kan' && 'Kan' in mortalEval.Pvals)
         )
         for (let i = -1; i < GS.gl.hands[gameEvent.pidx].length; i++) {
-            let tile = null
-            let Pval = null
-            if (i==-1) {
-                tile = GS.gl.drawnTile[gameEvent.pidx]
-                if (tile == null) {
-                    //console.log('skip tile null')
-                    continue // on calls there was no drawnTile
-                }
-            } else {
-                tile = GS.gl.hands[gameEvent.pidx][i]
+            let tile = (i==-1) ? GS.gl.drawnTile[gameEvent.pidx] : GS.gl.hands[gameEvent.pidx][i]
+            if (tile == null) {
+                continue // on calls there was no drawnTile
             }
-            Pval = mortalEval['Pvals'][tile]
-            Pval = mortalEval['Pvals_soft'][tile]
+            let Pval = mortalEval['Pvals_soft'][tile]
             if (Pval == null) {
                 console.log('missing Pval, probably because it is an illegal discard')
                 console.log(`tile=${tile} i=${i}`)
@@ -360,21 +356,13 @@ class UI {
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (tile == mortalEval.p_action) {
                 heroSlotFound = true
-                let rect2 = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-                rect2.setAttribute("x", xloc-GS.C_db_heroBarWidth/2)
-                rect2.setAttribute("y", 0)
-                rect2.setAttribute("width", GS.C_db_heroBarWidth)
-                rect2.setAttribute("height", Math.ceil(1*GS.C_db_height))
-                rect2.setAttribute("fill", GS.C_colorBarHero)
-                svgElement.appendChild(rect2)
+                svgElement.appendChild(this.createRect(
+                    xloc-GS.C_db_heroBarWidth/2, 0, GS.C_db_heroBarWidth, 1*GS.C_db_height, GS.C_colorBarHero
+                ))
             }
-            let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-            rect.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
-            rect.setAttribute("y", Math.floor((1-Pval/100)*GS.C_db_height))
-            rect.setAttribute("width", GS.C_db_mortBarWidth)
-            rect.setAttribute("height", Math.ceil((Pval/100)*GS.C_db_height))
-            rect.setAttribute("fill", GS.C_colorBarMortal)
-            svgElement.appendChild(rect);
+            svgElement.appendChild(this.createRect(
+                xloc-GS.C_db_mortBarWidth/2, (1-Pval/100)*GS.C_db_height, GS.C_db_mortBarWidth, (Pval/100)*GS.C_db_height, GS.C_colorBarMortal
+            ));
         }
         if (!heroSlotFound) {
             console.log('!heroSlotFound', gameEvent)
@@ -485,8 +473,6 @@ class UI {
             this.#getDiscard(pidx).lastChild.style.background = GS.C_colorTsumogiri
         }
         if (riichi) {
-            // let angle = (pidx.pov() * 90 + 90) % 360
-            // this.#getDiscard(pidx).lastChild.style.transform = `rotate(${angle}deg`
             this.rotateLastTile(pidx, 'discard')
         }
     }
@@ -509,10 +495,11 @@ class UI {
         }
         for (let [roundNum, currGeList] of GS.ge.entries()) {
             GS.gl = new GameLog(GS.json_data[hand_counter]['log'][0])
-            let result = currGeList.splice(-1)[0]
+            let result = currGeList.slice(-1)[0]
             tr = table.insertRow()
             tr.addEventListener('click', () => {
                 GS.hand_counter = roundNum
+                GS.ply_counter = 0
                 this.infoRoundModal.close()
                 updateState()
             })
@@ -727,7 +714,6 @@ function updateState() {
                     GS.gl.calls[event.pidx].push('rotate')
                 }
                 if (event.draw.type == 'm' && event.draw.fromIdxRel+1 == i) {
-                    console.log(event, i)
                     GS.gl.calls[event.pidx].push('rotate')
                     GS.gl.calls[event.pidx].push('float')
                 }
@@ -749,8 +735,7 @@ function updateState() {
                 }
             }
             if (rotatedIdx === null) {
-                console.log(event)
-                console.log(GS.gl.calls[event.pidx])
+                console.log(event, GS.gl.calls[event.pidx])
                 throw new Error('Cannot find meld to kakan to')
             }
             GS.gl.calls[event.pidx].splice(rotatedIdx+1, 0, event.kanTile.meldedTiles[0], 'rotate', 'float')
@@ -778,8 +763,7 @@ function updateState() {
             if (riichi && GS.ge[GS.hand_counter][ply+1].type != 'result') {
                 GS.gl.thisRoundSticks[event.pidx]++
             }
-            let tsumogiri = event.discard==60
-            if (tsumogiri) {
+            if (event.discard==60) {
                 let tile = new Tile(GS.gl.drawnTile[event.pidx])
                 tile.riichi = riichi
                 tile.tsumogiri = true
@@ -843,28 +827,30 @@ class NewTile {
         if (typeof callStr == 'number') {
             this.type = 'draw'
             this.newTile = parseInt(callStr)
-            console.assert(!isNaN(callStr))
-        } else {
-            this.fromIdxRel = callStr.search(/[a-z]/)
-            this.type = callStr[this.fromIdxRel]
-            if (this.type == 'r') {
-                this.newTile = parseInt(callStr[1]+callStr[2])
-            } else {
-                this.newTile = parseInt(callStr[this.fromIdxRel+1] + callStr[this.fromIdxRel+2])
-                this.fromIdxRel = Math.min(this.fromIdxRel/2, 2)
-                this.meldedTiles = callStr.replace(/[a-z]/, '').match(/../g).map(x => parseInt(x))
-                let tmp = this.meldedTiles[this.fromIdxRel]
-                console.assert(tmp == this.newTile)
-                if (this.type == 'k') {
-                    // only one of the tiles is actually new
-                    this.meldedTiles = [this.meldedTiles[this.fromIdxRel]]
-                } else if (this.type == 'a') {
-                    // meld all
-                } else {
-                    this.meldedTiles.splice(this.fromIdxRel, 1)
-                }
-            }
+            return
         }
+        this.fromIdxRel = callStr.search(/[a-z]/)
+        this.type = callStr[this.fromIdxRel]
+        this.fromIdxRel = this.fromIdxRel/2
+        if (this.type == 'r') {
+            this.newTile = parseInt(callStr[1]+callStr[2])
+            this.fromIdxRel = null
+            return
+        }
+        this.meldedTiles = callStr.replace(/[a-z]/, '').match(/../g).map(x => parseInt(x))
+        this.newTile = this.meldedTiles[this.fromIdxRel]
+        // TODO: Test ankan of red 5 type cases
+        if (this.type == 'k') {
+            // only one of the tiles is actually new
+            this.meldedTiles = [this.meldedTiles[this.fromIdxRel]]
+        } else if (this.type == 'a') {
+            // meld all
+        } else {
+            this.meldedTiles.splice(this.fromIdxRel, 1)
+        }
+        // e.g. 151515k51 -- 51 (red 5) was called from relative p2 (there is no p3)
+        // But wait until after we got the real called tile
+        this.fromIdxRel = Math.min(this.fromIdxRel, 2)
     }
 }
 
@@ -1037,7 +1023,6 @@ function preParseTenhouLogs(data) {
     }
     mergeMortalEvents()
     GS.ui.updateResultsTable()
-    console.log('preParseTenhouLogs done', GS.ge)
 }
 
 function createTile(tileStr) {
@@ -1073,11 +1058,20 @@ function convertTileStr(str) {
 }
 
 function incPlyCounter() {
-    GS.ply_counter < GS.ge[GS.hand_counter].length-1 && GS.ply_counter++
+    if (GS.ply_counter < GS.ge[GS.hand_counter].length-1) {
+        GS.ply_counter++
+    } else {
+        incHandCounter()
+    }
 }
 
 function decPlyCounter() {
-    GS.ply_counter > 0 && GS.ply_counter--
+    if (GS.ply_counter > 0) {
+        GS.ply_counter--
+    } else {
+        decHandCounter()
+        GS.ply_counter = GS.ge[GS.hand_counter].length-1
+    }
 }
 
 function incHandCounter() {
@@ -1336,8 +1330,14 @@ function getJsonData() {
     })
 }
 
+function tests() {
+    console.assert(new NewTile('151515k51').newTile == 51)
+    console.assert(new NewTile('151551k15').newTile == 15)
+}
+
 const GS = new GlobalState
 function main() {
+    tests()
     getJsonData()
     connectUI()
 }
