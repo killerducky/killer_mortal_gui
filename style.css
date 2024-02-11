@@ -12,31 +12,40 @@ Wrap the image in a div the right size after translation and it'll be fine..
  
     /* unused */
     /* green-yellow */
-    --color-main:   #306000;
-    --color-accent: #508000;
-    --color-text:    #b0ffa0;
-    /* blue-green, accent is the bright one */
-    --color-main:   #007090;
-    --color-text:    #005060;
-    --color-accent:  #60a0b0;
+    --color-main:   hsl(90, 100%, 19%);
+    --color-accent: hsl(83, 100%, 25%);
+    --color-text:    hsl(110, 100%, 81%);
     /* Mortal yellow, Hero dark red */
-    --color-bar-mortal: #b0b000;
-    --color-bar-hero: #600000;
+    --color-bar-mortal: hsl(60, 100%, 35%);
+    --color-bar-hero: hsl(0, 100%, 19%);
     /* Mortal orange, Hero red-orange*/
-    --color-bar-mortal: #f43a09;
-    --color-bar-hero: #c0b517;
+    --color-bar-mortal: hsl(13, 93%, 50%);
+    --color-bar-hero: hsl(56, 79%, 42%);
 
     /* blue-green, accents go darker */
-    --color-main:   #006888;
-    --color-accent: #005060;
-    --color-accent2: #003040;
-    --color-accent3: #004050;
-    --color-text:    hsl(186, 78%, 69%);
+    --color-main:   hsl(190, 100%, 27%);
+    --color-accent: hsl(190, 100%, 19%);
+    --color-accent2: hsl(190, 100%, 13%);
+    --color-accent3: hsl(190, 100%, 16%);
+    --color-text:    hsl(190, 58%, 70%);
+    /* Mortal orange, Hero yellow */
+    --color-bar-mortal: hsl(39, 83%, 44%);
+    --color-bar-hero: hsl(56, 70%, 55%);
     /* Mortal purple, Hero dark blue */
-    --color-bar-mortal: #9000b0;
-    --color-bar-hero: #3000b0;
+    --color-bar-mortal: hsl(290, 90%, 35%);
+    --color-bar-hero: hsl(250, 90%, 35%);
+    /* Analagous to main: split one way bluer, other way greener */
+    --color-bar-mortal: hsl(210, 90%, 55%);
+    --color-bar-hero: hsl(170, 90%, 55%);
+    /* Analagous to main: -> green-yellow -> yellow */
+    --color-bar-mortal: hsl(120, 73%, 55%);
+    --color-bar-hero: hsl(70, 87%, 55%);
+    /* Mortal orange, Hero grey-yellow */
+    --color-bar-hero: hsl(70, 60%, 30%);
+    --color-bar-mortal: hsl(30, 87%, 55%);
+    --color-bar-mortal: hsl(20, 87%, 57%);
     /* Discard background */
-    --color-tsumogiri: #ccc6c0;
+    --color-tsumogiri: hsl(30, 11%, 78%);
 }
 body, .info-round-modal, .info-round-close {
     background: var(--color-main);

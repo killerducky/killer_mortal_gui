@@ -193,7 +193,6 @@ class UI {
         return this.discards[pidx.pov()]
     }
     roundStr() {
-        console.log(GS.gl)
         let str = GS.C_windStr[GS.gl.roundWind-41]
         str += "-" + (GS.gl.roundNum+1)
         if (GS.gl.honbas > 0) {
