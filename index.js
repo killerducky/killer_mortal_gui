@@ -222,7 +222,7 @@ class UI {
     }
     #relativeToHeroStr(pidx) {
         let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
-        return ['Hero', 'Kamicha', 'Toimen', 'Shimocha', 'Pot'][relIdx]
+        return ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
         // return ['Self', 'Left', 'Cross', 'Right'][relIdx]
     }
     updateGridInfo() {
@@ -500,21 +500,25 @@ class UI {
         let tr = table.insertRow()
         let cell = tr.insertCell()
         cell.textContent = 'Round'
-        for (let pidx=0; pidx<4+1; pidx++) {
-            cell = tr.insertCell()
-            cell.textContent = `${this.#relativeToHeroStr(pidx)}`
-            cell = tr.insertCell()
+        for (let i=0; i<2; i++) {
+            for (let pidx=0; pidx<4+1; pidx++) {
+                cell = tr.insertCell()
+                cell.textContent = `${this.#relativeToHeroStr(pidx)}`
+            }
+            if (i==0) {cell = tr.insertCell()}
         }
         for (let currGeList of GS.ge) {
             GS.gl = new GameLog(GS.json_data[hand_counter]['log'][0])
             let result = currGeList.splice(-1)[0]
-            
             tr = table.insertRow()
             cell = tr.insertCell()
             cell.textContent = this.roundStr()
             for (let pidx=0; pidx<4+1; pidx++) {
                 cell = tr.insertCell()
                 cell.textContent = pidx==4 ? GS.gl.prevRoundSticks : `${GS.gl.scores[pidx]}`
+            }
+            cell = tr.insertCell()
+            for (let pidx=0; pidx<4+1; pidx++) {
                 cell = tr.insertCell()
                 cell.textContent = `${result.scoreChangesPlusSticks[pidx]}`
             }
@@ -1250,7 +1254,7 @@ function parseMortalHtml() {
                 evals.type = 'Call' // Chi, Pon, Open Kan
                 evals.p_action = roles[0].parentElement.textContent.replace(/Player:/, '').trim()
                 evals.strFromRel = beforeAction.match(/^[^\W]+/)[0]
-                const fromMap = {"Shimocha":1, "Toimen":2, "Kamicha":3}
+                const fromMap = {"Shimo":1, "Toimen":2, "Kami":3}
                 console.assert(evals.strFromRel in fromMap)
                 evals.fromIdxRel = fromMap[evals.strFromRel]
             } else if (evals.p_action == "Tsumo") {

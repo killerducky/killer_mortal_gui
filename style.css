@@ -38,7 +38,7 @@ Wrap the image in a div the right size after translation and it'll be fine..
     /* Discard background */
     --color-tsumogiri: #ccc6c0;
 }
-body{
+body, .info-round-modal, .info-round-close {
     background: var(--color-main);
     max-width: 1100px;
     margin: auto;
@@ -67,8 +67,8 @@ h1{
     display: grid;
     width: var(--main-width);
     height: var(--main-height);
-    grid-template-columns: 95px 170px 220px 170px 95px;
-    grid-template-rows: 95px 170px 220px 170px 145px;
+    grid-template-columns: 95px 165px 230px 165px 95px;
+    grid-template-rows: 95px 165px 230px 165px 145px;
     grid-template-areas: "ah-p3 ah-p2 ah-p2   ah-p2 ah-p2"
                          "ah-p3 .     ad-p2   .     ah-p1"
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"
@@ -236,15 +236,22 @@ h1{
 }
 .info-round-table table, th, td {
     text-align: right;
-    border: 1px solid black;
+    border: 1px solid var(--color-text);
     border-collapse: collapse;
     padding: 0.4rem;
 }
+.info-round-close {
+    margin: 0.5rem;
+}
 .controls > *:hover {
-    background:black;
+    background:rgba(0, 0, 0, 0.8);
+}
+button:hover {
+    background:rgba(0, 0, 0, 0.8);
 }
 #mortal-file-div {
     grid-column: span 2;
+    display:flex;
 }
 .killer-call-div {
     display:grid;
