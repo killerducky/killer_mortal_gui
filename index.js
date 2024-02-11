@@ -336,6 +336,7 @@ class UI {
         const discardBars = document.getElementById("discard-bars")
         let svgElement = discardBars.firstElementChild
         let heroSlotFound = typeof mortalEval.p_action == 'string' && (
+            (mortalEval.p_action == 'Ryuukyoku' && 'Ryuukyoku' in mortalEval.Pvals) ||
             (mortalEval.p_action == 'Riichi' && 'Riichi' in mortalEval.Pvals) ||
             (mortalEval.p_action == 'Kan' && 'Kan' in mortalEval.Pvals)
         )
@@ -1270,7 +1271,7 @@ function parseMortalHtml() {
             Qval = parseFloat(i[0].textContent + f[0].textContent)
             Pval = parseFloat(i[1].textContent + f[1].textContent)
 
-            if (evals.type == 'Call' || action == "Riichi" || action == "Tsumo" || action == "Kan") {
+            if (evals.type == 'Call' || action == "Riichi" || action == "Tsumo" || action == "Kan" || action == "Ryuukyoku") {
                 evals.Pvals[action] = Pval
                 //console.log('action', action, tr.innerHTML)
                 // TODO: Chi/Pon etc has tiles in it
