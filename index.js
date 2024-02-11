@@ -183,7 +183,8 @@ class UI {
         this.prevRoundSticks = document.querySelector('.info-sticks')
         this.doras = document.querySelector('.info-doras')
         this.result = document.querySelector('.result')
-        this.infoRoundModal = document.querySelector('.info-round-table')
+        this.infoRoundModal = document.querySelector('.info-round-modal')
+        this.infoRoundTable = document.querySelector('.info-round-table')
     }
     #getHand(pidx) { 
         return this.hands[pidx.pov()] 
@@ -495,7 +496,7 @@ class UI {
     }
     updateResultsTable() {
         let table = document.createElement("table")
-        this.infoRoundModal.replaceChildren(table)
+        this.infoRoundTable.replaceChildren(table)
         let hand_counter = 0
         let tr = table.insertRow()
         let cell = tr.insertCell()
@@ -507,10 +508,15 @@ class UI {
             }
             if (i==0) {cell = tr.insertCell()}
         }
-        for (let currGeList of GS.ge) {
+        for (let [roundNum, currGeList] of GS.ge.entries()) {
             GS.gl = new GameLog(GS.json_data[hand_counter]['log'][0])
             let result = currGeList.splice(-1)[0]
             tr = table.insertRow()
+            tr.addEventListener('click', () => {
+                GS.hand_counter = roundNum
+                this.infoRoundModal.close()
+                updateState()
+            })
             cell = tr.insertCell()
             cell.textContent = this.roundStr()
             for (let pidx=0; pidx<4+1; pidx++) {
@@ -1254,7 +1260,7 @@ function parseMortalHtml() {
                 evals.type = 'Call' // Chi, Pon, Open Kan
                 evals.p_action = roles[0].parentElement.textContent.replace(/Player:/, '').trim()
                 evals.strFromRel = beforeAction.match(/^[^\W]+/)[0]
-                const fromMap = {"Shimo":1, "Toimen":2, "Kami":3}
+                const fromMap = {"Shimocha":1, "Toimen":2, "Kamicha":3}
                 console.assert(evals.strFromRel in fromMap)
                 evals.fromIdxRel = fromMap[evals.strFromRel]
             } else if (evals.p_action == "Tsumo") {

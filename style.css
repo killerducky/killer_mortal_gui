@@ -31,7 +31,7 @@ Wrap the image in a div the right size after translation and it'll be fine..
     --color-accent: #005060;
     --color-accent2: #003040;
     --color-accent3: #004050;
-    --color-text:    #40d0e0;
+    --color-text:    hsl(186, 78%, 69%);
     /* Mortal purple, Hero dark blue */
     --color-bar-mortal: #9000b0;
     --color-bar-hero: #3000b0;
@@ -240,14 +240,17 @@ h1{
     border-collapse: collapse;
     padding: 0.4rem;
 }
+.info-round-table tr:hover {
+    background:rgba(0, 0, 0, 0.7);
+}
 .info-round-close {
     margin: 0.5rem;
 }
 .controls > *:hover {
-    background:rgba(0, 0, 0, 0.8);
+    background:rgba(0, 0, 0, 0.7);
 }
 button:hover {
-    background:rgba(0, 0, 0, 0.8);
+    background:rgba(0, 0, 0, 0.7);
 }
 #mortal-file-div {
     grid-column: span 2;
