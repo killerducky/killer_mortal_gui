@@ -217,19 +217,20 @@ class UI {
         this.prevRoundSticks.replaceChildren()
         this.doras.replaceChildren()
         for (let pidx=0; pidx<4; pidx++) {
-            this.discards[pidx].replaceChildren()
+            let pidxObj = new PIDX(pidx)
+            this.discards[pidxObj.pov()].replaceChildren()
             let seatWind = (4 + pidx - GS.gl.roundNum) % 4
-            this.pInfo[pidx].replaceChildren(GS.C_windStr[seatWind])
+            this.pInfo[pidxObj.pov()].replaceChildren(GS.C_windStr[seatWind])
             if (GS.gl.handOver) {
-                this.pInfo[pidx].append(' ', GS.gl.scores[pidx]+result.scoreChangesPlusSticks[pidx])
+                this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx]+result.scoreChangesPlusSticks[pidx])
             } else {
-                this.pInfo[pidx].append(' ', GS.gl.scores[pidx]-GS.gl.thisRoundSticks[pidx]*1000)
+                this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx]-GS.gl.thisRoundSticks[pidx]*1000)
             }
-            this.pInfoResult[pidx].replaceChildren()
+            this.pInfoResult[pidxObj.pov()].replaceChildren()
             if (GS.gl.handOver) {
-                this.pInfoResult[pidx].append(this.formatString(result.scoreChangesPlusSticks[pidx], false, true))
+                this.pInfoResult[pidxObj.pov()].append(this.formatString(result.scoreChangesPlusSticks[pidx], false, true))
             } else if (GS.gl.thisRoundSticks[pidx]) {
-                this.pInfoResult[pidx].append(this.formatString(-GS.gl.thisRoundSticks[pidx]*1000, false, true))
+                this.pInfoResult[pidxObj.pov()].append(this.formatString(-GS.gl.thisRoundSticks[pidx]*1000, false, true))
             }
         }
     }
@@ -1016,6 +1017,8 @@ function mergeMortalEvents() {
             } else if (event.type == 'discard' && ((GS.heroPidx + mortalEval.fromIdxRel)%4 == event.pidx) && mortalEval.type=='Call') {
                 event.mortalEval = mortalEval
                 mortalEvalIdx++
+            } else if (event.type == 'result') {
+                //console.log('result', event, mortalEval)
             }
         }
     }
@@ -1047,6 +1050,7 @@ function preParseTenhouLogs(data) {
         checkPlies(openkanCnt, kakanCnt, ply, currGeList)
     }
     mergeMortalEvents()
+    console.log('preParseTenhouLogs done', GS.ge)
     GS.ui.updateResultsTable()
 }
 
@@ -1364,6 +1368,7 @@ function tests() {
     GS.mortalEvals = [[]]
     preParseTenhouLogs(GS.json_data)
     updateState()
+    console.log('tests done (remove from production)')
 }
 
 const GS = new GlobalState
