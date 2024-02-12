@@ -1,3 +1,4 @@
+"use strict";
 /* Source: https://mjai.ekyu.moe/report/ac7f456533f7d814.html#kyoku-2-0 
 Also saved in mahjong_mortal_ui/example_logs/Example_mjai_report.html
 
@@ -561,7 +562,7 @@ function tm2t(str) {
     if (isNaN(num)) {
         //                                                   Pai=White Fa=Green Chun=Red
         const yakuhai = { 'e': 41, 's': 42, 'w': 43, 'n': 44, 'p':45, 'f':46, 'c': 47}
-        tile = yakuhai[str[0]]
+        let tile = yakuhai[str[0]]
         if (tile == null) {
             throw new Error(`Could not parse ${str}`)
         }
@@ -577,10 +578,10 @@ function tenhou2str(tileInt) {
         const akacon = { 51:'0m', 52:'0p', 53:'0s'}
         return akacon[tileInt]
     }
-    suitInt = Math.floor(tileInt / 10)
+    let suitInt = Math.floor(tileInt / 10)
     tileInt = tileInt % 10
     const tcon = ['m', 'p', 's', 'z']
-    output = tileInt.toString() + tcon[suitInt-1]
+    let output = tileInt.toString() + tcon[suitInt-1]
     return output
 }
 
@@ -705,20 +706,21 @@ function updateState() {
             if (event.draw.type == 'm') {
                 GS.gl.thisRoundExtraDoras++ // openkan
             }
-            let allMeldedTiles = [event.draw.newTile].concat(event.draw.meldedTiles)
+            GS.gl.hands[event.pidx].push(event.draw.newTile)
+            let allMeldedTiles = event.draw.meldedTiles
+            let newCall = []
             for (let i=0; i<allMeldedTiles.length; i++) {
-                if (i>0) {
-                    removeFromArray(GS.gl.hands[event.pidx], allMeldedTiles[i])
-                }
-                GS.gl.calls[event.pidx].push(allMeldedTiles[i])
+                removeFromArray(GS.gl.hands[event.pidx], allMeldedTiles[i])
+                newCall.push(allMeldedTiles[i])
                 if (event.draw.fromIdxRel == i) {
-                    GS.gl.calls[event.pidx].push('rotate')
+                    newCall.push('rotate')
                 }
                 if (event.draw.type == 'm' && event.draw.fromIdxRel+1 == i) {
-                    GS.gl.calls[event.pidx].push('rotate')
-                    GS.gl.calls[event.pidx].push('float')
+                    newCall.push('rotate')
+                    newCall.push('float')
                 }
             }
+            GS.gl.calls[event.pidx] = newCall.concat(GS.gl.calls[event.pidx])
         } else if (event.type == 'kakan') {
             // kakan = added kan
             console.assert(event.kanTile.meldedTiles.length==1)
@@ -746,18 +748,20 @@ function updateState() {
             GS.gl.hands[event.pidx].push(GS.gl.drawnTile[event.pidx])
             GS.gl.hands[event.pidx].sort(tileSort)
             GS.gl.drawnTile[event.pidx] = null
+            let newCall = []
             for (let i=0; i<event.meldedTiles.length; i++) {
                 removeFromArray(GS.gl.hands[event.pidx], event.meldedTiles[i])
                 if (i==0 || i==3) {
-                    GS.gl.calls[event.pidx].push('back')
+                    newCall.push('back')
                 } else {
-                    GS.gl.calls[event.pidx].push(event.meldedTiles[i])
-                    GS.gl.calls[event.pidx].push('rotate')
+                    newCall.push(event.meldedTiles[i])
+                    newCall.push('rotate')
                     if (i==2) {
-                        GS.gl.calls[event.pidx].push('float')
+                        newCall.push('float')
                     }
                 }
             }
+            GS.gl.calls[event.pidx] = newCall.concat(GS.gl.calls[event.pidx])
         } else if (event.type == 'discard') {
             let riichi = GS.ge[GS.hand_counter][ply-1].type == "riichi"
             // If riichi and the tile passed
@@ -844,10 +848,6 @@ class NewTile {
         if (this.type == 'k') {
             // only one of the tiles is actually new
             this.meldedTiles = [this.meldedTiles[this.fromIdxRel]]
-        } else if (this.type == 'a') {
-            // meld all
-        } else {
-            this.meldedTiles.splice(this.fromIdxRel, 1)
         }
         // e.g. 151515k51 -- 51 (red 5) was called from relative p2 (there is no p3)
         // But wait until after we got the real called tile
@@ -872,10 +872,9 @@ class NewTile {
 //     (writes to discards)
 ///////////////////////////////////////////////////
 
-function parseOneTenhouRound() {
+function parseOneTenhouRound(round) {
     let currGeList = []
     GS.ge.push(currGeList)
-    GS.gl = new GameLog(round['log'][0])
     GS.gl = new GameLog(round['log'][0])
     let openkanCnt = 0
     let kakanCnt = 0
@@ -999,7 +998,7 @@ function mergeMortalEvents() {
 
 function checkPlies(openkanCnt, kakanCnt, ply, currGeList) {
     let checkPlies = 0
-    for (i=0; i<4; i++) {
+    for (let i=0; i<4; i++) {
         checkPlies += GS.gl.draws[i].length
         checkPlies += GS.gl.discards[i].length
     }
@@ -1013,12 +1012,12 @@ function preParseTenhouLogs(data) {
         console.log('no data to parse yet')
         return
     }
-    for (round of data) {
+    for (let round of data) {
         let currGeList
         let openkanCnt
         let kakanCnt
         let ply
-        [openkanCnt, kakanCnt, ply, currGeList] = parseOneTenhouRound()
+        [openkanCnt, kakanCnt, ply, currGeList] = parseOneTenhouRound(round)
         addResult(currGeList)
         checkPlies(openkanCnt, kakanCnt, ply, currGeList)
     }
@@ -1149,7 +1148,7 @@ function setMortalHtmlStr(data) {
     GS.hand_counter = 0
     parseMortalHtml()
     GS.json_data = []
-    for (ta of GS.mortalHtmlDoc.querySelectorAll('textarea')) {
+    for (let ta of GS.mortalHtmlDoc.querySelectorAll('textarea')) {
         GS.json_data.push(JSON.parse(ta.value))
     }
     preParseTenhouLogs(GS.json_data)
@@ -1191,7 +1190,7 @@ class MortalEval {
 function parseMortalHtml() {
     let RiichiState = null
     
-    for (dtElement of GS.mortalHtmlDoc.querySelectorAll('dt')) {
+    for (let dtElement of GS.mortalHtmlDoc.querySelectorAll('dt')) {
         if (dtElement.textContent === 'player id') {
             GS.heroPidx = parseInt(dtElement.nextSibling.textContent)
             GS.ui.povPidx = GS.heroPidx
@@ -1200,7 +1199,7 @@ function parseMortalHtml() {
     }
 
     GS.mortalEvals = []
-    for (d of GS.mortalHtmlDoc.querySelectorAll('details')) {
+    for (let d of GS.mortalHtmlDoc.querySelectorAll('details')) {
         let summary = d.querySelector('summary')
         let currTurn = null
         if (!summary) {
@@ -1266,10 +1265,10 @@ function parseMortalHtml() {
         let tbody = d.querySelector('tbody')
         for (let tr of tbody.querySelectorAll('tr')) {
             let action = tr.firstElementChild.textContent.trim()
-            i = tr.querySelectorAll('span.int')
-            f = tr.querySelectorAll('span.frac')
-            Qval = parseFloat(i[0].textContent + f[0].textContent)
-            Pval = parseFloat(i[1].textContent + f[1].textContent)
+            let i = tr.querySelectorAll('span.int')
+            let f = tr.querySelectorAll('span.frac')
+            let Qval = parseFloat(i[0].textContent + f[0].textContent)
+            let Pval = parseFloat(i[1].textContent + f[1].textContent)
 
             if (evals.type == 'Call' || action == "Riichi" || action == "Tsumo" || action == "Kan" || action == "Ryuukyoku") {
                 evals.Pvals[action] = Pval
@@ -1300,9 +1299,9 @@ function soften(pdfs) {
 }
 
 function getJsonData() {
-    data = localStorage.getItem('mortalHtmlStr')
+    let data = localStorage.getItem('mortalHtmlStr')
     if (data) {
-        mortalFilename = localStorage.getItem('mortalFilename')
+        let mortalFilename = localStorage.getItem('mortalFilename')
         let label = document.getElementById('mortal-html-label')
         label.innerHTML = "Choose Mortal File<br>" + mortalFilename
         data = LZString.decompressFromUTF16(data)
@@ -1334,6 +1333,12 @@ function getJsonData() {
 function tests() {
     console.assert(new NewTile('151515k51').newTile == 51)
     console.assert(new NewTile('151551k15').newTile == 15)
+    // crazy open kans
+    GS.json_data = '{"title":["",""],"name":["","","",""],"rule":{"aka":0,"aka51":1,"aka52":1,"aka53":1,"disp":"玉の間南喰赤"},"sx":["C","C","C","C"],"log":[[[0,0,0],[25000,25000,25000,25000],[47],[],[11,13,51,17,19,21,21,21,23,23,23,25,25],[25,42,42,42,42],[11,13,51,17,19],[31,31,31,31,33,33,33,33,35,35,35,53,37],[],[],[32,32,32,32,34,34,34,34,36,36,36,36,38],[],[],[11,11,11,13,13,13,15,15,15,17,17,17,19],["111111m11",41,"131313m13",41,"151515m51",41,"171717m17",41],[0,60,0,60,0,60,0,60],["不明"]]]}'
+    GS.json_data = [JSON.parse(GS.json_data)]
+    GS.mortalEvals = [[]]
+    preParseTenhouLogs(GS.json_data)
+    updateState()
 }
 
 const GS = new GlobalState
