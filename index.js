@@ -173,17 +173,19 @@ class UI {
         this.hands = []
         this.discards = []
         this.pInfo = []
+        this.pInfoResult = []
         this.gridInfo = document.querySelector('.grid-info')
         this.povPidx = 0
         for (let pnum of Array(4).keys()) {
             this.hands.push(document.querySelector(`.grid-hand-p${pnum}`))
             this.discards.push(document.querySelector(`.grid-discard-p${pnum}`))
             this.pInfo.push(document.querySelector(`.gi-p${pnum}`))
+            this.pInfoResult.push(document.querySelector(`.gi-p${pnum}-result`))
         }
         this.round = document.querySelector('.info-round')
         this.prevRoundSticks = document.querySelector('.info-sticks')
         this.doras = document.querySelector('.info-doras')
-        this.result = document.querySelector('.result')
+        // this.result = document.querySelector('.result')
         this.infoRoundModal = document.querySelector('.info-round-modal')
         this.infoRoundTable = document.querySelector('.info-round-table')
     }
@@ -202,6 +204,8 @@ class UI {
         return str
     }
     reset() {
+        let currGeList = GS.ge[GS.hand_counter]
+        let result = currGeList.slice(-1)[0]
         this.round.replaceChildren(GS.C_windStr[GS.gl.roundWind-41])
         this.round.append("-", GS.gl.roundNum+1)
         if (GS.gl.honbas > 0) {
@@ -212,19 +216,34 @@ class UI {
         }
         this.prevRoundSticks.replaceChildren()
         this.doras.replaceChildren()
-        this.result.replaceChildren()
         for (let pidx=0; pidx<4; pidx++) {
             this.discards[pidx].replaceChildren()
-            let pidxObj = new PIDX(pidx)
             let seatWind = (4 + pidx - GS.gl.roundNum) % 4
-            this.pInfo[pidxObj.pov()].replaceChildren(GS.C_windStr[seatWind])
-            this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx]-GS.gl.thisRoundSticks[pidx]*1000)
+            this.pInfo[pidx].replaceChildren(GS.C_windStr[seatWind])
+            if (GS.gl.handOver) {
+                this.pInfo[pidx].append(' ', GS.gl.scores[pidx]+result.scoreChangesPlusSticks[pidx])
+            } else {
+                this.pInfo[pidx].append(' ', GS.gl.scores[pidx]-GS.gl.thisRoundSticks[pidx]*1000)
+            }
+            this.pInfoResult[pidx].replaceChildren()
+            if (GS.gl.handOver) {
+                this.pInfoResult[pidx].append(this.formatString(result.scoreChangesPlusSticks[pidx], false, true))
+            } else if (GS.gl.thisRoundSticks[pidx]) {
+                this.pInfoResult[pidx].append(this.formatString(-GS.gl.thisRoundSticks[pidx]*1000, false, true))
+            }
         }
+    }
+    formatString(num, showZero, addPlus) {
+        if (!showZero && num == 0) {
+            return ''
+        }
+        let s = (addPlus && num>0) ? '+' : ''
+        s += num
+        return s
     }
     #relativeToHeroStr(pidx) {
         let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
         return ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
-        // return ['Self', 'Left', 'Cross', 'Right'][relIdx]
     }
     updateGridInfo() {
         this.clearDiscardBars()
@@ -247,6 +266,7 @@ class UI {
             }
             this.doras.lastChild.setAttribute('width', 20)
         }
+        /*
         if (GS.gl.handOver) {
             if (GS.gl.result == '和了') {
                 if (GS.gl.winner == GS.gl.payer) {
@@ -277,6 +297,7 @@ class UI {
         } else {
             this.result.append('(Result hidden)')
         }
+        */
     }
     clearCallBars() {
         const callBars = document.querySelector('.killer-call-bars')
@@ -373,26 +394,28 @@ class UI {
             throw new Error()
         }
     }
-    updateHandInfo(hands, calls, drawnTile) {
+    updateHandInfo() {
+        let result = GS.ge[GS.hand_counter].slice(-1)[0]
         for (let pnum=0; pnum<4; pnum++) {
             let objPidx = new PIDX(pnum)
             this.addHandTiles(objPidx, [], true)
-            for (let tileInt of hands[pnum]) {
-                if (GS.showHands || pnum==GS.heroPidx) {
+            for (let tileInt of GS.gl.hands[pnum]) {
+                // TODO: Draw and all tenpai could show the hands also?
+                if (GS.showHands || (GS.gl.handOver && GS.gl.scoreChanges[pnum]>0) || pnum==GS.heroPidx) {
                     this.addHandTiles(objPidx, [tenhou2str(tileInt)], false)
                 } else {
                     this.addHandTiles(objPidx, ['back'], false)
                 }
             }
             this.addBlankSpace(objPidx)
-            if (drawnTile[pnum] != null) {
-                this.addHandTiles(objPidx, [tenhou2str(drawnTile[pnum])], false)
+            if (GS.gl.drawnTile[pnum] != null) {
+                this.addHandTiles(objPidx, [tenhou2str(GS.gl.drawnTile[pnum])], false)
             } else {
                 this.addBlankSpace(objPidx)
             }
-            if (calls[pnum].length > 0) {
+            if (GS.gl.calls[pnum].length > 0) {
                 this.addBlankSpace(objPidx)
-                for (let tileInt of calls[pnum]) {
+                for (let tileInt of GS.gl.calls[pnum]) {
                     if (tileInt == 'rotate') {
                         this.rotateLastTile(objPidx, 'hand')
                     } else if (tileInt == 'float') {
@@ -518,6 +541,9 @@ class UI {
             }
             hand_counter++
         }
+        this.infoRoundModal.addEventListener('click', (event) => {
+            this.infoRoundModal.close()
+        })
     }
 }
 
@@ -797,7 +823,7 @@ function updateState() {
         }
     }
     GS.ui.reset()
-    GS.ui.updateHandInfo(GS.gl.hands, GS.gl.calls, GS.gl.drawnTile)
+    GS.ui.updateHandInfo()
     GS.ui.updateDiscardPond()
     GS.ui.updateGridInfo()
 }
@@ -957,7 +983,6 @@ function addResult(currGeList) {
     }
     console.assert(sum(result.scoreChangesPlusSticks)==0)
 }
-
 
 function mergeMortalEvents() {
     for (let roundNum=0; roundNum<GS.ge.length; roundNum++) {

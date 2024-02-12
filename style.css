@@ -170,7 +170,7 @@ h1{
 .info-doras {
     grid-area: ai-doras;
 }
-.result {
+/* .result {
     margin: auto;
     margin-top: 10px;
     margin-bottom: 10px;
@@ -187,26 +187,30 @@ h1{
     text-align: right;
     border-collapse: collapse;
     padding: 0.4rem;
+} */
+.gi-p0-outer, .gi-p1-outer, .gi-p2-outer, .gi-p3-outer {
+    display: flex;
+    justify-content: space-between;
 }
-.gi-p0 {
+.gi-p0-outer {
     grid-area: ai-p0;
-    margin: auto;
+    margin: auto 10px;
 }
-.gi-p1 {
+.gi-p1-outer {
     grid-area: ai-p1;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    margin: auto;
+    margin: 10px auto;
 }
-.gi-p2 {
+.gi-p2-outer {
     grid-area: ai-p2;
     transform: rotate(180deg);
-    margin: auto;
+    margin: auto 10px;
 }
-.gi-p3 {
+.gi-p3-outer {
     grid-area: ai-p3;
     writing-mode: vertical-rl;
-    margin: auto;
+    margin: 10px auto;
 }
 .rotate > img {
     transform: rotate(90deg);
@@ -227,8 +231,7 @@ h1{
 .controls {
     display:grid;
     grid-template-columns: repeat(2, 120px);
-    margin:auto;
-    margin-top:10px;
+    margin:10px auto;
     width:240px;
     padding:10px;
     background:var(--color-accent);
