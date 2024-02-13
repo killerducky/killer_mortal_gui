@@ -142,7 +142,8 @@ class GlobalState {
         this.C_db_tileWidth = 34
         this.C_db_heroBarWidth = 20
         this.C_db_mortBarWidth = 10
-        this.C_cb_height = 60
+        this.C_cb_heroBarHeight = 60
+        this.C_cb_mortBarHeightRatio = 0.9
         this.C_cb_totHeight = 100
         this.C_cb_totWidth = 100
         this.C_cb_padding = 10
@@ -321,11 +322,11 @@ class UI {
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (key == mortalEval.p_action) {
                 svgElement.appendChild(this.createRect(
-                    xloc-GS.C_db_heroBarWidth/2, 0, GS.C_db_heroBarWidth, 1*GS.C_cb_height, GS.C_colorBarHero
+                    xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, GS.C_colorBarHero
                 ))
             }
             svgElement.appendChild(this.createRect(
-                xloc-GS.C_db_mortBarWidth/2, (1-Pval/100)*GS.C_cb_height, GS.C_db_mortBarWidth, Pval/100*GS.C_cb_height, GS.C_colorBarMortal
+                xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_cb_heroBarHeight, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
             ));
             let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
@@ -338,18 +339,19 @@ class UI {
     }
     clearDiscardBars() {
         const discardBars = document.getElementById("discard-bars")
-        let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
         svgElement.setAttribute("padding", GS.C_db_padding)
         discardBars.replaceChildren(svgElement)
     }
-    createRect(x, y, width, height, fill) {
+    createRect(x, width, totHeight, fillRatio, fill) {
+        let y = (1-fillRatio)*totHeight
         let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
         rect.setAttribute("x", x)
         rect.setAttribute("y", y)
         rect.setAttribute("width", width)
-        rect.setAttribute("height", height)
+        rect.setAttribute("height", totHeight*fillRatio)
         rect.setAttribute("fill", fill)
         return rect
     }
@@ -381,11 +383,11 @@ class UI {
             if (tile == mortalEval.p_action) {
                 heroSlotFound = true
                 svgElement.appendChild(this.createRect(
-                    xloc-GS.C_db_heroBarWidth/2, 0, GS.C_db_heroBarWidth, 1*GS.C_db_height, GS.C_colorBarHero
+                    xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
                 ))
             }
             svgElement.appendChild(this.createRect(
-                xloc-GS.C_db_mortBarWidth/2, (1-Pval/100)*GS.C_db_height, GS.C_db_mortBarWidth, (Pval/100)*GS.C_db_height, GS.C_colorBarMortal
+                xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_db_height, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
             ));
         }
         if (!heroSlotFound) {
@@ -539,6 +541,11 @@ class UI {
             for (let pidx=0; pidx<4+1; pidx++) {
                 cell = tr.insertCell()
                 cell.textContent = `${result.scoreChangesPlusSticks[pidx]}`
+                if (result.scoreChangesPlusSticks[pidx] < -7000) {
+                    cell.classList.add('big-loss')
+                } else if (result.scoreChangesPlusSticks[pidx] < 0) {
+                    cell.classList.add('small-loss')
+                }
             }
             hand_counter++
         }
