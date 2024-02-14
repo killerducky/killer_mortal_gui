@@ -153,7 +153,7 @@ class GlobalState {
         this.C_colorBarHero = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-hero')
         this.C_colorTsumogiri = getComputedStyle(document.documentElement).getPropertyValue('--color-tsumogiri')
 
-        this.C_windStr = ['East', 'South', 'West', 'North']
+        this.C_windStr = ['E', 'S', 'W', 'N']
     }
 }
 
@@ -186,9 +186,10 @@ class UI {
         this.round = document.querySelector('.info-round')
         this.prevRoundSticks = document.querySelector('.info-sticks')
         this.doras = document.querySelector('.info-doras')
-        // this.result = document.querySelector('.result')
         this.infoRoundModal = document.querySelector('.info-round-modal')
         this.infoRoundTable = document.querySelector('.info-round-table')
+        this.infoThisRoundModal = document.querySelector('.info-this-round-modal')
+        this.infoThisRoundTable = document.querySelector('.info-this-round-table')
     }
     #getHand(pidx) { 
         return this.hands[pidx.pov()] 
@@ -198,7 +199,7 @@ class UI {
     }
     roundStr() {
         let str = GS.C_windStr[GS.gl.roundWind-41]
-        str += "-" + (GS.gl.roundNum+1)
+        str += (GS.gl.roundNum+1)
         if (GS.gl.honbas > 0) {
             str += "-" + GS.gl.honbas
         }
@@ -207,14 +208,7 @@ class UI {
     reset() {
         let currGeList = GS.ge[GS.hand_counter]
         let result = currGeList.slice(-1)[0]
-        this.round.replaceChildren(GS.C_windStr[GS.gl.roundWind-41])
-        this.round.append("-", GS.gl.roundNum+1)
-        if (GS.gl.honbas > 0) {
-            this.round.append("-", GS.gl.honbas)
-        }
-        if (GS.gl.prevRoundSticks > 0) {
-            this.round.append(' +', GS.gl.prevRoundSticks*1000)
-        }
+        this.round.replaceChildren(this.roundStr())
         this.prevRoundSticks.replaceChildren()
         this.doras.replaceChildren()
         for (let pidx=0; pidx<4; pidx++) {
@@ -222,17 +216,9 @@ class UI {
             this.discards[pidxObj.pov()].replaceChildren()
             let seatWind = (4 + pidx - GS.gl.roundNum) % 4
             this.pInfo[pidxObj.pov()].replaceChildren(GS.C_windStr[seatWind])
-            if (GS.gl.handOver) {
-                this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx]+result.scoreChangesPlusSticks[pidx])
-            } else {
-                this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx]-GS.gl.thisRoundSticks[pidx]*1000)
-            }
+            this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx]-GS.gl.thisRoundSticks[pidx]*1000)
             this.pInfoResult[pidxObj.pov()].replaceChildren()
-            if (GS.gl.handOver) {
-                this.pInfoResult[pidxObj.pov()].append(this.formatString(result.scoreChangesPlusSticks[pidx], false, true))
-            } else if (GS.gl.thisRoundSticks[pidx]) {
-                this.pInfoResult[pidxObj.pov()].append(this.formatString(-GS.gl.thisRoundSticks[pidx]*1000, false, true))
-            }
+            this.pInfoResult[pidxObj.pov()].append(this.formatString(-GS.gl.thisRoundSticks[pidx]*1000, false, true))
         }
     }
     formatString(num, showZero, addPlus) {
@@ -268,27 +254,27 @@ class UI {
             }
             this.doras.lastChild.setAttribute('width', 20)
         }
-        /*
         if (GS.gl.handOver) {
+            let table = document.createElement("table")
+            this.infoThisRoundTable.replaceChildren(table)
+            let tr = table.insertRow()
+            let cell = tr.insertCell()
             if (GS.gl.result == '和了') {
                 if (GS.gl.winner == GS.gl.payer) {
-                    this.result.append(`Tsumo`)
-                    this.result.append(document.createElement("br"))
+                    cell.append(`Tsumo`)
+                    cell.append(document.createElement("br"))
                 } else {
-                    this.result.append(`Ron`)
-                    this.result.append(document.createElement("br"))
+                    cell.append(`Ron`)
+                    cell.append(document.createElement("br"))
                 }
             } else if (GS.gl.result == '流局') {
-                this.result.append('Draw')
-                this.result.append(document.createElement("br"))
+                cell.append('Draw')
+                cell.append(document.createElement("br"))
             } else if (GS.gl.result == '流し満貫') {
-                this.result.append('Nagashi Mangan (wow!) TODO test this')
+                cell.append('Nagashi Mangan (wow!) TODO test this')
             } else if (GS.gl.result == '九種九牌') {
-                this.result.append('Nine Terminal Draw')
+                cell.append('Nine Terminal Draw')
             }
-            let table = document.createElement("table")
-            this.result.append(table)
-            let tr
             for (let pidx=0; pidx<4+1; pidx++) {
                 if (pidx%2==0) { tr = table.insertRow() }
                 let cell = tr.insertCell()
@@ -296,10 +282,12 @@ class UI {
                 cell = tr.insertCell()
                 cell.textContent = `${event.scoreChangesPlusSticks[pidx]}`
             }
-        } else {
-            this.result.append('(Result hidden)')
+            this.infoThisRoundModal.showModal()
+            this.infoThisRoundModal.addEventListener('click', (event) => {
+                this.infoThisRoundModal.close()
+            })
         }
-        */
+
     }
     clearCallBars() {
         const callBars = document.querySelector('.killer-call-bars')

@@ -15,7 +15,7 @@
     /* Discard background */
     --color-tsumogiri: hsl(30, 11%, 78%);
 }
-body, .info-round-modal, .info-round-close {
+body, .info-round-modal, .info-round-close, .info-this-round-modal {
     font-family: sans-serif;
     max-width: 1100px;
     margin: auto;
@@ -186,19 +186,15 @@ h1{
     border-color:black;
     border-width:2px;
 }
-.info-round {
+
+.info-round, .info-this-round {
     background: var(--color-accent2);
     color:var(--color-text);
     border-style:outset;
     border-color:black;
     border-width:2px;
 }
-/* .info-round-modal {
-    border: 0;
-    box-shadow: 0 0 1em rgb(0 0 0 / .9);
-    box-shadow: 0 0 1em rgb(255 255 255 / .5);
-} */
-.info-round-modal::backdrop {
+.info-round-modal::backdrop, .info-this-round-modal::backdrop {
     background: rgb(0 0 0 / .3);
 }
 .big-loss {
@@ -214,12 +210,20 @@ h1{
     padding: 0.4rem;
     background: var(--color-accent);
 }
+.info-this-round-table table, th, td {
+    text-align: right;
+    border: 1px solid var(--color-text);
+    border-collapse: collapse;
+    padding: 0.4rem;
+    background: var(--color-accent);
+}
 .info-round-table tr:hover td {
     background:rgba(0, 0, 0, 0.7);
 }
 .info-round-close {
     margin: 0.5rem;
 }
+
 .controls > *:hover {
     background:rgba(0, 0, 0, 0.7);
 }
