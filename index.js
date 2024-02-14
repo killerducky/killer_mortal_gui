@@ -149,10 +149,10 @@ class UI {
         this.infoThisRoundModal = document.querySelector('.info-this-round-modal')
         this.infoThisRoundTable = document.querySelector('.info-this-round-table')
     }
-    #getHand(pidx) { 
+    getHand(pidx) { 
         return this.hands[pidx.pov()] 
     }
-    #getDiscard(pidx) { 
+    getDiscard(pidx) { 
         return this.discards[pidx.pov()]
     }
     roundStr() {
@@ -187,9 +187,16 @@ class UI {
         s += num
         return s
     }
-    #relativeToHeroStr(pidx) {
+    relativeToHeroStr(pidx) {
         let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
         return ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
+    }
+    parseYakuString(yaku) {
+        console.log(yaku)
+        let s = yaku.split(/([\(\)])|([0-9:]+)/)
+        console.log(s)
+        s = s.map(x => x in exactTranslation ? exactTranslation[x]['DEFAULT'] : x)
+        return s.join(' ')
     }
     updateGridInfo() {
         this.clearDiscardBars()
@@ -232,13 +239,13 @@ class UI {
                 this.infoThisRoundTable.append('Nine Terminal Draw')
             }
             for (let yaku of GS.gl.yakuStrings) {
-                this.infoThisRoundTable.append(yaku)
+                this.infoThisRoundTable.append(this.parseYakuString(yaku))
                 this.infoThisRoundTable.append(document.createElement("br"))
             }
             for (let pidx=0; pidx<4+1; pidx++) {
                 let tr = table.insertRow()
                 let cell = tr.insertCell()
-                cell.textContent = `${this.#relativeToHeroStr(pidx)}`
+                cell.textContent = `${this.relativeToHeroStr(pidx)}`
                 cell = tr.insertCell()
                 cell.textContent = `${event.scoreChangesPlusSticks[pidx]}`
             }
@@ -250,7 +257,6 @@ class UI {
                 this.infoThisRoundModal.close()
             })
         }
-
     }
     clearCallBars() {
         const callBars = document.querySelector('.killer-call-bars')
@@ -381,22 +387,22 @@ class UI {
     }
     addHandTiles(pidx, tileStrArray, replace) {
         if (replace) {
-            this.#getHand(pidx).replaceChildren()
+            this.getHand(pidx).replaceChildren()
         }
         for (let i in tileStrArray) {
-            this.#getHand(pidx).appendChild(createTile(tileStrArray[i]))
+            this.getHand(pidx).appendChild(createTile(tileStrArray[i]))
         }   
     }
     addDiscardTiles(pidx, tileStrArray, replace) {
         if (replace) {
-            this.#getDiscard(pidx).replaceChildren()
+            this.getDiscard(pidx).replaceChildren()
         }
         for (let i in tileStrArray) {
-            this.#getDiscard(pidx).appendChild(createTile(tileStrArray[i]))
+            this.getDiscard(pidx).appendChild(createTile(tileStrArray[i]))
         }   
     }
     rotateLastTile(objPidx, type) {
-        let div = (type=='hand') ? this.#getHand(objPidx) : this.#getDiscard(objPidx)
+        let div = (type=='hand') ? this.getHand(objPidx) : this.getDiscard(objPidx)
         let angle = (objPidx.pov() * 90 + 90) % 360
         div.lastChild.style.transform = `rotate(${angle}deg)`
         if (objPidx.pov() == 1 || objPidx.pov() == 3) {
@@ -412,24 +418,24 @@ class UI {
     }
     floatLastTile(pidx) {
         if (pidx.pov() == 0) {
-            this.#getHand(pidx).lastChild.style.marginLeft = '-39px'
-            this.#getHand(pidx).lastChild.style.transform += ' translate(-34px,0px)'
+            this.getHand(pidx).lastChild.style.marginLeft = '-39px'
+            this.getHand(pidx).lastChild.style.transform += ' translate(-34px,0px)'
         } else if (pidx.pov() == 1) {
-            this.#getHand(pidx).lastChild.style.marginTop = '-39px'
-            this.#getHand(pidx).lastChild.style.transform += ' translate(-34px,0px)'
+            this.getHand(pidx).lastChild.style.marginTop = '-39px'
+            this.getHand(pidx).lastChild.style.transform += ' translate(-34px,0px)'
         } else if (pidx.pov() == 2) {
-            this.#getHand(pidx).lastChild.style.marginLeft = '-39px'
-            this.#getHand(pidx).lastChild.style.transform += ' translate(34px,0px)'
+            this.getHand(pidx).lastChild.style.marginLeft = '-39px'
+            this.getHand(pidx).lastChild.style.transform += ' translate(34px,0px)'
         } else if (pidx.pov() == 3) {
-            this.#getHand(pidx).lastChild.style.marginTop = '-39px'
-            this.#getHand(pidx).lastChild.style.transform += ' translate(34px,0px)'
+            this.getHand(pidx).lastChild.style.marginTop = '-39px'
+            this.getHand(pidx).lastChild.style.transform += ' translate(34px,0px)'
         } else {
             console.log('error ', pidx)
         }
     }
     addBlankSpace(pidx) {
         this.addHandTiles(pidx, ['Blank'], false)
-        this.#getHand(pidx).lastChild.style.opacity = "0"
+        this.getHand(pidx).lastChild.style.opacity = "0"
     }
     updateDiscardPond() {
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
@@ -443,22 +449,22 @@ class UI {
             }
             if (event.type=='discard' && pidx==event.pidx) {
                 // console.log('hi', event)
-                // this.#getDiscard(pidxObj).lastChild.style.transform += ' translate(30px,30px)'
-                // console.log(this.#getDiscard(pidxObj).lastChild)
+                // this.getDiscard(pidxObj).lastChild.style.transform += ' translate(30px,30px)'
+                // console.log(this.getDiscard(pidxObj).lastChild)
             }
         }
     }
     addDiscard(pidx, tileStrArray, tsumogiri, riichi) {
         this.addDiscardTiles(pidx, tileStrArray)
         if (tsumogiri) {
-            this.#getDiscard(pidx).lastChild.style.background = GS.C_colorTsumogiri
+            this.getDiscard(pidx).lastChild.style.background = GS.C_colorTsumogiri
         }
         if (riichi) {
             this.rotateLastTile(pidx, 'discard')
         }
     }
     lastDiscardWasCalled(pidx) {
-        this.#getDiscard(pidx).lastChild.style.opacity = "0.5"
+        this.getDiscard(pidx).lastChild.style.opacity = "0.5"
     }
     updateResultsTable() {
         let table = document.createElement("table")
@@ -470,7 +476,7 @@ class UI {
         for (let i=0; i<2; i++) {
             for (let pidx=0; pidx<4+1; pidx++) {
                 cell = tr.insertCell()
-                cell.textContent = `${this.#relativeToHeroStr(pidx)}`
+                cell.textContent = `${this.relativeToHeroStr(pidx)}`
             }
             if (i==0) {cell = tr.insertCell()}
         }
