@@ -102,8 +102,8 @@ class GlobalState {
         this.C_db_mortBarWidth = 10
         this.C_cb_heroBarHeight = 60
         this.C_cb_mortBarHeightRatio = 0.9
-        this.C_cb_totHeight = 100
-        this.C_cb_totWidth = 100
+        this.C_cb_totHeight = 105
+        this.C_cb_totWidth = 200
         this.C_cb_padding = 10
 
         this.C_colorText = getComputedStyle(document.documentElement).getPropertyValue('--color-text')
@@ -272,11 +272,11 @@ class UI {
         let svgElement = callBars.firstElementChild
         let slot = 0
         for (const key in mortalEval.Pvals) {
-            if (!isNaN(key)) {
-                continue // skip tiles
-            }
             let Pval = mortalEval.Pvals[key]
-            let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
+            if (!isNaN(key) && (mortalEval.m_action != key || mortalEval.p_action == key)) {
+                continue
+            }
+            let xloc = GS.C_db_tileWidth*1.2/2 + slot*GS.C_db_tileWidth*1.2
             if (key == mortalEval.p_action) {
                 svgElement.appendChild(this.createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, GS.C_colorBarHero
@@ -285,12 +285,31 @@ class UI {
             svgElement.appendChild(this.createRect(
                 xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_cb_heroBarHeight, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
             ));
-            let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
-            text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
-            text.setAttribute("y", GS.C_db_height + 20)
-            text.setAttribute("fill", GS.C_colorText)
-            text.textContent = key
-            svgElement.appendChild(text)
+            if (isNaN(key)) {
+                let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
+                text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
+                text.setAttribute("y", GS.C_db_height + 20)
+                text.setAttribute("fill", GS.C_colorText)
+                text.textContent = key
+                svgElement.appendChild(text)
+            } else {
+                let backgroundRect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+                backgroundRect.setAttribute("x", xloc - GS.C_db_mortBarWidth / 2 - 10+5-1)
+                backgroundRect.setAttribute("y", GS.C_db_height + 10-1)
+                backgroundRect.setAttribute("width", "20")
+                backgroundRect.setAttribute("height", "26")
+                backgroundRect.setAttribute("fill", "white")
+                svgElement.appendChild(backgroundRect)
+                const tileImg = document.createElementNS("http://www.w3.org/2000/svg", "image")
+                tileImg.setAttribute('href', `media/Regular_shortnames/${tenhou2str(key)}.svg`)
+                tileImg.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10+5)
+                tileImg.setAttribute("y", GS.C_db_height + 10)
+                tileImg.style.background = "white"
+                tileImg.style.border = "5px solid red"
+                tileImg.style.padding = "1px 1px 1px 1px"
+                tileImg.setAttribute("width", 18)
+                svgElement.appendChild(tileImg)
+            }
             slot++
         }
     }
@@ -1084,13 +1103,22 @@ function decHandCounter() {
     GS.ply_counter = 0
 }
 
+function stopCondition(onlyMismatches) {
+    let mortalEval = GS.ge[GS.hand_counter][GS.ply_counter].mortalEval
+    let mismatch = mortalEval && (mortalEval.m_action != mortalEval.p_action)
+    return mortalEval && (!onlyMismatches || mismatch) ||
+        GS.ply_counter == 0 || 
+        GS.ply_counter == GS.ge[GS.hand_counter].length-1
+}
 function connectUI() {
-    const inc = document.getElementById("ply-inc");
-    const inc2 = document.getElementById("ply-inc2");
-    const dec = document.getElementById("ply-dec");
-    const dec2 = document.getElementById("ply-dec2");
     const handInc = document.getElementById("hand-inc")
     const handDec = document.getElementById("hand-dec")
+    const prevMismatch = document.getElementById("prev-mismatch")
+    const nextMismatch = document.getElementById("next-mismatch")
+    const inc2 = document.getElementById("ply-inc2");
+    const dec2 = document.getElementById("ply-dec2");
+    const inc = document.getElementById("ply-inc");
+    const dec = document.getElementById("ply-dec");
     const showHands =  document.getElementById("show-hands")
     const infoRound = document.querySelector('.info-round')
     const closeModal = document.querySelector('.info-round-close')
@@ -1102,7 +1130,13 @@ function connectUI() {
     inc2.addEventListener("click", () => {
         do {
             incPlyCounter();
-        } while (!('mortalEval' in GS.ge[GS.hand_counter][GS.ply_counter]) && GS.ply_counter != 0 && GS.ply_counter != GS.ge[GS.hand_counter].length-1)
+        } while (!stopCondition(false))
+        updateState()
+    });
+    nextMismatch.addEventListener("click", () => {
+        do {
+            incPlyCounter();
+        } while (!stopCondition(true))
         updateState()
     });
     dec.addEventListener("click", () => {
@@ -1112,7 +1146,13 @@ function connectUI() {
     dec2.addEventListener("click", () => {
         do {
             decPlyCounter();
-        } while (!('mortalEval' in GS.ge[GS.hand_counter][GS.ply_counter]) && GS.ply_counter != 0 && GS.ply_counter != GS.ge[GS.hand_counter].length-1)
+        } while (!stopCondition(false))
+        updateState()
+    });
+    prevMismatch.addEventListener("click", () => {
+        do {
+            decPlyCounter();
+        } while (!stopCondition(true))
         updateState()
     });
     handInc.addEventListener("click", () => {

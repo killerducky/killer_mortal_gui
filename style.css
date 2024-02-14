@@ -239,18 +239,17 @@ button:hover {
 }
 .killer-call-div {
     display:grid;
-    grid-template-columns: 200px;
-    width: 200px;
-    margin:auto;
+    margin:20px auto;
 }
 .killer-call-bars {
-    width: 110px;
-    height: 90px;
+    width: 200px;
+    height: 105px;
     background: var(--color-accent3);
     padding: 10px;
     margin: auto;
 }
 .killer-call-img {
+    width: auto;
     margin: auto;
     margin-top: 20px;
 }
