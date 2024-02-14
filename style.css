@@ -215,6 +215,9 @@ h1{
     border: 1px solid var(--color-text);
     border-collapse: collapse;
     padding: 0.4rem;
+    background: var(--color-accent2);
+}
+.info-this-round-modal {
     background: var(--color-accent);
 }
 .info-round-table tr:hover td {
