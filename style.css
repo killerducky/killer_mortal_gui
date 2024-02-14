@@ -1,46 +1,14 @@
-/*
-TODO Different options based on user screen size 
-TODO: size a container instead 
-https://stackoverflow.com/questions/38476117/how-do-i-fix-width-height-of-rotated-img-div/38476256#38476256
-Wrap the image in a div the right size after translation and it'll be fine..
-*/
-
 :root{
     --main-width: 750px;
     --main-height: 800px;
     --neg-margin: -10px;
  
-    /* unused */
-    /* green-yellow */
-    --color-main:   hsl(90, 100%, 19%);
-    --color-accent: hsl(83, 100%, 25%);
-    --color-text:    hsl(110, 100%, 81%);
-    /* Mortal yellow, Hero dark red */
-    --color-bar-mortal: hsl(60, 100%, 35%);
-    --color-bar-hero: hsl(0, 100%, 19%);
-    /* Mortal orange, Hero red-orange*/
-    --color-bar-mortal: hsl(13, 93%, 50%);
-    --color-bar-hero: hsl(56, 79%, 42%);
-
     /* blue-green, accents go darker */
     --color-main:   hsl(190, 100%, 27%);
     --color-accent: hsl(190, 100%, 19%);
     --color-accent2: hsl(190, 100%, 13%);
     --color-accent3: hsl(190, 100%, 16%);
     --color-text:    hsl(190, 58%, 70%);
-    /* Mortal orange, Hero yellow */
-    --color-bar-mortal: hsl(39, 83%, 44%);
-    --color-bar-hero: hsl(56, 70%, 55%);
-    /* Mortal purple, Hero dark blue */
-    --color-bar-mortal: hsl(290, 90%, 35%);
-    --color-bar-hero: hsl(250, 90%, 35%);
-    /* Analagous to main: split one way bluer, other way greener */
-    --color-bar-mortal: hsl(210, 90%, 55%);
-    --color-bar-hero: hsl(170, 90%, 55%);
-    /* Mortal orange, Hero grey-yellow */
-    --color-bar-hero: hsl(70, 60%, 30%);
-    --color-bar-mortal: hsl(30, 87%, 55%);
-    --color-bar-mortal: hsl(20, 87%, 57%);
     /* Analagous to main: -> green-yellow -> yellow */
     --color-bar-mortal: hsl(120, 81%, 34%);
     --color-bar-hero: hsl(70, 72%, 48%);
@@ -48,22 +16,13 @@ Wrap the image in a div the right size after translation and it'll be fine..
     --color-tsumogiri: hsl(30, 11%, 78%);
 }
 body, .info-round-modal, .info-round-close {
-    background: var(--color-main);
+    font-family: sans-serif;
     max-width: 1100px;
     margin: auto;
     color: var(--color-text);
     line-height: 1.5;
-    /*
-    background: rgb(2,0,36);
-    background: radial-gradient(circle, rgba(2,0,36,1) 0%, rgba(9,17,121,1) 38%, rgba(0,39,255,1) 100%);
-    background: radial-gradient(circle, rgba(0,39,255,1) 0%, rgba(9,17,121,1) 60%, rgba(2,0,36,1) 100%);
-    background: radial-gradient(circle, #003040 0%, #007090 100%);
-    background: radial-gradient(circle, #007090 0%, #003040 100%);
-    https://cssgradient.io/
-    */
     background: var(--color-main);
 }
-
 h1{
     background: var(--color-accent);
     text-align: center;
@@ -170,24 +129,6 @@ h1{
 .info-doras {
     grid-area: ai-doras;
 }
-/* .result {
-    margin: auto;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    padding-left: 10px;
-    padding-left: 10px;
-    width: 260px;
-    height: 150px;
-    background: var(--color-accent);
-}
-.result > * {
-    padding: 10px;
-}
-.result table, th, td {
-    text-align: right;
-    border-collapse: collapse;
-    padding: 0.4rem;
-} */
 .gi-p0-outer, .gi-p1-outer, .gi-p2-outer, .gi-p3-outer {
     display: flex;
     justify-content: space-between;

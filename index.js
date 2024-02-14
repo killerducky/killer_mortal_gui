@@ -485,6 +485,7 @@ class UI {
         this.#getHand(pidx).lastChild.style.opacity = "0"
     }
     updateDiscardPond() {
+        let event = GS.ge[GS.hand_counter][GS.ply_counter]
         for (let pidx=0; pidx<4; pidx++) {
             let pidxObj = new PIDX(pidx)
             for (let tile of GS.gl.discardPond[pidx]) {
@@ -492,6 +493,11 @@ class UI {
                 if (tile.called) {
                     this.lastDiscardWasCalled(pidxObj)
                 }
+            }
+            if (event.type=='discard' && pidx==event.pidx) {
+                // console.log('hi', event)
+                // this.#getDiscard(pidxObj).lastChild.style.transform += ' translate(30px,30px)'
+                // console.log(this.#getDiscard(pidxObj).lastChild)
             }
         }
     }
@@ -535,7 +541,7 @@ class UI {
             cell.textContent = this.roundStr()
             for (let pidx=0; pidx<4+1; pidx++) {
                 cell = tr.insertCell()
-                cell.textContent = pidx==4 ? GS.gl.prevRoundSticks : `${GS.gl.scores[pidx]}`
+                cell.textContent = pidx==4 ? GS.gl.prevRoundSticks*1000 : `${GS.gl.scores[pidx]}`
             }
             cell = tr.insertCell()
             for (let pidx=0; pidx<4+1; pidx++) {
@@ -1010,7 +1016,7 @@ function mergeMortalEvents() {
                     if (mortalEval) {
                         if (mortalEval.type == "Discard") {
                             event.mortalEvalAfterRiichi = mortalEval
-                            console.log('mortal disagreed with riichi discard', event)
+                            // console.log('mortal disagreed with riichi discard', event)
                         } else {
                             console.log('TODO: Add Ron/Tsumo/Kan after riichi', mortalEval)
                         }
@@ -1380,7 +1386,7 @@ function tests() {
 
 const GS = new GlobalState
 function main() {
-    tests()
+    //tests()
     getJsonData()
     connectUI()
 }
