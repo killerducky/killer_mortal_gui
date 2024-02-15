@@ -193,7 +193,7 @@ h1{
     border-width:2px;
 }
 
-.info-round, .info-this-round {
+.info-round {
     background: var(--color-accent2);
     color:var(--color-text);
     border-style:outset;
@@ -202,6 +202,13 @@ h1{
 }
 .info-round-modal::backdrop, .info-this-round-modal::backdrop, #about-modal::backdrop {
     background: rgb(0 0 0 / .3);
+}
+/*.info-round-modal {}   TODO maybe change border? */
+.info-this-round-modal {
+    background: var(--color-accent);
+    border-color: var(--color-accent2);
+    border-width: 5px;
+    border-style:outset;
 }
 .big-loss {
     background: rgb(0 0 0 / .6);
@@ -222,9 +229,6 @@ h1{
     border-collapse: collapse;
     padding: 0.4rem;
     background: var(--color-accent2);
-}
-.info-this-round-modal {
-    background: var(--color-accent);
 }
 .info-round-table tr:hover td {
     background:rgba(0, 0, 0, 0.7);
@@ -259,7 +263,3 @@ button:hover {
     margin: auto;
     margin-top: 20px;
 }
-/* svg {
-    filter: drop-shadow(3px 0px 2px rgb(0 0 0 / 0.4)) url(#inset-shadow);
-    box-shadow: 0 0 15px 6px inset rgba(255,0,96,0.8);
-} */

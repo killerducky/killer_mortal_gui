@@ -275,7 +275,7 @@ class UI {
         for (const key in mortalEval.Pvals_soft) {
             let Pval = mortalEval.Pvals_soft[key]
             if (!isNaN(key) && (mortalEval.m_action != key || mortalEval.p_action == key)) {
-                continue
+                continue // Skip tiles (unless it's a mismatch)
             }
             let xloc = GS.C_db_tileWidth*1.2/2 + slot*GS.C_db_tileWidth*1.2
             if (key == mortalEval.p_action) {
@@ -327,7 +327,6 @@ class UI {
             }
             svgElement.appendChild(text)
         }
-
     }
     clearDiscardBars() {
         const discardBars = document.getElementById("discard-bars")
