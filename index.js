@@ -272,9 +272,8 @@ class UI {
         const callBars = document.querySelector('.killer-call-bars')
         let svgElement = callBars.firstElementChild
         let slot = 0
-        let mismatch = false
-        for (const key in mortalEval.Pvals) {
-            let Pval = mortalEval.Pvals[key]
+        for (const key in mortalEval.Pvals_soft) {
+            let Pval = mortalEval.Pvals_soft[key]
             if (!isNaN(key) && (mortalEval.m_action != key || mortalEval.p_action == key)) {
                 continue
             }
@@ -286,7 +285,7 @@ class UI {
             }
             svgElement.appendChild(this.createRect(
                 xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_cb_heroBarHeight, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
-            ));
+            ))
             if (isNaN(key)) {
                 let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
                 text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
@@ -295,7 +294,6 @@ class UI {
                 text.textContent = key
                 svgElement.appendChild(text)
             } else {
-                mismatch = true
                 let backgroundRect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
                 backgroundRect.setAttribute("x", xloc - GS.C_db_mortBarWidth / 2 - 10+5-1)
                 backgroundRect.setAttribute("y", GS.C_db_height + 10-1)
@@ -316,13 +314,17 @@ class UI {
             }
             slot++
         }
-        if (mismatch) {
+        if (mortalEval.Pvals_soft[mortalEval.p_action] != 100) {
             let xloc = GS.C_db_tileWidth*1.2/2 + slot*GS.C_db_tileWidth*1.2
             let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
             text.setAttribute("y", 60)
             text.setAttribute("fill", GS.C_colorText)
-            text.textContent = "Hmmm..."
+            if (mortalEval.Pvals_soft[mortalEval.p_action] > 50) {
+                text.textContent = "Hmmm..."
+            } else {
+                text.textContent = "Quack!"
+            }
             svgElement.appendChild(text)
         }
 
