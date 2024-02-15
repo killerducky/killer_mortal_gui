@@ -1346,20 +1346,24 @@ function soften(pdfs) {
 
 function getJsonData() {
     let data = localStorage.getItem('mortalHtmlStr')
+    let label = document.getElementById('mortal-html-label')
     if (data) {
         let mortalFilename = localStorage.getItem('mortalFilename')
-        let label = document.getElementById('mortal-html-label')
         label.innerHTML = "Choose Mortal File<br>" + mortalFilename
         data = LZString.decompressFromUTF16(data)
         setMortalHtmlStr(data)
         updateState()
+    } else {
+        data = LZString.decompressFromBase64(demo_data)
+        setMortalHtmlStr(data)
+        updateState()
+        label.innerHTML = "Choose Mortal File<br>" + "(Demo file loaded)"
     }
 
     let fileInput = document.getElementById('mortal-html-file')
     fileInput.addEventListener('change', function(event) {
         let file = event.target.files[0]
         if (file) {
-            let label = document.getElementById('mortal-html-label')
             label.innerHTML = "Choose Mortal File<br>" + file.name
             let fr = new FileReader()
             fr.readAsText(file)

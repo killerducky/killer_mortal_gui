@@ -28,8 +28,8 @@ h1{
     text-align: center;
 }
 .outer {
-    display: grid;
-    grid-template-columns: var(--main-width) 1fr;
+    display:flex;
+    justify-content: space-around;
 }
 .grid-main{
     display: grid;
