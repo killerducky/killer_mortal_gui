@@ -1,3 +1,10 @@
+Killer Mortal Reviewer is a GUI frontend to the Mortal AI engine. You must first generate a Mortal review, save it, and then load it into this GUI.
+
+Usage:
+   1. Generate a Mortal review <a href="https://mjai.ekyu.moe" target="_blank">https://mjai.ekyu.moe</a>
+   1. Click "Save this page"
+   1. Return and click "Choose Mortal File"
+
 Credits:
 
 * Compression from https://github.com/pieroxy/lz-string

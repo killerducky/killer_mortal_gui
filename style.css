@@ -15,13 +15,19 @@
     /* Discard background */
     --color-tsumogiri: hsl(30, 11%, 78%);
 }
-body, .info-round-modal, .info-round-close, .info-this-round-modal {
+body, .info-round-modal, .info-round-close, .info-this-round-modal, #about-modal {
     font-family: sans-serif;
     max-width: 1100px;
     margin: auto;
     color: var(--color-text);
     line-height: 1.5;
     background: var(--color-main);
+}
+a {
+    color: var(--color-text);
+}
+#about-modal {
+    background: var(--color-accent2);
 }
 h1{
     background: var(--color-accent);
@@ -194,7 +200,7 @@ h1{
     border-color:black;
     border-width:2px;
 }
-.info-round-modal::backdrop, .info-this-round-modal::backdrop {
+.info-round-modal::backdrop, .info-this-round-modal::backdrop, #about-modal::backdrop {
     background: rgb(0 0 0 / .3);
 }
 .big-loss {

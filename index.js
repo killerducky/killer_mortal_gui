@@ -83,6 +83,7 @@ class GlobalState {
         this.ui = new UI
         this.gl = null
         this.ge = null
+        this.newUser = true
 
         this.ply_counter = 0
         this.hand_counter = 0
@@ -144,6 +145,7 @@ class UI {
         this.round = document.querySelector('.info-round')
         this.prevRoundSticks = document.querySelector('.info-sticks')
         this.doras = document.querySelector('.info-doras')
+        this.aboutModal = document.querySelector('.about-modal')
         this.infoRoundModal = document.querySelector('.info-round-modal')
         this.infoRoundTable = document.querySelector('.info-round-table')
         this.infoThisRoundModal = document.querySelector('.info-this-round-modal')
@@ -1122,6 +1124,14 @@ function stopCondition(onlyMismatches) {
         GS.ply_counter == 0 || 
         GS.ply_counter == GS.ge[GS.hand_counter].length-1
 }
+function showModalAndWait(modal) {
+    modal.showModal()
+    modal.addEventListener('click', (event) => {
+        if (event.target == modal) {
+            modal.close()
+        }
+    })
+}
 function connectUI() {
     const handInc = document.getElementById("hand-inc")
     const handDec = document.getElementById("hand-dec")
@@ -1132,6 +1142,8 @@ function connectUI() {
     const inc = document.getElementById("ply-inc");
     const dec = document.getElementById("ply-dec");
     const showHands =  document.getElementById("show-hands")
+    const about =  document.getElementById("about")
+    const aboutModal =  document.getElementById("about-modal")
     const infoRound = document.querySelector('.info-round')
     const closeModal = document.querySelector('.info-round-close')
     const infoRoundModal = document.querySelector('.info-round-modal')
@@ -1178,6 +1190,12 @@ function connectUI() {
     showHands.addEventListener("click", () => {
         GS.showHands = !GS.showHands
         updateState()
+    })
+    if (GS.newUser) {
+        showModalAndWait(aboutModal)
+    }
+    about.addEventListener("click", () => {
+        showModalAndWait(aboutModal)
     })
     infoRound.addEventListener("click", () => {
         infoRoundModal.showModal()
@@ -1339,7 +1357,6 @@ function parseMortalHtml() {
 
 function soften(pdfs) {
     const hotter = pdfs.map(x => Math.pow(x, 1/GS.C_soft_T))
-    // const denom = hotter.reduce((a, b) => a + b)
     const denom = Math.max(...hotter)
     return hotter.map(x => x/denom*100)
 }
@@ -1353,6 +1370,7 @@ function getJsonData() {
         data = LZString.decompressFromUTF16(data)
         setMortalHtmlStr(data)
         updateState()
+        GS.newUser = false
     } else {
         data = LZString.decompressFromBase64(demo_data)
         setMortalHtmlStr(data)
