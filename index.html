@@ -9,60 +9,62 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <header>
+        <div class="header-title-container">
+            <h1>Killer Mortal Reviewer</h1>
+        </div>
+    </header>
     <main>
         <div class="outer">
-            <div class="main-size-container"> <!-- hack for zooming -->
-                <div class="main-grid">
-                    <span class="grid-hand-p0-container">
-                        <span id="discard-bars" class="discard-bars"></span>
-                        <span class="grid-hand grid-hand-p0"></span>
-                    </span>
-                    <span class="grid-hand rotate grid-hand-p3"></span>
-                    <span class="grid-hand grid-hand-p2"></span>
-                    <span class="grid-hand rotate grid-hand-p1"></span>
-                    <span class="grid-discard grid-discard-p0"></span>
-                    <span class="grid-discard rotate grid-discard-p3"></span>
-                    <span class="grid-discard grid-discard-p2"></span>
-                    <span class="grid-discard rotate grid-discard-p1"></span>
-                    <div class="grid-info">
-                        <button class="info-round"></button>
-                        <dialog class="info-round-modal">
-                            <div class="info-round-table"></div>
-                            <button class="info-round-close">X</button>
-                        </dialog>
-                        <dialog class="info-this-round-modal">
-                            <div class="info-this-round-table"></div>
-                        </dialog>
-                        <span class="info-sticks"></span>
-                        <span class="info-honbas"></span>
-                        <span class="info-doras"></span>
-                        <span class="gi-p0-outer"><span class="gi-p0"></span><span class="gi-p0-result"></span></span>
-                        <span class="gi-p1-outer"><span class="gi-p1"></span><span class="gi-p1-result"></span></span>
-                        <span class="gi-p2-outer"><span class="gi-p2"></span><span class="gi-p2-result"></span></span>
-                        <span class="gi-p3-outer"><span class="gi-p3"></span><span class="gi-p3-result"></span></span>
-                    </div>
+            <div class="grid-main">
+                <span class="grid-hand-p0-container">
+                    <span id="discard-bars" class="discard-bars"></span>
+                    <span class="grid-hand grid-hand-p0"></span>
+                </span>
+                <span class="grid-hand rotate grid-hand-p3"></span>
+                <span class="grid-hand grid-hand-p2"></span>
+                <span class="grid-hand rotate grid-hand-p1"></span>
+                <span class="grid-discard grid-discard-p0"></span>
+                <span class="grid-discard rotate grid-discard-p3"></span>
+                <span class="grid-discard grid-discard-p2"></span>
+                <span class="grid-discard rotate grid-discard-p1"></span>
+                <div class="grid-info">
+                    <button class="info-round"></button>
+                    <dialog class="info-round-modal">
+                        <div class="info-round-table"></div>
+                        <button class="info-round-close">X</button>
+                    </dialog>
+                    <dialog class="info-this-round-modal">
+                        <div class="info-this-round-table"></div>
+                    </dialog>
+                    <span class="info-sticks"></span>
+                    <span class="info-honbas"></span>
+                    <span class="info-doras"></span>
+                    <span class="gi-p0-outer"><span class="gi-p0"></span><span class="gi-p0-result"></span></span>
+                    <span class="gi-p1-outer"><span class="gi-p1"></span><span class="gi-p1-result"></span></span>
+                    <span class="gi-p2-outer"><span class="gi-p2"></span><span class="gi-p2-result"></span></span>
+                    <span class="gi-p3-outer"><span class="gi-p3"></span><span class="gi-p3-result"></span></span>
                 </div>
             </div>
-            <div class="sidebar">
-                <div class="controls">
-                    <div id="mortal-file-div">
-                        <label id="mortal-html-label" for="mortal-html-file">Choose Mortal File<br>No file loaded</label>
-                        <input type="file" id="mortal-html-file" accept=".html" style="display:none;">
-                    </div>
-                    <button id="hand-dec">&lt; Prev Hand</button>
-                    <button id="hand-inc">Next Hand &gt;</button>
-                    <button id="prev-mismatch">&lt; Prev Error</button>
-                    <button id="next-mismatch">Next Error &gt;</button>
-                    <button id="ply-dec2">&lt; Prev Choice</button>
-                    <button id="ply-inc2">Next Choice &gt;</button>
-                    <button id="ply-dec">&lt; Prev</button>
-                    <button id="ply-inc">Next &gt;</button>
-                    <button id="show-hands">Show hands</button>
+        <div class="sidebar">
+            <div class="controls">
+                <div id="mortal-file-div">
+                    <label id="mortal-html-label" for="mortal-html-file">Choose Mortal File<br>No file loaded</label>
+                    <input type="file" id="mortal-html-file" style="display:none;">
                 </div>
-                <div class="killer-call-div">
-                    <div class="killer-call-bars"></div>
-                    <img class="killer-call-img" src="media/killerducky.png"></img>
-                </div>
+                <button id="hand-dec">&lt; Prev Hand</button>
+                <button id="hand-inc">Next Hand &gt;</button>
+                <button id="prev-mismatch">&lt; Prev Error</button>
+                <button id="next-mismatch">Next Error &gt;</button>
+                <button id="ply-dec2">&lt; Prev Choice</button>
+                <button id="ply-inc2">Next Choice &gt;</button>
+                <button id="ply-dec">&lt; Prev</button>
+                <button id="ply-inc">Next &gt;</button>
+                <button id="show-hands">Show hands</button>
+            </div>
+            <div class="killer-call-div">
+                <div class="killer-call-bars"></div>
+                <img class="killer-call-img" src="media/killerducky.png"></img>
             </div>
         </div>
     </main>

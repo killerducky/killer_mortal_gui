@@ -2,7 +2,6 @@
     --main-width: 750px;
     --main-height: 800px;
     --neg-margin: -10px;
-    --zoom: 1.0;
  
     /* blue-green, accents go darker */
     --color-main:   hsl(190, 100%, 27%);
@@ -13,17 +12,8 @@
     /* Analagous to main: -> green-yellow -> yellow */
     --color-bar-mortal: hsl(120, 81%, 34%);
     --color-bar-hero: hsl(70, 72%, 48%);
+    /* Discard background */
     --color-tsumogiri: hsl(30, 11%, 78%);
-}
-@media (max-width: 1010px) {
-    :root {
-        --zoom: 0.7;
-    }
-}
-@media (max-width: 600px) {
-    :root {
-        --zoom: 0.48;
-    }
 }
 body, .info-round-modal, .info-round-close, .info-this-round-modal {
     font-family: sans-serif;
@@ -38,11 +28,10 @@ h1{
     text-align: center;
 }
 .outer {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
+    display: grid;
+    grid-template-columns: var(--main-width) 1fr;
 }
-.main-grid {
+.grid-main{
     display: grid;
     width: var(--main-width);
     height: var(--main-height);
@@ -53,28 +42,6 @@ h1{
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"
                          "ah-p3 .     ad-p0   .     ah-p1"
                          "ah-p0 ah-p0 ah-p0   ah-p0 ah-p1";
-    transform: scale(var(--zoom));
-    transform-origin: 0% 0% 0px;
-}
-.sidebar {
-    width: 260px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-}
-@media (max-width: 1010px) {
-    .sidebar {
-        width: 530px;
-    }
-}
-@media (max-width: 600px) {
-    .sidebar {
-        width: 360px;
-    }
-}
-.main-size-container {
-    width: calc(var(--main-width)*var(--zoom));
-    height: calc(var(--main-height)*var(--zoom));
 }
 .grid-hand-p3{
     grid-area: ah-p3;
@@ -219,24 +186,6 @@ h1{
     border-color:black;
     border-width:2px;
 }
-@media (max-width: 600px) {
-    .controls {
-        width: auto;
-        grid-template-columns: repeat(2, 60px);
-        overflow: hidden;
-        padding:2px;
-    }
-    .controls > * {
-        margin:2px;
-        padding:8px;
-        background: var(--color-accent2);
-        color:var(--color-text);
-        border-style:outset;
-        border-color:black;
-        border-width:2px;
-        font-size: x-small;
-    }
-}
 
 .info-round, .info-this-round {
     background: var(--color-accent2);
@@ -304,3 +253,7 @@ button:hover {
     margin: auto;
     margin-top: 20px;
 }
+/* svg {
+    filter: drop-shadow(3px 0px 2px rgb(0 0 0 / 0.4)) url(#inset-shadow);
+    box-shadow: 0 0 15px 6px inset rgba(255,0,96,0.8);
+} */
