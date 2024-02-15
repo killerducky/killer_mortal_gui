@@ -192,10 +192,9 @@ class UI {
         return ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
     }
     parseYakuString(yaku) {
-        console.log(yaku)
         let s = yaku.split(/([\(\)])|([0-9:]+)/)
-        console.log(s)
         s = s.map(x => x in exactTranslation ? exactTranslation[x]['DEFAULT'] : x)
+        s = s.map(x => x in partialTranslationForStats ? partialTranslationForStats[x]['DEFAULT'] : x)
         return s.join(' ')
     }
     updateGridInfo() {
@@ -271,6 +270,7 @@ class UI {
         const callBars = document.querySelector('.killer-call-bars')
         let svgElement = callBars.firstElementChild
         let slot = 0
+        let mismatch = false
         for (const key in mortalEval.Pvals) {
             let Pval = mortalEval.Pvals[key]
             if (!isNaN(key) && (mortalEval.m_action != key || mortalEval.p_action == key)) {
@@ -293,6 +293,7 @@ class UI {
                 text.textContent = key
                 svgElement.appendChild(text)
             } else {
+                mismatch = true
                 let backgroundRect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
                 backgroundRect.setAttribute("x", xloc - GS.C_db_mortBarWidth / 2 - 10+5-1)
                 backgroundRect.setAttribute("y", GS.C_db_height + 10-1)
@@ -309,9 +310,20 @@ class UI {
                 tileImg.style.padding = "1px 1px 1px 1px"
                 tileImg.setAttribute("width", 18)
                 svgElement.appendChild(tileImg)
+                let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
             }
             slot++
         }
+        if (mismatch) {
+            let xloc = GS.C_db_tileWidth*1.2/2 + slot*GS.C_db_tileWidth*1.2
+            let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
+            text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
+            text.setAttribute("y", 60)
+            text.setAttribute("fill", GS.C_colorText)
+            text.textContent = "Hmmm..."
+            svgElement.appendChild(text)
+        }
+
     }
     clearDiscardBars() {
         const discardBars = document.getElementById("discard-bars")

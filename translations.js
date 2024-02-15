@@ -575,7 +575,8 @@ const exactTranslation = {
         'ES': 'Yakuman',
     },
     '点∀': {
-        'DEFAULT': 'Points ∀',
+        /* 'DEFAULT': 'Points ∀', */
+        'DEFAULT': 'Points each',
         'EMA_ENG': 'Points each',
         'FRA_TRAD': 'points tous',
         'VIE': 'mỗi người',
