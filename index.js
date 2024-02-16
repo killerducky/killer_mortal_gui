@@ -25,8 +25,8 @@ class GlobalState {
         this.C_db_mortBarWidth = 10
         this.C_cb_heroBarHeight = 60
         this.C_cb_mortBarHeightRatio = 0.9
-        this.C_cb_totHeight = 105
-        this.C_cb_totWidth = 200
+        this.C_cb_totHeight = 115
+        this.C_cb_totWidth = 220
         this.C_cb_padding = 10
 
         this.C_colorText = getComputedStyle(document.documentElement).getPropertyValue('--color-text')
@@ -232,19 +232,41 @@ class UI {
         svgElement.setAttribute("height", GS.C_cb_totHeight)
         callBars.replaceChildren(svgElement)
     }
+    createTileSvg(x, y, tile) {
+        if (isNaN(tile)) {
+            console.log(tile)
+            throw new Error()
+        }
+        const backgroundRect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+        backgroundRect.setAttribute("x", x-1)
+        backgroundRect.setAttribute("y", y-1)
+        backgroundRect.setAttribute("width", "20")
+        backgroundRect.setAttribute("height", "26")
+        backgroundRect.setAttribute("fill", "white")
+        const tileSvg = document.createElementNS("http://www.w3.org/2000/svg", "image")
+        tileSvg.setAttribute('href', `media/Regular_shortnames/${tenhou2str(tile)}.svg`)
+        tileSvg.setAttribute("x", x)
+        tileSvg.setAttribute("y", y)
+        tileSvg.style.background = "white"
+        tileSvg.style.border = "5px solid red"
+        tileSvg.style.padding = "1px 1px 1px 1px"
+        tileSvg.setAttribute("width", 18)
+        return [backgroundRect, tileSvg]
+    }
     updateCallBars() {
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = gameEvent.mortalEval
         const callBars = document.querySelector('.killer-call-bars')
         let svgElement = callBars.firstElementChild
         let slot = 0
-        for (const key in mortalEval.Pvals_soft) {
-            let Pval = mortalEval.Pvals_soft[key]
-            if (!isNaN(key) && (mortalEval.m_action != key || mortalEval.p_action == key)) {
+        for (let fullKey in mortalEval.Pvals_soft) {
+            let splitKey = fullKey.split(',')
+            let Pval = mortalEval.Pvals_soft[fullKey]
+            if (splitKey[0] == 'Discard' && (mortalEval.m_action != fullKey || mortalEval.p_action == fullKey)) {
                 continue // Skip tiles (unless it's a mismatch)
             }
-            let xloc = GS.C_db_tileWidth*1.2/2 + slot*GS.C_db_tileWidth*1.2
-            if (key == mortalEval.p_action) {
+            let xloc = GS.C_db_tileWidth*1.3/2 + slot*GS.C_db_tileWidth*1.3
+            if (fullKey == mortalEval.p_action) {
                 svgElement.appendChild(this.createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, GS.C_colorBarHero
                 ))
@@ -252,42 +274,29 @@ class UI {
             svgElement.appendChild(this.createRect(
                 xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_cb_heroBarHeight, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
             ))
-            if (isNaN(key)) {
-                let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
-                text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
-                text.setAttribute("y", GS.C_db_height + 20)
-                text.setAttribute("fill", GS.C_colorText)
-                text.textContent = key
-                svgElement.appendChild(text)
-            } else {
-                let backgroundRect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-                backgroundRect.setAttribute("x", xloc - GS.C_db_mortBarWidth / 2 - 10+5-1)
-                backgroundRect.setAttribute("y", GS.C_db_height + 10-1)
-                backgroundRect.setAttribute("width", "20")
-                backgroundRect.setAttribute("height", "26")
-                backgroundRect.setAttribute("fill", "white")
-                svgElement.appendChild(backgroundRect)
-                const tileImg = document.createElementNS("http://www.w3.org/2000/svg", "image")
-                tileImg.setAttribute('href', `media/Regular_shortnames/${tenhou2str(key)}.svg`)
-                tileImg.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10+5)
-                tileImg.setAttribute("y", GS.C_db_height + 10)
-                tileImg.style.background = "white"
-                tileImg.style.border = "5px solid red"
-                tileImg.style.padding = "1px 1px 1px 1px"
-                tileImg.setAttribute("width", 18)
-                svgElement.appendChild(tileImg)
-                let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
+            let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
+            text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
+            text.setAttribute("y", GS.C_db_height + 20)
+            text.setAttribute("fill", GS.C_colorText)
+            text.textContent = splitKey[0] == 'Discard' ? 'Cut' : splitKey[0]
+            svgElement.appendChild(text)
+            let x_offset = splitKey.length-1 == 1 ? 25 : 35 // why did I use svgs and now I have to write my own layout code!
+            for (let i=1; i<splitKey.length; i++) {
+                let tileSvg = this.createTileSvg(xloc+i*20-GS.C_db_mortBarWidth/2-x_offset, GS.C_db_height + 30, splitKey[i])
+                svgElement.appendChild(tileSvg[0])
+                svgElement.appendChild(tileSvg[1])
             }
             slot++
         }
         if (mortalEval.Pvals_soft[mortalEval.p_action] != 100) {
-            let xloc = GS.C_db_tileWidth*1.2/2 + slot*GS.C_db_tileWidth*1.2
+            let xloc = GS.C_db_tileWidth*1.3/2 + slot*GS.C_db_tileWidth*1.3
+            // let xloc = GS.C_cb_totWidth - 60
             let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
             text.setAttribute("y", 60)
             text.setAttribute("fill", GS.C_colorText)
             if (mortalEval.Pvals_soft[mortalEval.p_action] > 50) {
-                text.textContent = "Hmmm..."
+                text.textContent = "Hmm..."
             } else {
                 text.textContent = "Quack!"
             }
@@ -318,22 +327,20 @@ class UI {
         const discardBars = document.getElementById("discard-bars")
         let svgElement = discardBars.firstElementChild
         let heroSlotFound = typeof mortalEval.p_action == 'string' && (
-            (mortalEval.p_action == 'Ryuukyoku' && 'Ryuukyoku' in mortalEval.Pvals) ||
-            (mortalEval.p_action == 'Riichi' && 'Riichi' in mortalEval.Pvals) ||
-            (mortalEval.p_action == 'Kan' && 'Kan' in mortalEval.Pvals)
+            (mortalEval.p_action in mortalEval.Pvals)
         )
         for (let i = -1; i < GS.gl.hands[gameEvent.pidx].length; i++) {
             let tile = (i==-1) ? GS.gl.drawnTile[gameEvent.pidx] : GS.gl.hands[gameEvent.pidx][i]
             if (tile == null) {
                 continue // on calls there was no drawnTile
             }
-            let Pval = mortalEval['Pvals_soft'][tile]
+            let Pval = mortalEval['Pvals_soft'][`Discard,${tile}`]
             if (Pval == null) {
                 continue // TODO: Check code for this. For now assume due to illegal calls swaps
             }
             let slot = (i !== -1) ? i : GS.gl.hands[gameEvent.pidx].length+1
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
-            if (tile == mortalEval.p_action) {
+            if (`Discard,${tile}` == mortalEval.p_action) {
                 heroSlotFound = true
                 svgElement.appendChild(this.createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
@@ -1229,29 +1236,25 @@ function parseMortalHtml() {
             continue
         }
         let evals = new MortalEval(currTurn)
-        // TODO: This is probably not going to be the final value of evals.p_action!
-        evals.p_action = roles[0].nextSibling.textContent.trim()
+        evals.p_action = roles[0].parentElement.textContent.replace(/Player:/, '').trim()
+
         if (RiichiState == 'Discarding') {
             RiichiState = 'Complete' // We are now processing the riichi discard set the state now
         }
         if (evals.p_action.includes('Riichi')) {
             RiichiState = 'Discarding' // set flag so we process the Riichi discard next
         }
+        let tiles = roles[0].parentElement.querySelectorAll('use')
+        tiles = [...tiles].map(t => mortalHashTile2tenhou(t.href.baseVal))
+        evals.p_action = [evals.p_action].concat(tiles)
+        evals.p_action = evals.p_action.join() // Hash key must be string, not array
 
         if (evals.p_action.includes('Discard')) {
             evals.type = 'Discard'
-            // replace evals.p_action with the actual tile discarded
-            // Player is wrapped nicely in a parent span
-            evals.p_action = roles[0].parentElement.querySelector('use').href.baseVal
-            evals.p_action = mortalHashTile2tenhou(evals.p_action)
         } else {
             let beforeAction = d.querySelector('li.tsumo').getAttribute('before')
             if (beforeAction && !beforeAction.includes('Draw')) {
-                // if (evals.p_action != "Skip") {
-                //     console.log(roles[1].parentElement.textContent)
-                // }
                 evals.type = 'Call' // Chi, Pon, Open Kan
-                evals.p_action = roles[0].parentElement.textContent.replace(/Player:/, '').trim()
                 evals.strFromRel = beforeAction.match(/^[^\W]+/)[0]
                 const fromMap = {"Shimocha":1, "Toimen":2, "Kamicha":3}
                 console.assert(evals.strFromRel in fromMap)
@@ -1264,21 +1267,15 @@ function parseMortalHtml() {
         }
         let tbody = d.querySelector('tbody')
         for (let tr of tbody.querySelectorAll('tr')) {
-            let action = tr.firstElementChild.textContent.trim()
             let i = tr.querySelectorAll('span.int')
             let f = tr.querySelectorAll('span.frac')
             let Qval = parseFloat(i[0].textContent + f[0].textContent)
             let Pval = parseFloat(i[1].textContent + f[1].textContent)
-
-            if (evals.type == 'Call' || action == "Riichi" || action == "Tsumo" || action == "Kan" || action == "Ryuukyoku") {
-                evals.Pvals[action] = Pval
-                //console.log('action', action, tr.innerHTML)
-                // TODO: Chi/Pon etc has tiles in it
-            } else {
-                let tile = tr.querySelector('use').href.baseVal
-                tile = mortalHashTile2tenhou(tile)
-                evals.Pvals[tile] = Pval
-            }
+            let tiles = tr.querySelectorAll('use')
+            tiles = [...tiles].map(t => mortalHashTile2tenhou(t.href.baseVal))
+            let action = tr.firstElementChild.textContent.trim()
+            action = [action].concat(tiles)
+            evals.Pvals[action] = Pval
         }
         let softmaxed = soften(Object.values(evals.Pvals))
         evals.Pvals_soft = Object.keys(evals.Pvals).reduce((acc, key, index) => {

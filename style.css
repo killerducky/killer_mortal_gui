@@ -252,8 +252,6 @@ button:hover {
     margin:20px auto;
 }
 .killer-call-bars {
-    width: 200px;
-    height: 105px;
     background: var(--color-accent3);
     padding: 10px;
     margin: auto;
