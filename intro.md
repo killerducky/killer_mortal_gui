@@ -53,3 +53,22 @@ json_data = {
     "sx":["C","C","C","C"]
 }
 ```
+
+```
+///////////////////////////////////////////////////
+// kan naki:
+//   daiminkan: (open kan)
+//     kamicha   "m39393939" (0)
+//     toimen    "39m393939" (1)
+//     shimocha  "222222m22" (3)
+//     (writes to draws; 0 to discards)
+//   shouminkan: (kakan aka added kan) (same order as pon; immediate tile after k is the added tile)
+//     kamicha   "k37373737" (0)
+//     toimen    "31k313131" (1)
+//     shimocha  "3737k3737" (2)
+//     (writes to discards)
+//   ankan: (closed kan)
+//     "121212a12" (3)
+//     (writes to discards)
+///////////////////////////////////////////////////
+```

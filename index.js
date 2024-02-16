@@ -1,38 +1,42 @@
 "use strict";
 
-const RUNES  = {
-    /*hand limits*/
-    "mangan"         : ["満貫",         "Mangan ",         "Mangan "               ],
-    "haneman"        : ["跳満",         "Haneman ",        "Haneman "              ],
-    "baiman"         : ["倍満",         "Baiman ",         "Baiman "               ],
-    "sanbaiman"      : ["三倍満",       "Sanbaiman ",      "Sanbaiman "            ],
-    "yakuman"        : ["役満",         "Yakuman ",        "Yakuman "              ],
-    "kazoeyakuman"   : ["数え役満",     "Kazoe Yakuman ",  "Counted Yakuman "      ],
-    "kiriagemangan"  : ["切り上げ満貫", "Kiriage Mangan ", "Rounded Mangan "       ],
-    /*round enders*/
-    "agari"          : ["和了",         "Agari",           "Agari"                 ],
-    "ryuukyoku"      : ["流局",         "Ryuukyoku",       "Exhaustive Draw"       ],
-    "nagashimangan"  : ["流し満貫",     "Nagashi Mangan",  "Mangan at Draw"        ],
-    "suukaikan"      : ["四開槓",       "Suukaikan",       "Four Kan Abortion"     ],
-    "sanchahou"      : ["三家和",       "Sanchahou",       "Three Ron Abortion"    ],
-    "kyuushukyuuhai" : ["九種九牌",     "Kyuushu Kyuuhai", "Nine Terminal Abortion"],
-    "suufonrenda"    : ["四風連打",     "Suufon Renda",    "Four Wind Abortion"    ],
-    "suuchariichi"   : ["四家立直",     "Suucha Riichi",   "Four Riichi Abortion"  ],
-    /*scoring*/
-    "fu"             : ["符",           /*"Fu",*/"符",     "Fu"                    ],
-    "han"            : ["飜",           /*"Han",*/"飜",    "Han"                   ],
-    "points"         : ["点",           /*"Points",*/"点", "Points"                ],
-    "all"            : ["∀",            "∀",               "∀"                     ],
-    "pao"            : ["包",           "pao",             "Responsibility"        ],
-    /*rooms*/
-    "tonpuu"         : ["東喰",         " East",           " East"                 ],
-    "hanchan"        : ["南喰",         " South",          " South"                ],
-    "friendly"       : ["友人戦",       "Friendly",        "Friendly"              ],
-    "tournament"     : ["大会戦",       "Tounament",       "Tournament"            ],
-    "sanma"          : ["三",           "3-Player ",       "3-Player "             ],
-    "red"            : ["赤",           " Red",            " Red Fives"            ],
-    "nored"          : ["",             " Aka Nashi",      " No Red Fives"         ]
-};
+class GlobalState {
+    constructor() {
+        this.ui = new UI
+        this.gl = null
+        this.ge = null
+        this.newUser = true
+
+        this.ply_counter = 0
+        this.hand_counter = 0
+        this.mortalHtmlDoc = null
+        this.json_data = null
+        this.heroPidx = null   // player index mortal reviewed
+        this.showHands = false
+
+        this.C_soft_T = 2
+
+        this.C_db_height = 60
+        this.C_db_totWidth = 605
+        this.C_db_handPadding = 10
+        this.C_db_padding = 15
+        this.C_db_tileWidth = 34
+        this.C_db_heroBarWidth = 20
+        this.C_db_mortBarWidth = 10
+        this.C_cb_heroBarHeight = 60
+        this.C_cb_mortBarHeightRatio = 0.9
+        this.C_cb_totHeight = 105
+        this.C_cb_totWidth = 200
+        this.C_cb_padding = 10
+
+        this.C_colorText = getComputedStyle(document.documentElement).getPropertyValue('--color-text')
+        this.C_colorBarMortal = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-mortal')
+        this.C_colorBarHero = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-hero')
+        this.C_colorTsumogiri = getComputedStyle(document.documentElement).getPropertyValue('--color-tsumogiri')
+
+        this.C_windStr = ['E', 'S', 'W', 'N']
+    }
+}
 
 class GameLog {
     constructor(log) {
@@ -75,44 +79,6 @@ class GameLog {
         this.drawnTile = [null, null, null, null]
         this.calls = [[],[],[],[]]
         this.handOver = false
-    }
-}
-
-class GlobalState {
-    constructor() {
-        this.ui = new UI
-        this.gl = null
-        this.ge = null
-        this.newUser = true
-
-        this.ply_counter = 0
-        this.hand_counter = 0
-        this.mortalHtmlDoc = null
-        this.json_data = null
-        this.heroPidx = null   // player index mortal reviewed
-        this.showHands = false
-
-        this.C_soft_T = 2
-
-        this.C_db_height = 60
-        this.C_db_totWidth = 605
-        this.C_db_handPadding = 10
-        this.C_db_padding = 15
-        this.C_db_tileWidth = 34
-        this.C_db_heroBarWidth = 20
-        this.C_db_mortBarWidth = 10
-        this.C_cb_heroBarHeight = 60
-        this.C_cb_mortBarHeightRatio = 0.9
-        this.C_cb_totHeight = 105
-        this.C_cb_totWidth = 200
-        this.C_cb_padding = 10
-
-        this.C_colorText = getComputedStyle(document.documentElement).getPropertyValue('--color-text')
-        this.C_colorBarMortal = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-mortal')
-        this.C_colorBarHero = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-hero')
-        this.C_colorTsumogiri = getComputedStyle(document.documentElement).getPropertyValue('--color-tsumogiri')
-
-        this.C_windStr = ['E', 'S', 'W', 'N']
     }
 }
 
@@ -663,11 +629,8 @@ class TurnNum {
             this.nextDiscardIdx[this.pidx]++
             if (!selfKan) {
                 this.pidx = this.whoIsNext(discard)
-            } else {
-                // console.log('self kan so extra turn')
             }
             if (openKan) {
-                console.log('openkan')
                 this.nextDiscardIdx[this.pidx]++
             }
         } else if (selfKan) {
@@ -697,10 +660,6 @@ class TurnNum {
                 if (fancyDrawClass.fromIdxRel == offset) {
                     if (fuzzyCompareTile(fancyDrawClass.newTile, discard)) {
                         return tmpPidx
-                    } else {
-                        // console.log('We will call from them, but it must be later, not now!')
-                        // console.log(draw, discard, tmpPidx, GS.gl.rawRound)
-                        // console.log(fancyDrawClass)
                     }
                 }
             }
@@ -870,7 +829,6 @@ class NewTile {
         }
         this.meldedTiles = callStr.replace(/[a-z]/, '').match(/../g).map(x => parseInt(x))
         this.newTile = this.meldedTiles[this.fromIdxRel]
-        // TODO: Test ankan of red 5 type cases
         if (this.type == 'k') {
             // only one of the tiles is actually new
             this.meldedTiles = [this.meldedTiles[this.fromIdxRel]]
@@ -880,23 +838,6 @@ class NewTile {
         this.fromIdxRel = Math.min(this.fromIdxRel, 2)
     }
 }
-
-///////////////////////////////////////////////////
-// kan naki:
-//   daiminkan: (open kan)
-//     kamicha   "m39393939" (0)
-//     toimen    "39m393939" (1)
-//     shimocha  "222222m22" (3)
-//     (writes to draws; 0 to discards)
-//   shouminkan: (kakan aka added kan) (same order as pon; immediate tile after k is the added tile)
-//     kamicha   "k37373737" (0)
-//     toimen    "31k313131" (1)
-//     shimocha  "3737k3737" (2)
-//     (writes to discards)
-//   ankan: (closed kan)
-//     "121212a12" (3)
-//     (writes to discards)
-///////////////////////////////////////////////////
 
 function parseOneTenhouRound(round) {
     let currGeList = []
@@ -920,8 +861,7 @@ function parseOneTenhouRound(round) {
         ply.incPly(null, draw.type == 'm', draw.type == 'm')
         if (draw.type == 'm') {
             openkanCnt++
-            // skip discard, loop back around to draw again
-            continue
+            continue // skip discard, loop back around to draw again
         }
         let discard = ply.getDiscard()
         if (discard === null) {
@@ -1023,7 +963,7 @@ function mergeMortalEvents() {
     }
 }
 
-function checkPlies(openkanCnt, kakanCnt, ply, currGeList) {
+function checkPlies(openkanCnt, kakanCnt, ply) {
     let checkPlies = 0
     for (let i=0; i<4; i++) {
         checkPlies += GS.gl.draws[i].length
@@ -1046,7 +986,7 @@ function preParseTenhouLogs(data) {
         let ply
         [openkanCnt, kakanCnt, ply, currGeList] = parseOneTenhouRound(round)
         addResult(currGeList)
-        checkPlies(openkanCnt, kakanCnt, ply, currGeList)
+        checkPlies(openkanCnt, kakanCnt, ply)
     }
     mergeMortalEvents()
     console.log('preParseTenhouLogs done', GS.ge)
