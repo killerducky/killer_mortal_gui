@@ -1303,13 +1303,8 @@ function parseMortalHtml() {
             // replace evals.p_action with the actual tile discarded
             // Player is wrapped nicely in a parent span
             evals.p_action = roles[0].parentElement.querySelector('use').href.baseVal
-            // Mortal is not wrapped, use next.next instead
-            evals.m_action = roles[1].nextSibling.nextSibling.querySelector('use').href.baseVal
             evals.p_action = mortalHashTile2tenhou(evals.p_action)
-            evals.m_action = mortalHashTile2tenhou(evals.m_action)
         } else {
-            // TODO this isn't right for all cases but m_action isn't really used anyways...
-            evals.m_action = roles[1].nextSibling.textContent.trim()
             let beforeAction = d.querySelector('li.tsumo').getAttribute('before')
             if (beforeAction && !beforeAction.includes('Draw')) {
                 // if (evals.p_action != "Skip") {
@@ -1350,6 +1345,11 @@ function parseMortalHtml() {
             acc[key] = softmaxed[index];
             return acc;
         }, {});
+        // Find maximum Pval and set it to be mortal's action (m_action)
+        const maxEntry = Object.entries(evals.Pvals_soft).reduce((prev, curr) => {
+            return prev[1] > curr[1] ? prev : curr;
+        });
+        evals.m_action = maxEntry[0]
 
         GS.mortalEvals[GS.mortalEvals.length-1].push(evals)
     }
