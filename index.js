@@ -26,7 +26,7 @@ class GlobalState {
         this.C_cb_heroBarHeight = 60
         this.C_cb_mortBarHeightRatio = 0.9
         this.C_cb_totHeight = 115
-        this.C_cb_totWidth = 220
+        this.C_cb_totWidth = 260
         this.C_cb_padding = 10
 
         this.C_colorText = getComputedStyle(document.documentElement).getPropertyValue('--color-text')
@@ -123,18 +123,21 @@ class UI {
     getDiscard(pidx) { 
         return this.discards[pidx.pov()]
     }
-    roundStr() {
+    roundStr(showSticks) {
         let str = GS.C_windStr[GS.gl.roundWind-41]
         str += (GS.gl.roundNum+1)
         if (GS.gl.honbas > 0) {
             str += "-" + GS.gl.honbas
+        }
+        if (showSticks && GS.gl.prevRoundSticks>0) {
+            str += " +" + GS.gl.prevRoundSticks*1000
         }
         return str
     }
     reset() {
         let currGeList = GS.ge[GS.hand_counter]
         let result = currGeList.slice(-1)[0]
-        this.round.replaceChildren(this.roundStr())
+        this.round.replaceChildren(this.roundStr(true))
         this.prevRoundSticks.replaceChildren()
         this.doras.replaceChildren()
         for (let pidx=0; pidx<4; pidx++) {
@@ -290,7 +293,6 @@ class UI {
         }
         if (mortalEval.Pvals_soft[mortalEval.p_action] != 100) {
             let xloc = GS.C_db_tileWidth*1.3/2 + slot*GS.C_db_tileWidth*1.3
-            // let xloc = GS.C_cb_totWidth - 60
             let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
             text.setAttribute("y", 60)
@@ -358,7 +360,6 @@ class UI {
         }
     }
     updateHandInfo() {
-        let result = GS.ge[GS.hand_counter].slice(-1)[0]
         for (let pnum=0; pnum<4; pnum++) {
             let objPidx = new PIDX(pnum)
             this.addHandTiles(objPidx, [], true)
@@ -498,7 +499,7 @@ class UI {
                 updateState()
             })
             cell = tr.insertCell()
-            cell.textContent = this.roundStr()
+            cell.textContent = this.roundStr(false)
             for (let pidx=0; pidx<4+1; pidx++) {
                 cell = tr.insertCell()
                 cell.textContent = pidx==4 ? GS.gl.prevRoundSticks*1000 : `${GS.gl.scores[pidx]}`
@@ -509,7 +510,7 @@ class UI {
                 cell.textContent = `${result.scoreChangesPlusSticks[pidx]}`
                 if (result.scoreChangesPlusSticks[pidx] < -7000) {
                     cell.classList.add('big-loss')
-                } else if (result.scoreChangesPlusSticks[pidx] < 0) {
+                } else if (result.scoreChangesPlusSticks[pidx] < -3000) {
                     cell.classList.add('small-loss')
                 }
             }
