@@ -356,7 +356,11 @@ class UI {
             }
             this.addBlankSpace(pidx)
             if (GS.gl.drawnTile[pidx] != null) {
-                this.addHandTiles(pidx, [tenhou2str(GS.gl.drawnTile[pidx])], false)
+                if (GS.showHands || pidx==GS.heroPidx) {
+                    this.addHandTiles(pidx, [tenhou2str(GS.gl.drawnTile[pidx])], false)
+                } else {
+                    this.addHandTiles(pidx, ['back'], false)
+                }
             } else {
                 this.addBlankSpace(pidx)
             }
