@@ -307,7 +307,7 @@ button:hover {
     margin-top: 20px;
 }
 
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
     .outer {
         flex-direction: column;
         align-items: center;
