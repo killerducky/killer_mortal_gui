@@ -82,32 +82,13 @@ class GameLog {
     }
 }
 
-class PIDX {
-    constructor(pidx) {
-        this.pidx = pidx
-    }
-    logical() {
-        return this.pidx
-    }
-    pov() {
-        return (4 + this.pidx - GS.ui.povPidx) % 4
-    }
-}
-
 class UI {
     constructor() {
-        this.hands = []
-        this.discards = []
-        this.pInfo = []
-        this.pInfoResult = []
+        this.hands = [[],[],[],[]]
+        this.discards = [[],[],[],[]]
+        this.pInfo = [[],[],[],[]]
+        this.pInfoResult = [[],[],[],[]]
         this.gridInfo = document.querySelector('.grid-info')
-        this.povPidx = 0
-        for (let pnum of Array(4).keys()) {
-            this.hands.push(document.querySelector(`.grid-hand-p${pnum}`))
-            this.discards.push(document.querySelector(`.grid-discard-p${pnum}`))
-            this.pInfo.push(document.querySelector(`.gi-p${pnum}`))
-            this.pInfoResult.push(document.querySelector(`.gi-p${pnum}-result`))
-        }
         this.round = document.querySelector('.info-round')
         this.prevRoundSticks = document.querySelector('.info-sticks')
         this.doras = document.querySelector('.info-doras')
@@ -116,12 +97,17 @@ class UI {
         this.infoRoundTable = document.querySelector('.info-round-table')
         this.infoThisRoundModal = document.querySelector('.info-this-round-modal')
         this.infoThisRoundTable = document.querySelector('.info-this-round-table')
+        this.setPovPidx(0)
     }
-    getHand(pidx) { 
-        return this.hands[pidx.pov()] 
-    }
-    getDiscard(pidx) { 
-        return this.discards[pidx.pov()]
+    setPovPidx(newPidx) {
+        this.povPidx = newPidx
+        for (let pidx=0; pidx<4; pidx++) {
+            let tmpPovPidx = (4 + pidx - this.povPidx) % 4
+            this.hands[pidx] = document.querySelector(`.grid-hand-p${tmpPovPidx}`)
+            this.discards[pidx] = document.querySelector(`.grid-discard-p${tmpPovPidx}`)
+            this.pInfo[pidx] = document.querySelector(`.gi-p${tmpPovPidx}`)
+            this.pInfoResult[pidx] = document.querySelector(`.gi-p${tmpPovPidx}-result`)
+        }
     }
     roundStr(showSticks) {
         let str = GS.C_windStr[GS.gl.roundWind-41]
@@ -141,13 +127,12 @@ class UI {
         this.prevRoundSticks.replaceChildren()
         this.doras.replaceChildren()
         for (let pidx=0; pidx<4; pidx++) {
-            let pidxObj = new PIDX(pidx)
-            this.discards[pidxObj.pov()].replaceChildren()
+            this.discards[pidx].replaceChildren()
             let seatWind = (4 + pidx - GS.gl.roundNum) % 4
-            this.pInfo[pidxObj.pov()].replaceChildren(GS.C_windStr[seatWind])
-            this.pInfo[pidxObj.pov()].append(' ', GS.gl.scores[pidx]-GS.gl.thisRoundSticks[pidx]*1000)
-            this.pInfoResult[pidxObj.pov()].replaceChildren()
-            this.pInfoResult[pidxObj.pov()].append(this.formatString(-GS.gl.thisRoundSticks[pidx]*1000, false, true))
+            this.pInfo[pidx].replaceChildren(GS.C_windStr[seatWind])
+            this.pInfo[pidx].append(' ', GS.gl.scores[pidx]-GS.gl.thisRoundSticks[pidx]*1000)
+            this.pInfoResult[pidx].replaceChildren()
+            this.pInfoResult[pidx].append(this.formatString(-GS.gl.thisRoundSticks[pidx]*1000, false, true))
         }
     }
     formatString(num, showZero, addPlus) {
@@ -359,34 +344,33 @@ class UI {
         }
     }
     updateHandInfo() {
-        for (let pnum=0; pnum<4; pnum++) {
-            let objPidx = new PIDX(pnum)
-            this.addHandTiles(objPidx, [], true)
-            for (let tileInt of GS.gl.hands[pnum]) {
+        for (let pidx=0; pidx<4; pidx++) {
+            this.addHandTiles(pidx, [], true)
+            for (let tileInt of GS.gl.hands[pidx]) {
                 // TODO: Draw and all tenpai could show the hands also?
-                if (GS.showHands || (GS.gl.handOver && GS.gl.scoreChanges[pnum]>0) || pnum==GS.heroPidx) {
-                    this.addHandTiles(objPidx, [tenhou2str(tileInt)], false)
+                if (GS.showHands || (GS.gl.handOver && GS.gl.scoreChanges[pidx]>0) || pidx==GS.heroPidx) {
+                    this.addHandTiles(pidx, [tenhou2str(tileInt)], false)
                 } else {
-                    this.addHandTiles(objPidx, ['back'], false)
+                    this.addHandTiles(pidx, ['back'], false)
                 }
             }
-            this.addBlankSpace(objPidx)
-            if (GS.gl.drawnTile[pnum] != null) {
-                this.addHandTiles(objPidx, [tenhou2str(GS.gl.drawnTile[pnum])], false)
+            this.addBlankSpace(pidx)
+            if (GS.gl.drawnTile[pidx] != null) {
+                this.addHandTiles(pidx, [tenhou2str(GS.gl.drawnTile[pidx])], false)
             } else {
-                this.addBlankSpace(objPidx)
+                this.addBlankSpace(pidx)
             }
-            if (GS.gl.calls[pnum].length > 0) {
-                this.addBlankSpace(objPidx)
-                for (let tileInt of GS.gl.calls[pnum]) {
+            if (GS.gl.calls[pidx].length > 0) {
+                this.addBlankSpace(pidx)
+                for (let tileInt of GS.gl.calls[pidx]) {
                     if (tileInt == 'rotate') {
-                        this.rotateLastTile(objPidx, 'hand')
+                        this.rotateLastTile(pidx, 'hand')
                     } else if (tileInt == 'float') {
-                        this.floatLastTile(objPidx)
+                        this.floatLastTile(pidx)
                     } else if (tileInt == 'back') {
-                        this.addHandTiles(objPidx, [tileInt], false)
+                        this.addHandTiles(pidx, [tileInt], false)
                     } else {
-                        this.addHandTiles(objPidx, [tenhou2str(tileInt)], false)
+                        this.addHandTiles(pidx, [tenhou2str(tileInt)], false)
                     }
                 }
             }
@@ -394,14 +378,14 @@ class UI {
     }
     addHandTiles(pidx, tileStrArray, replace) {
         if (replace) {
-            this.getHand(pidx).replaceChildren()
+            this.hands[pidx].replaceChildren()
         }
         for (let i in tileStrArray) {
-            this.getHand(pidx).appendChild(createTile(tileStrArray[i]))
+            this.hands[pidx].appendChild(createTile(tileStrArray[i]))
         }   
     }
     addDiscardTiles(pidx, tileStrArray, replace) {
-        let div = this.getDiscard(pidx)
+        let div = this.discards[pidx]
         if (replace) {
             div.replaceChildren()
         }
@@ -418,44 +402,43 @@ class UI {
             div.appendChild(createTile(tileStrArray[i]))
         }   
     }
-    rotateLastTile(objPidx, type) {
-        let div = (type=='hand') ? this.getHand(objPidx) : this.getDiscard(objPidx)
+    rotateLastTile(pidx, type) {
+        let div = (type=='hand') ? this.hands[pidx] : this.discards[pidx]
         div.lastChild.lastChild.classList.add('rotate')
     }
-    floatLastTile(objPidx) {
-        let div = this.getHand(objPidx)
+    floatLastTile(pidx) {
+        let div = this.hands[pidx]
         div.lastChild.lastChild.classList.add('float')
     }
     addBlankSpace(pidx) {
         this.addHandTiles(pidx, ['Blank'], false)
-        this.getHand(pidx).lastChild.style.opacity = "0"
+        this.hands[pidx].lastChild.style.opacity = "0"
     }
     updateDiscardPond() {
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
         for (let pidx=0; pidx<4; pidx++) {
-            let pidxObj = new PIDX(pidx)
             for (let tile of GS.gl.discardPond[pidx]) {
-                this.addDiscard(pidxObj, [tenhou2str(tile.tile)], tile.tsumogiri, tile.riichi)
+                this.addDiscard(pidx, [tenhou2str(tile.tile)], tile.tsumogiri, tile.riichi)
                 if (tile.called) {
-                    this.lastDiscardWasCalled(pidxObj)
+                    this.lastDiscardWasCalled(pidx)
                 }
             }
             if (event.type=='discard' && pidx==event.pidx) {
-                this.getDiscard(pidxObj).lastChild.lastChild.classList.add('last-discard')
+                this.discards[pidx].lastChild.lastChild.classList.add('last-discard')
             }
         }
     }
     addDiscard(pidx, tileStrArray, tsumogiri, riichi) {
         this.addDiscardTiles(pidx, tileStrArray)
         if (tsumogiri) {
-            this.getDiscard(pidx).lastChild.lastChild.classList.add('tsumogiri')
+            this.discards[pidx].lastChild.lastChild.classList.add('tsumogiri')
         }
         if (riichi) {
             this.rotateLastTile(pidx, 'discard')
         }
     }
     lastDiscardWasCalled(pidx) {
-        this.getDiscard(pidx).lastChild.style.opacity = "0.5"
+        this.discards[pidx].lastChild.style.opacity = "0.5"
     }
     updateResultsTable() {
         let table = document.createElement("table")
@@ -1190,7 +1173,7 @@ function parseMortalHtml() {
     for (let dtElement of GS.mortalHtmlDoc.querySelectorAll('dt')) {
         if (dtElement.textContent === 'player id') {
             GS.heroPidx = parseInt(dtElement.nextSibling.textContent)
-            GS.ui.povPidx = GS.heroPidx
+            GS.ui.setPovPidx(GS.heroPidx)
             break
         }
     }
@@ -1325,10 +1308,9 @@ function discardOverflowTest() {
     // discard overflow test
     for (let pidx=0; pidx<4; pidx++) {
         for (let i=0; i<27; i++) {
-            let pidxObj = new PIDX(pidx)
-            GS.ui.addDiscardTiles(pidxObj, ['1m'], false)
+            GS.ui.addDiscardTiles(pidx, ['1m'], false)
             if (i==15) {
-                GS.ui.rotateLastTile(pidxObj, 'discard')
+                GS.ui.rotateLastTile(pidx, 'discard')
             }
         }
     }
