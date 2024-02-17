@@ -187,7 +187,6 @@ class UI {
             } else {
                 this.doras.append(createTile(tenhou2str(GS.gl.dora[i])))
             }
-            this.doras.lastChild.setAttribute('width', 20)
         }
         if (GS.gl.handOver) {
             this.infoThisRoundTable.replaceChildren()
@@ -411,35 +410,11 @@ class UI {
     }
     rotateLastTile(objPidx, type) {
         let div = (type=='hand') ? this.getHand(objPidx) : this.getDiscard(objPidx)
-        let angle = (objPidx.pov() * 90 + 90) % 360
-        div.lastChild.style.transform = `rotate(${angle}deg)`
-        if (objPidx.pov() == 1 || objPidx.pov() == 3) {
-            div.lastChild.style.marginBottom = '-5px'
-            div.lastChild.style.marginTop = '5px'
-            div.lastChild.style.transform += objPidx.pov()==1 ? ' translate(6px,0px)' : ' translate(-6px,0px)'
-        } else {
-            div.lastChild.style.marginRight = '5px'
-            div.lastChild.style.marginLeft = '5px'
-            div.lastChild.style.marginBottom = '0px'
-            div.lastChild.style.transform += objPidx.pov()==2 ? ' translate(-6px,0px)' : ' translate(6px,0px)'
-        }
+        div.lastChild.lastChild.classList.add('rotate')
     }
-    floatLastTile(pidx) {
-        if (pidx.pov() == 0) {
-            this.getHand(pidx).lastChild.style.marginLeft = '-39px'
-            this.getHand(pidx).lastChild.style.transform += ' translate(-34px,0px)'
-        } else if (pidx.pov() == 1) {
-            this.getHand(pidx).lastChild.style.marginTop = '-39px'
-            this.getHand(pidx).lastChild.style.transform += ' translate(-34px,0px)'
-        } else if (pidx.pov() == 2) {
-            this.getHand(pidx).lastChild.style.marginLeft = '-39px'
-            this.getHand(pidx).lastChild.style.transform += ' translate(34px,0px)'
-        } else if (pidx.pov() == 3) {
-            this.getHand(pidx).lastChild.style.marginTop = '-39px'
-            this.getHand(pidx).lastChild.style.transform += ' translate(34px,0px)'
-        } else {
-            console.log('error ', pidx)
-        }
+    floatLastTile(objPidx) {
+        let div = this.getHand(objPidx)
+        div.lastChild.lastChild.classList.add('float')
     }
     addBlankSpace(pidx) {
         this.addHandTiles(pidx, ['Blank'], false)
@@ -456,16 +431,14 @@ class UI {
                 }
             }
             if (event.type=='discard' && pidx==event.pidx) {
-                // console.log('hi', event)
-                // this.getDiscard(pidxObj).lastChild.style.transform += ' translate(30px,30px)'
-                // console.log(this.getDiscard(pidxObj).lastChild)
+                this.getDiscard(pidxObj).lastChild.lastChild.classList.add('last-discard')
             }
         }
     }
     addDiscard(pidx, tileStrArray, tsumogiri, riichi) {
         this.addDiscardTiles(pidx, tileStrArray)
         if (tsumogiri) {
-            this.getDiscard(pidx).lastChild.style.background = GS.C_colorTsumogiri
+            this.getDiscard(pidx).lastChild.lastChild.classList.add('tsumogiri')
         }
         if (riichi) {
             this.rotateLastTile(pidx, 'discard')
@@ -1006,12 +979,13 @@ function createTile(tileStr) {
         console.log('error', tileStr)
         throw new Error()
     }
+    const tileDiv = document.createElement('div')
     const tileImg = document.createElement('img')
+    tileDiv.append(tileImg)
+    tileDiv.classList.add('tileDiv')
     tileImg.src = `media/Regular_shortnames/${tileStr}.svg`
-    tileImg.style.background = "white"
-    tileImg.style.border = "1px solid grey"
-    tileImg.style.padding = "1px 1px 1px 1px"
-    return tileImg
+    tileImg.classList.add('tileImg')
+    return tileDiv
 }
 
 // Input: 123m456s789p1112z Output: 1m2m3m4s5s6s7p8p9p1z1z1z2z
