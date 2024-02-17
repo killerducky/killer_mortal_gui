@@ -34,6 +34,7 @@ h1{
     text-align: center;
 }
 .outer {
+    margin-top:20px;
     display:flex;
     justify-content: space-around;
 }
@@ -215,9 +216,11 @@ h1{
     height:62px;
 }
 .sidebar {
+    margin:10px;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-around;
+    gap: 10px;
 }
 .controls {
     display:grid;
@@ -304,29 +307,28 @@ button:hover {
     margin-top: 20px;
 }
 
-/* @media (max-width: 800px) {
+@media (max-width: 900px) {
     .outer {
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: center;
     }
-    .grid-main{
-        display: grid;
-        width:352px;
-        height:352px;
-        grid-template-columns: 13.5% 22.0% 29.1% 22.0% 13.5%;
-        grid-template-rows: 13.5% 22.0% 29.1% 22.0% 13.5%;
+    .controls {
+        display:grid;
+        grid-template-columns: repeat(2, 180px);
+        padding:10px;
+        background:var(--color-accent);
     }
-    :root {
-        max-width: 500px;
+    .controls > * {
+        margin:12px;
+        padding-left:12px;
+        padding-right:12px;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        background: var(--color-accent2);
+        color:var(--color-text);
+        border-style:outset;
+        border-color:black;
+        border-width:2px;
+        font-size:larger;
     }
-} */
-/* 
-@media (max-width: 800px) {
-    .outer {
-        flex-wrap: wrap;
-    }
-    .grid-main {
-        transform: scale(.5);
-        width:302.5px;
-        height:377.5px;
-    }
-} */
+}
