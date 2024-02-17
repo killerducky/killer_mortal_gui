@@ -38,10 +38,12 @@ h1{
 }
 .grid-main{
     display: grid;
-    grid-template-columns: 95px 165px 230px 165px 95px;
-    grid-template-rows: 95px 165px 230px 165px 145px;
+    grid-template-columns: 95px 155px 230px 155px 95px;
+    grid-template-rows: 95px 155px 230px 155px 145px;
+    grid-template-columns: 95px 155px 205px 155px 95px;
+    grid-template-rows: 95px 155px 205px 155px 145px;
     grid-template-areas: "ah-p3 ah-p2 ah-p2   ah-p2 ah-p2"
-                         "ah-p3 .     ad-p2   .     ah-p1"
+                         "ah-p3     . ad-p2   .     ah-p1"
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"
                          "ah-p3 .     ad-p0   .     ah-p1"
                          "ah-p0 ah-p0 ah-p0   ah-p0 ah-p1";
@@ -120,18 +122,24 @@ h1{
 }
 .grid-discard-p3 {
     grid-area: ad-p3;
+    height:360px;
     flex-flow: column wrap-reverse;
 }
 .grid-discard-p2 {
     grid-area: ad-p2;
+    width:360px;
+    justify-self:end;
     flex-flow: row-reverse wrap-reverse;
 }
 .grid-discard-p1 {
     grid-area: ad-p1;
+    height:360px;
+    align-self: end;
     flex-flow: column-reverse wrap;
 }
 .grid-discard-p0 {
     grid-area: ad-p0;
+    width:360px;
 }
 .grid-info {
     grid-area: a-info;

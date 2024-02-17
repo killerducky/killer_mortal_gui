@@ -401,11 +401,21 @@ class UI {
         }   
     }
     addDiscardTiles(pidx, tileStrArray, replace) {
+        let div = this.getDiscard(pidx)
         if (replace) {
-            this.getDiscard(pidx).replaceChildren()
+            div.replaceChildren()
         }
         for (let i in tileStrArray) {
-            this.getDiscard(pidx).appendChild(createTile(tileStrArray[i]))
+            // Add 4 blank placeholders for the first 2 rows of discards
+            // The 3rd row will allow 4 overflow tiles
+            // Then it overflows to the 4th row (and probably overlaps GUI stuff a bit)
+            if (div.childElementCount == 6 || div.childElementCount == 12+4) {
+                for (let j=0; j<4; j++) {
+                    div.appendChild(createTile('Blank'))
+                    div.lastChild.style.opacity = "0"
+                }
+            }
+            div.appendChild(createTile(tileStrArray[i]))
         }   
     }
     rotateLastTile(objPidx, type) {
@@ -1311,6 +1321,19 @@ function getJsonData() {
     })
 }
 
+function discardOverflowTest() {
+    // discard overflow test
+    for (let pidx=0; pidx<4; pidx++) {
+        for (let i=0; i<27; i++) {
+            let pidxObj = new PIDX(pidx)
+            GS.ui.addDiscardTiles(pidxObj, ['1m'], false)
+            if (i==15) {
+                GS.ui.rotateLastTile(pidxObj, 'discard')
+            }
+        }
+    }
+}
+
 function tests() {
     console.assert(new NewTile('151515k51').newTile == 51)
     console.assert(new NewTile('151551k15').newTile == 15)
@@ -1328,6 +1351,7 @@ function main() {
     //tests()
     getJsonData()
     connectUI()
+    //discardOverflowTest()
 }
 main()
 
