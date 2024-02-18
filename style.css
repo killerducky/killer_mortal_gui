@@ -4,11 +4,11 @@
     --max-width: 1100px;
 
     /* blue-green, accents go darker */
-    --color-main:   hsl(190, 100%, 27%);
+    --color-main:   hsl(190, 100%, 25%);
     --color-accent: hsl(190, 100%, 19%);
-    --color-accent2: hsl(190, 100%, 13%);
     --color-accent3: hsl(190, 100%, 16%);
-    --color-text:    hsl(190, 58%, 70%);
+    --color-accent2: hsl(190, 100%, 13%);
+    --color-text:    hsla(190, 0%, 100%, 0.75);
     /* Analagous to main: -> green-yellow -> yellow */
     --color-bar-mortal: hsl(120, 81%, 34%);
     --color-bar-hero: hsl(70, 72%, 48%);
@@ -108,11 +108,11 @@ h1{
 .pov-p3 > div:has(.rotate) { width:34px; height:44px; }
 .pov-p0 > div > .rotate { transform: rotate(90deg) translate(0px, -5px); }
 .pov-p1 > div > .rotate { transform: translate(5px, 1px); }
-.pov-p2 > div > .rotate { transform: rotate(-90deg) translate(10px, 6px); }
+.pov-p2 > div > .rotate { transform: rotate(-90deg) translate(10px, 5px); }
 .pov-p3 > div > .rotate { transform: translate(-5px, 0px); }
 .pov-p0 > div > .float { transform: rotate(90deg) translate(0px, -5px) translate(-50px, 44px); }
 .pov-p1 > div > .float { transform: translate(5px, 1px) translate(-50px, 0px);}
-.pov-p2 > div > .float { transform: rotate(-90deg) translate(10px, 6px) translate(-18px, 0px)}
+.pov-p2 > div > .float { transform: rotate(-90deg) translate(10px, 5px) translate(-18px, 0px)}
 .pov-p3 > div > .float { transform: translate(-5px, 0px) translate(17px, -44px); }
 .pov-p0 > div:has(.float) { width:0px; height: 0px;}
 .pov-p1 > div:has(.float) { width:0px; height: 0px;}
@@ -207,8 +207,8 @@ h1{
     height:26.6px;
 }
 .info-doras > * {
-    width:20px;
-    height:26.6px;
+    width:24px;
+    height:30.6px;
 }
 .discard-bars {
     display: grid;
@@ -312,23 +312,12 @@ button:hover {
         flex-direction: column;
         align-items: center;
     }
-    .controls {
-        display:grid;
-        grid-template-columns: repeat(2, 180px);
-        padding:10px;
-        background:var(--color-accent);
-    }
     .controls > * {
         margin:12px;
         padding-left:12px;
         padding-right:12px;
         padding-top: 20px;
         padding-bottom: 20px;
-        background: var(--color-accent2);
-        color:var(--color-text);
-        border-style:outset;
-        border-color:black;
-        border-width:2px;
         font-size:larger;
     }
 }
