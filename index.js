@@ -97,6 +97,7 @@ class UI {
         this.infoRoundTable = document.querySelector('.info-round-table')
         this.infoThisRoundModal = document.querySelector('.info-this-round-modal')
         this.infoThisRoundTable = document.querySelector('.info-this-round-table')
+        this.infoThisRoundClose = document.querySelector('.info-this-round-close')
         this.setPovPidx(0)
     }
     setPovPidx(newPidx) {
@@ -208,6 +209,9 @@ class UI {
 
             this.infoThisRoundModal.showModal()
             this.infoThisRoundModal.addEventListener('click', (event) => {
+                this.infoThisRoundModal.close()
+            })
+            this.infoThisRoundClose.addEventListener('click', (event) => {
                 this.infoThisRoundModal.close()
             })
         }
@@ -1076,8 +1080,9 @@ function connectUI() {
     const about =  document.getElementById("about")
     const aboutModal =  document.getElementById("about-modal")
     const infoRound = document.querySelector('.info-round')
-    const closeModal = document.querySelector('.info-round-close')
     const infoRoundModal = document.querySelector('.info-round-modal')
+    const closeModal = document.querySelector('.info-round-close')
+    const closeAboutModal = document.querySelector('.about-close')
     inc.addEventListener("click", () => {
         incPlyCounter();
         updateState()
@@ -1133,6 +1138,9 @@ function connectUI() {
     })
     closeModal.addEventListener("click", () => {
         infoRoundModal.close()
+    })
+    closeAboutModal.addEventListener("click", () => {
+        aboutModal.close()
     })
 }
 

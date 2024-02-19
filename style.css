@@ -26,7 +26,7 @@
     --color-tsumogiri: hsl(30, 70%, 80%);
     --opacity-called: 0.25;
 }
-body, .info-round-modal, .info-round-close, .info-this-round-modal, #about-modal {
+body, .info-round-modal, .close, .info-this-round-modal, #about-modal {
     font-family: sans-serif;
     max-width: var(--max-width);
     margin: auto;
