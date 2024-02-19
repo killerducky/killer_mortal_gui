@@ -863,7 +863,12 @@ function parseOneTenhouRound(round) {
                 // let the next if statement handle the discard
             }
             if (typeof discard.newTile == 'number') {
-                currGeList.push(new GameEvent('discard', ply.pidx, {'discard':discard.newTile}))
+                let ge = new GameEvent('discard', ply.pidx, {'discard':discard.newTile})
+                ge.actualTile = ge.discard
+                if (ge.discard == 60) {
+                    ge.actualTile = currGeList[currGeList.length-1].draw
+                }
+                currGeList.push(ge)
             } else {
                 console.log(typeof discard, discard)
                 throw new Error('discard.newTile should be number')
@@ -933,10 +938,13 @@ function mergeMortalEvents() {
                 mortalEvalIdx++
             } else if (event.type == 'discard' && 
                         ((GS.heroPidx + mortalEval.fromIdxRel)%4 == event.pidx) && 
-                        mortalEval.type=='Call' && 
-                        (mortalEval.cutTile == event.discard || mortalEval.fromIdxRel==3)) {
-                event.mortalEval = mortalEval
-                mortalEvalIdx++
+                        mortalEval.type=='Call') {
+                if (mortalEval.cutTile != event.actualTile) {
+                    // console.log('mismatch', mortalEval, event)
+                } else {
+                    event.mortalEval = mortalEval
+                    mortalEvalIdx++
+                }
             } else if (event.type == 'result') {
                 //console.log('result', event, mortalEval)
             }
