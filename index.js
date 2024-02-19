@@ -934,7 +934,7 @@ function mergeMortalEvents() {
             } else if (event.type == 'discard' && 
                         ((GS.heroPidx + mortalEval.fromIdxRel)%4 == event.pidx) && 
                         mortalEval.type=='Call' && 
-                        mortalEval.cutTile == event.discard) {
+                        (mortalEval.cutTile == event.discard || mortalEval.fromIdxRel==3)) {
                 event.mortalEval = mortalEval
                 mortalEvalIdx++
             } else if (event.type == 'result') {
