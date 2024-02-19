@@ -123,9 +123,9 @@ h1{
 .pov-p1 > div > .rotate { transform: translate(5px, 0px); }
 .pov-p2 > div > .rotate { transform: rotate(-90deg) translate(10px, 5px); }
 .pov-p3 > div > .rotate { transform: translate(-5px, 0px); }
-.pov-p0 > div > .float { transform: rotate(90deg) translate(0px, -5px) translate(-50px, 44px); }
-.pov-p1 > div > .float { transform: translate(5px, 0px) translate(-50px, 0px);}
-.pov-p2 > div > .float { transform: rotate(-90deg) translate(10px, 5px) translate(-18px, 0px)}
+.pov-p0 > div > .float { transform: rotate(90deg) translate(0px, -5px) translate(-51px, 44px); }
+.pov-p1 > div > .float { transform: translate(5px, 0px) translate(-51px, 0px);}
+.pov-p2 > div > .float { transform: rotate(-90deg) translate(10px, 5px) translate(-17px, 0px)}
 .pov-p3 > div > .float { transform: translate(-5px, 0px) translate(17px, -44px); }
 .pov-p0 > div:has(.float) { width:0px; height: 0px;}
 .pov-p1 > div:has(.float) { width:0px; height: 0px;}
