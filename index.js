@@ -1309,12 +1309,24 @@ function getJsonData() {
 }
 
 function discardOverflowTest() {
-    // discard overflow test
     for (let pidx=0; pidx<4; pidx++) {
         for (let i=0; i<27; i++) {
             GS.ui.addDiscardTiles(pidx, ['1m'], false)
             if (i==15) {
                 GS.ui.rotateLastTile(pidx, 'discard')
+            }
+        }
+    }
+    for (let pidx=0; pidx<4; pidx++) {
+        GS.ui.addHandTiles(pidx, [], true)
+        for (let i=0; i<18; i++) {
+            GS.ui.addHandTiles(pidx, ['1m'], false)
+            if (i==14) {
+                GS.ui.rotateLastTile(pidx, 'hand')
+            }
+            if (i==15) {
+                GS.ui.rotateLastTile(pidx, 'hand')
+                GS.ui.floatLastTile(pidx)
             }
         }
     }
