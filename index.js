@@ -442,7 +442,7 @@ class UI {
         }
     }
     lastDiscardWasCalled(pidx) {
-        this.discards[pidx].lastChild.style.opacity = "0.5"
+        this.discards[pidx].lastChild.classList.add('called')
     }
     updateResultsTable() {
         let table = document.createElement("table")

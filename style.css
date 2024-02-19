@@ -23,7 +23,8 @@
     --color-bar-mortal: hsl(120, 81%, 34%);
     --color-bar-hero: hsl(70, 72%, 48%);
     /* Discard background */
-    --color-tsumogiri: hsl(30, 11%, 78%);
+    --color-tsumogiri: hsl(30, 70%, 80%);
+    --opacity-called: 0.25;
 }
 body, .info-round-modal, .info-round-close, .info-this-round-modal, #about-modal {
     font-family: sans-serif;
@@ -217,7 +218,10 @@ h1{
     /* Adjust so these rotated tiles are next to each other */
 }
 .tsumogiri {
-    background:var(--color-tsumogiri)
+    background:var(--color-tsumogiri);
+}
+.called {
+    opacity:var(--opacity-called);
 }
 .info-doras > * > * {
     width:20px;
