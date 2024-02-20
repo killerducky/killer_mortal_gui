@@ -33,6 +33,7 @@ class GlobalState {
         this.C_colorBarMortal = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-mortal')
         this.C_colorBarHero = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-hero')
         this.C_colorTsumogiri = getComputedStyle(document.documentElement).getPropertyValue('--color-tsumogiri')
+        this.C_colorTileBg = getComputedStyle(document.documentElement).getPropertyValue('--color-tile-bg')
 
         this.C_windStr = ['E', 'S', 'W', 'N']
     }
@@ -233,12 +234,12 @@ class UI {
         backgroundRect.setAttribute("y", y-1)
         backgroundRect.setAttribute("width", "20")
         backgroundRect.setAttribute("height", "26")
-        backgroundRect.setAttribute("fill", "white")
+        backgroundRect.setAttribute("fill", GS.C_colorTileBg)
         const tileSvg = document.createElementNS("http://www.w3.org/2000/svg", "image")
         tileSvg.setAttribute('href', `media/Regular_shortnames/${tenhou2str(tile)}.svg`)
         tileSvg.setAttribute("x", x)
         tileSvg.setAttribute("y", y)
-        tileSvg.style.background = "white"
+        tileSvg.style.background = GS.C_colorTileBg
         tileSvg.style.border = "5px solid red"
         tileSvg.style.padding = "1px 1px 1px 1px"
         tileSvg.setAttribute("width", 18)
@@ -485,7 +486,11 @@ class UI {
                 if (result.scoreChangesPlusSticks[pidx] < -7000) {
                     cell.classList.add('big-loss')
                 } else if (result.scoreChangesPlusSticks[pidx] < -3000) {
-                    cell.classList.add('small-loss')
+                    cell.classList.add('medium-loss')
+                } else if (result.scoreChangesPlusSticks[pidx] > 7000) {
+                    cell.classList.add('big-win')
+                } else if (result.scoreChangesPlusSticks[pidx] > 3000) {
+                    cell.classList.add('medium-win')
                 }
             }
             hand_counter++
@@ -931,7 +936,7 @@ function mergeMortalEvents() {
                             event.mortalEvalAfterRiichi = mortalEval
                             // console.log('mortal disagreed with riichi discard', event)
                         } else {
-                            console.log('TODO: Add Ron/Tsumo/Kan after riichi', mortalEval)
+                            // console.log('TODO: Add Ron/Tsumo/Kan after riichi', mortalEval)
                         }
                     }
                 }
@@ -1056,7 +1061,6 @@ function stopCondition(onlyMismatches) {
     let mortalEval = GS.ge[GS.hand_counter][GS.ply_counter].mortalEval
     let mismatch = mortalEval && (mortalEval.m_action != mortalEval.p_action)
     return mortalEval && (!onlyMismatches || mismatch) ||
-        GS.ply_counter == 0 || 
         GS.ply_counter == GS.ge[GS.hand_counter].length-1
 }
 function showModalAndWait(modal) {
@@ -1341,7 +1345,9 @@ function discardOverflowTest() {
     for (let pidx=0; pidx<4; pidx++) {
         GS.ui.addHandTiles(pidx, [], true)
         GS.ui.addHandTiles(pidx, ['1m'], false)
+        GS.ui.addBlankSpace(pidx)
         GS.ui.addHandTiles(pidx, ['1m'], false)
+        GS.ui.addBlankSpace(pidx)
 
         GS.ui.addHandTiles(pidx, ['1m'], false)
         GS.ui.addHandTiles(pidx, ['1m'], false)
@@ -1391,7 +1397,7 @@ function main() {
     //tests()
     getJsonData()
     connectUI()
-    //discardOverflowTest()
+    // discardOverflowTest()
 }
 main()
 
