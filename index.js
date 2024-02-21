@@ -495,6 +495,16 @@ class UI {
             }
             hand_counter++
         }
+        tr = table.insertRow()
+        cell = tr.insertCell()
+        cell.textContent = "Final"
+        let lastResult = GS.ge.slice(-1)[0].slice(-1)[0]
+        for (let pidx=0; pidx<4+1; pidx++) {
+            let finalScore = lastResult.scoreChangesPlusSticks[pidx]
+            finalScore += pidx==4 ? GS.gl.prevRoundSticks*1000 : GS.gl.scores[pidx]
+            cell = tr.insertCell()
+            cell.textContent = `${finalScore}`
+        }
         this.infoRoundModal.addEventListener('click', (event) => {
             this.infoRoundModal.close()
         })
@@ -919,7 +929,12 @@ function addResult(currGeList) {
 function mergeMortalEvents() {
     for (let roundNum=0; roundNum<GS.ge.length; roundNum++) {
         let mortalEvalIdx = 0
-        for (let event of GS.ge[roundNum]) {
+        let mortalEvalAfterRiichi = false
+        for (let [idx, event] of GS.ge[roundNum].entries()) {
+            if (mortalEvalAfterRiichi) {
+                mortalEvalAfterRiichi = false
+                continue
+            }
             if (mortalEvalIdx >= GS.mortalEvals[roundNum].length) {
                 break
             }
@@ -933,10 +948,11 @@ function mergeMortalEvents() {
                     mortalEval = GS.mortalEvals[roundNum][mortalEvalIdx]
                     if (mortalEval) {
                         if (mortalEval.type == "Discard") {
-                            event.mortalEvalAfterRiichi = mortalEval
-                            // console.log('mortal disagreed with riichi discard', event)
+                            mortalEvalAfterRiichi = true
+                            GS.ge[roundNum][idx+1].mortalEval = mortalEval
+                            // console.log('mortal disagreed with riichi discard', event, roundNum)
                         } else {
-                            // console.log('TODO: Add Ron/Tsumo/Kan after riichi', mortalEval)
+                            // console.log('TODO: Add Ron/Tsumo/Kan after riichi', mortalEval, roundNum)
                         }
                     }
                 }

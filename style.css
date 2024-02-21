@@ -15,7 +15,7 @@
     --color-bar-mortal: hsl(120, 70%, 34%);
     --color-bar-hero: hsl(70, 60%, 48%);
     /* Discard background */
-    --color-tsumogiri: hsl(30, 70%, 80%);
+    --color-tsumogiri: hsl(30, 60%, 80%);
     --color-tile-bg: hsl(0, 0%, 93%);
     --opacity-called: 0.3;
 }
