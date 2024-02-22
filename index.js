@@ -161,8 +161,9 @@ class UI {
         this.clearCallBars()
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = event.mortalEval
+        console.log('updateGridInfo', event, mortalEval)
         if (mortalEval) {
-            if (mortalEval.type == 'Discard') {
+            if (event.type == 'tsumo') {
                 this.updateDiscardBars()
                 this.updateCallBars() // For calls such as Kan or Riichi instead of discarding
             } else {
@@ -319,23 +320,23 @@ class UI {
     updateDiscardBars() {
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = gameEvent.mortalEval
+        console.log('updateDiscardBars', gameEvent, mortalEval)
         const discardBars = document.getElementById("discard-bars")
         let svgElement = discardBars.firstElementChild
-        let heroSlotFound = typeof mortalEval.actual == 'string' && (
-            (mortalEval.actual in mortalEval.Pvals)
-        )
-        for (let i = -1; i < GS.gs.hands[gameevent.actor].length; i++) {
-            let tile = (i==-1) ? GS.gs.drawnTile[gameevent.actor] : GS.gs.hands[gameevent.actor][i]
+        let heroSlotFound = false
+        for (let i = -1; i < GS.gs.hands[gameEvent.actor].length; i++) {
+            let tile = (i==-1) ? GS.gs.drawnTile[gameEvent.actor] : GS.gs.hands[gameEvent.actor][i]
             if (tile == null) {
                 continue // on calls there was no drawnTile
             }
-            let Pval = mortalEval['Pvals_soft'][`Discard,${tile}`]
+            let matchingDetail = mortalEval.details.find(x => x.action && x.action.pai && x.action.pai==tile)
+            let Pval = matchingDetail.prob*100
             if (Pval == null) {
                 continue // TODO: Check code for this. For now assume due to illegal calls swaps
             }
-            let slot = (i !== -1) ? i : GS.gs.hands[gameevent.actor].length+1
+            let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+1
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
-            if (`Discard,${tile}` == mortalEval.actual) {
+            if (matchingDetail.action.pai == mortalEval.actual.pai) {
                 heroSlotFound = true
                 svgElement.appendChild(this.createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
@@ -347,9 +348,9 @@ class UI {
         }
         if (!heroSlotFound) {
             console.log('!heroSlotFound', gameEvent)
-            console.log(GS.gs.drawnTile[gameevent.actor])
+            console.log(GS.gs.drawnTile[gameEvent.actor])
             console.log(GS.gs.drawnTile)
-            throw new Error()
+            // throw new Error()
         }
     }
     updateHandInfo() {
@@ -429,6 +430,7 @@ class UI {
     }
     updateDiscardPond() {
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
+        console.log('updateDiscardPond', event)
         for (let pidx=0; pidx<4; pidx++) {
             for (let tile of GS.gs.discardPond[pidx]) {
                 this.addDiscard(pidx, [tenhou2str(tile.tile)], tile.tsumogiri, tile.riichi)
@@ -436,7 +438,7 @@ class UI {
                     this.lastDiscardWasCalled(pidx)
                 }
             }
-            if (event.type=='discard' && pidx==event.actor) {
+            if (event.type=='dahai' && pidx==event.actor) {
                 this.discards[pidx].lastChild.lastChild.classList.add('last-discard')
             }
         }
