@@ -116,6 +116,10 @@ h1{
 .pov-p1 > div:has(.rotate) { width:34px; height:44px; }
 .pov-p2 > div:has(.rotate) { width:44px; height:34px; }
 .pov-p3 > div:has(.rotate) { width:34px; height:44px; }
+.pov-p0 > .narrow { width:17px; }
+.pov-p1 > .narrow { height:17px; }
+.pov-p2 > .narrow { width:17px; }
+.pov-p3 > .narrow { height:17px; }
 /* .pov-p0 > div > img  no transform needed */
 .pov-p1 > div > img { transform: rotate(-90deg) translate(5px, 5px); }
 .pov-p2 > div > img { transform: rotate(180deg); }

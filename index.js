@@ -124,8 +124,6 @@ class UI {
         return str
     }
     reset() {
-        let currGeList = GS.ge[GS.hand_counter]
-        let result = currGeList.slice(-1)[0]
         this.round.replaceChildren(this.roundStr(true))
         this.prevRoundSticks.replaceChildren()
         this.doras.replaceChildren()
@@ -338,7 +336,7 @@ class UI {
                 continue // TODO: Check code for this. For now assume due to illegal calls swaps
             }
             let Pval = matchingDetail.normProb*100
-            let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+1
+            let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+0.5
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (matchingDetail.action.pai == mortalEval.actual.pai) {
                 heroSlotFound = true
@@ -368,7 +366,7 @@ class UI {
                     this.addHandTiles(pidx, ['back'], false)
                 }
             }
-            this.addBlankSpace(pidx)
+            this.addBlankSpace(pidx, true)
             if (GS.gs.drawnTile[pidx] != null) {
                 if (GS.showHands || (GS.gs.handOver && GS.gs.scoreChanges[pidx]>0) || pidx==GS.heroPidx) {
                     this.addHandTiles(pidx, [tenhou2str(GS.gs.drawnTile[pidx])], false)
@@ -376,10 +374,10 @@ class UI {
                     this.addHandTiles(pidx, ['back'], false)
                 }
             } else {
-                this.addBlankSpace(pidx)
+                this.addBlankSpace(pidx, false)
             }
             if (GS.gs.calls[pidx].length > 0) {
-                this.addBlankSpace(pidx)
+                this.addBlankSpace(pidx, true)
                 for (let tileInt of GS.gs.calls[pidx]) {
                     if (tileInt == 'rotate') {
                         this.rotateLastTile(pidx, 'hand')
@@ -428,9 +426,12 @@ class UI {
         let div = this.hands[pidx]
         div.lastChild.lastChild.classList.add('float')
     }
-    addBlankSpace(pidx) {
+    addBlankSpace(pidx, narrow) {
         this.addHandTiles(pidx, ['Blank'], false)
         this.hands[pidx].lastChild.style.opacity = "0"
+        if (narrow) {
+            this.hands[pidx].lastChild.classList.add('narrow')
+        }
     }
     updateDiscardPond() {
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
@@ -1139,9 +1140,9 @@ function discardOverflowTest() {
     for (let pidx=0; pidx<4; pidx++) {
         GS.ui.addHandTiles(pidx, [], true)
         GS.ui.addHandTiles(pidx, ['1m'], false)
-        GS.ui.addBlankSpace(pidx)
+        GS.ui.addBlankSpace(pidx, true)
         GS.ui.addHandTiles(pidx, ['1m'], false)
-        GS.ui.addBlankSpace(pidx)
+        GS.ui.addBlankSpace(pidx, true)
 
         GS.ui.addHandTiles(pidx, ['1m'], false)
         GS.ui.addHandTiles(pidx, ['1m'], false)
