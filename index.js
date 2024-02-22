@@ -178,6 +178,7 @@ class UI {
             }
         }
         if (GS.gs.handOver) {
+            console.log('handOver', event)
             this.infoThisRoundTable.replaceChildren()
             let table = document.createElement("table")
             if (GS.gs.result == '和了') {
@@ -277,6 +278,8 @@ class UI {
                                detail.action.type == 'pon' ? 'Pon' :
                                detail.action.type == 'chi' ? 'Chi' :
                                detail.action.type == 'none' ? 'Skip' :
+                               detail.action.type == 'hora' ? 'Tsumo' : // TODO Is Ron different?
+                               detail.action.type == 'reach' ? 'Riichi' :
                                detail.action.type
             svgElement.appendChild(text)
             if (detail.action.pai) {
@@ -331,16 +334,19 @@ class UI {
         const discardBars = document.getElementById("discard-bars")
         let svgElement = discardBars.firstElementChild
         let heroSlotFound = false
+        if (mortalEval.actual.type == 'hora') {
+            console.log('udb', gameEvent)
+        }
         for (let i = -1; i < GS.gs.hands[gameEvent.actor].length; i++) {
             let tile = (i==-1) ? GS.gs.drawnTile[gameEvent.actor] : GS.gs.hands[gameEvent.actor][i]
             if (tile == null) {
                 continue // on calls there was no drawnTile
             }
             let matchingDetail = mortalEval.details.find(x => x.action && x.action.pai && x.action.pai==tile)
-            let Pval = matchingDetail.prob*100
-            if (Pval == null) {
+            if (matchingDetail == null) {
                 continue // TODO: Check code for this. For now assume due to illegal calls swaps
             }
+            let Pval = matchingDetail.prob*100
             let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+1
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (matchingDetail.action.pai == mortalEval.actual.pai) {
@@ -354,9 +360,9 @@ class UI {
             ));
         }
         if (!heroSlotFound) {
-            console.log('!heroSlotFound', gameEvent)
-            console.log(GS.gs.drawnTile[gameEvent.actor])
-            console.log(GS.gs.drawnTile)
+            console.log('!heroSlotFound', gameEvent.mortalEval.actual.type, gameEvent)
+            // console.log(GS.gs.drawnTile[gameEvent.actor])
+            // console.log(GS.gs.drawnTile)
             // throw new Error()
         }
     }
@@ -477,7 +483,7 @@ class UI {
             if (i==0) {cell = tr.insertCell()}
         }
         for (let [roundNum, currGeList] of GS.ge.entries()) {
-            GS.gs = new GameState(GS.json_data[hand_counter]['log'][0])
+            GS.gs = new GameState(GS.fullData.split_logs[roundNum].log[0])
             let result = currGeList.slice(-1)[0]
             tr = table.insertRow()
             tr.addEventListener('click', () => {
@@ -633,17 +639,20 @@ function updateState() {
         let event = GS.ge[GS.hand_counter][ply]
         if (event.type == 'tsumo') {
             GS.gs.drawnTile[event.actor] = event.pai
-        } else if (event.type == 'chi') {
+        } else if (event.type == 'chi' || event.type == 'pon') {
             let dp = GS.gs.discardPond[event.target]
             dp[dp.length-1].called = true
             GS.gs.hands[event.actor].push(event.pai)
             let newCall = []
-            removeFromArray(GS.gs.hands[event.actor], event.pai)
-            newCall.push(event.pai)
-            newCall.push('rotate')
-            for (let i=0; i<2; i++) {
-                removeFromArray(GS.gs.hands[event.actor], event.consumed[i])
-                newCall.push(event.consumed[i])
+            let fromIdxRel = (4 + event.actor - event.target - 1) % 4
+            let consumed = [...event.consumed]
+            consumed.splice(fromIdxRel, 0, event.pai)
+            for (let i=0; i<consumed.length; i++) {
+                removeFromArray(GS.gs.hands[event.actor], consumed[i])
+                newCall.push(consumed[i])
+                if (i==fromIdxRel) {
+                    newCall.push('rotate')
+                }
             }
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
         } else if (event.type == 'call') {
@@ -689,18 +698,17 @@ function updateState() {
             }
             GS.gs.calls[event.actor].splice(rotatedIdx+1, 0, event.kanTile.meldedTiles[0], 'rotate', 'float')
         } else if (event.type == 'ankan') {
-            console.assert(event.meldedTiles.length==4)
             GS.gs.thisRoundExtraDoras++
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
             GS.gs.hands[event.actor].sort(tileSort)
             GS.gs.drawnTile[event.actor] = null
             let newCall = []
-            for (let i=0; i<event.meldedTiles.length; i++) {
-                removeFromArray(GS.gs.hands[event.actor], event.meldedTiles[i])
+            for (let i=0; i<event.consumed.length; i++) {
+                removeFromArray(GS.gs.hands[event.actor], event.consumed[i])
                 if (i==0 || i==3) {
                     newCall.push('back')
                 } else {
-                    newCall.push(event.meldedTiles[i])
+                    newCall.push(event.consumed[i])
                     newCall.push('rotate')
                     if (i==2) {
                         newCall.push('float')
@@ -709,11 +717,7 @@ function updateState() {
             }
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
         } else if (event.type == 'dahai') {
-            let riichi = GS.ge[GS.hand_counter][ply-1].type == "riichi"
-            // If riichi and the tile passed
-            if (riichi && GS.ge[GS.hand_counter][ply+1].type != 'result') {
-                GS.gs.thisRoundSticks[event.actor]++
-            }
+            let riichi = GS.ge[GS.hand_counter][ply-1].type == "reach"
             if (event.tsumogiri) {
                 let tile = new Tile(GS.gs.drawnTile[event.actor])
                 tile.riichi = riichi
@@ -732,10 +736,15 @@ function updateState() {
                     GS.gs.drawnTile[event.actor] = null
                 }
             }
-        } else if (event.type == 'riichi') {
-            // console.log('riichi', GS.ply_counter)
-        } else if (event.type == 'result') {
+        } else if (event.type == 'reach') {
+            // console.log('reach', GS.ply_counter)
+        } else if (event.type == 'reach_accepted') {
+            GS.gs.thisRoundSticks[event.actor]++
+            // console.log('reach_accepted', GS.ply_counter)
+        } else if (event.type == 'hora') {
             GS.gs.handOver = true
+        } else if (event.type == 'dora') {
+            // TODO: I have my own logic for this, could remove now.
         } else {
             console.log(event)
             throw new Error('unknown type')
@@ -799,29 +808,29 @@ class NewTile {
     }
 }
 
-function addResult(currGeList) {
-    let result = new GameEvent('result', null)
-    currGeList.push(result)
-
-    for (let tmpPly=1; tmpPly<currGeList.length; tmpPly++) {
-        let riichi = currGeList[tmpPly-1].type == "riichi"
-        // If riichi and the tile passed
-        if (riichi && currGeList[tmpPly+1].type != 'result') {
-            GS.gs.thisRoundSticks[currGeList[tmpPly].pidx]++
+function addResult() {
+    for (let [idx, currGeList] of GS.ge.entries()) {
+        let gs = new GameState(GS.fullData.split_logs[idx].log[0])
+        let result = currGeList.slice(-1)[0]
+        for (let tmpPly=0; tmpPly<currGeList.length; tmpPly++) {
+            if (currGeList[tmpPly].type == "reach_accepted") {
+                gs.thisRoundSticks[currGeList[tmpPly].actor]++
+            }
         }
+        result.scoreChangesPlusSticks = gs.scoreChanges.concat([0])
+        for (let pidx=0; pidx<4; pidx++) {
+            result.scoreChangesPlusSticks[pidx] -= gs.thisRoundSticks[pidx]*1000
+        }
+        if (gs.result == '和了') {
+            // If there was a winner, they get the prevRoundSticks
+            result.scoreChangesPlusSticks[4] = -gs.prevRoundSticks*1000
+        } else {
+            // If no winner, pot "wins" the sticks
+            result.scoreChangesPlusSticks[4] += sum(gs.thisRoundSticks)*1000
+        }
+        console.assert(sum(result.scoreChangesPlusSticks)==0)
     }
-    result.scoreChangesPlusSticks = GS.gs.scoreChanges.concat([0])
-    for (let pidx=0; pidx<4; pidx++) {
-        result.scoreChangesPlusSticks[pidx] -= GS.gs.thisRoundSticks[pidx]*1000
-    }
-    if (GS.gs.result == '和了') {
-        // If there was a winner, they get the prevRoundSticks
-        result.scoreChangesPlusSticks[4] = -GS.gs.prevRoundSticks*1000
-    } else {
-        // If no winner, pot "wins" the sticks
-        result.scoreChangesPlusSticks[4] += sum(GS.gs.thisRoundSticks)*1000
-    }
-    console.assert(sum(result.scoreChangesPlusSticks)==0)
+
 }
 
 function createTile(tileStr) {
@@ -1042,7 +1051,7 @@ function convertPai2Tenhou(data) {
     deepMap(data, 'tile', tm2t)
     deepMap(data, 'consumed', convertConsumed)
 }
-function setMortalJsonStr(data) {
+function parseMortalJsonStr(data) {
     GS.ply_counter = 0 // TODO where does it make sense to reset this stuff?
     GS.hand_counter = 0
     const parser = new DOMParser()
@@ -1054,7 +1063,7 @@ function setMortalJsonStr(data) {
     GS.ge = []
     let currGe = null
     for (let event of data.mjai_log) {
-        if (event.type == 'end_game' || event.type == 'start_game') {
+        if (event.type == 'end_game' || event.type == 'start_game' || event.type == 'dora') {
             continue
         }
         if (event.type == 'start_kyoku') {
@@ -1068,10 +1077,16 @@ function setMortalJsonStr(data) {
         }
         currGe.push(event)
     }
+    return data
+}
+function setMortalJsonStr(data) {
+    data = parseMortalJsonStr(data)
     convertPai2Tenhou(data)
     console.log('GS.ge premerge', GS.ge)
     mergeMortalEvals(data)
     console.log('GS.ge postmerge', GS.ge)
+    addResult()
+    GS.ui.updateResultsTable()
 }
 
 function soften(pdfs) {
@@ -1108,7 +1123,7 @@ function getJsonData() {
                 let data = LZString.compressToUTF16(fr.result)
                 localStorage.setItem('mortalHtmlStr', data)
                 localStorage.setItem('mortalFilename', file.name)
-                setMortalHtmlStr(fr.result)
+                setMortalJsonStr(fr.result)
                 updateState()
             }
         } else {
