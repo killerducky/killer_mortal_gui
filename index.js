@@ -994,9 +994,20 @@ function mergeMortalEvals(data) {
                 break
             }
             if (event[1].actor == mortalEval.last_actor && event[1].pai == mortalEval.tile) {
-                event[1].mortalEval = mortalEval
-                // console.log("merge", event, mortalEval)
-                reviewIdx++
+                if (event[1].actor != GS.heroPidx && event[1].type=='tsumo') {
+                    // console.log('maybe not merge?')
+                    // console.log(event)
+                    // console.log(mortalEval)
+                } else {
+                    if (event[1].actor != GS.heroPidx && event[1].type!='dahai') {
+                        console.log('check this merge:')
+                        console.log(event)
+                        console.log(mortalEval)
+                    }
+                    event[1].mortalEval = mortalEval
+                    // console.log("merge", event, mortalEval)
+                    reviewIdx++
+                }
             }
         }
     }
@@ -1028,6 +1039,7 @@ function convertConsumed(data) {
 }
 function convertPai2Tenhou(data) {
     deepMap(data, 'pai', tm2t)
+    deepMap(data, 'tile', tm2t)
     deepMap(data, 'consumed', convertConsumed)
 }
 function setMortalJsonStr(data) {
@@ -1056,9 +1068,9 @@ function setMortalJsonStr(data) {
         }
         currGe.push(event)
     }
+    convertPai2Tenhou(data)
     console.log('GS.ge premerge', GS.ge)
     mergeMortalEvals(data)
-    convertPai2Tenhou(data)
     console.log('GS.ge postmerge', GS.ge)
 }
 
