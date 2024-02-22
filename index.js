@@ -161,7 +161,7 @@ class UI {
         this.clearCallBars()
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = event.mortalEval
-        console.log('updateGridInfo', event, mortalEval)
+        // console.log('updateGridInfo', event, mortalEval)
         if (mortalEval) {
             if (event.type == 'tsumo') {
                 this.updateDiscardBars()
@@ -259,7 +259,7 @@ class UI {
                 // todo also check if there was mismatch on this discard
                 continue // Skip tiles (unless it's a mismatch)
             }
-            console.log('callbar', detail)
+            // console.log('callbar', detail)
             let xloc = GS.C_db_tileWidth*1.3/2 + slot*GS.C_db_tileWidth*1.3
             if (detail.action.pai == mortalEval.actual.pai) {
                 svgElement.appendChild(this.createRect(
@@ -282,7 +282,6 @@ class UI {
             if (detail.action.pai) {
                 let splitKey = [detail.action.pai] // TODO
                 let x_offset = splitKey.length == 1 ? 25 : 35 // why did I use svgs and now I have to write my own layout code!
-                console.log('yo', splitKey)
                 for (let i=0; i<splitKey.length; i++) {
                     let tileSvg = this.createTileSvg(xloc+(i+1)*20-GS.C_db_mortBarWidth/2-x_offset, GS.C_db_height + 30, splitKey[i])
                     svgElement.appendChild(tileSvg[0])
@@ -291,7 +290,7 @@ class UI {
             }
             slot++
         }
-        console.log(mortalEval)
+        // console.log(mortalEval)
         if (!mortalEval.is_equal) {
             let xloc = GS.C_db_tileWidth*1.3/2 + slot*GS.C_db_tileWidth*1.3
             let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
@@ -328,7 +327,7 @@ class UI {
     updateDiscardBars() {
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = gameEvent.mortalEval
-        console.log('updateDiscardBars', gameEvent, mortalEval)
+        // console.log('updateDiscardBars', gameEvent, mortalEval)
         const discardBars = document.getElementById("discard-bars")
         let svgElement = discardBars.firstElementChild
         let heroSlotFound = false
@@ -438,7 +437,7 @@ class UI {
     }
     updateDiscardPond() {
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
-        console.log('updateDiscardPond', event)
+        // console.log('updateDiscardPond', event)
         for (let pidx=0; pidx<4; pidx++) {
             for (let tile of GS.gs.discardPond[pidx]) {
                 this.addDiscard(pidx, [tenhou2str(tile.tile)], tile.tsumogiri, tile.riichi)
@@ -634,6 +633,19 @@ function updateState() {
         let event = GS.ge[GS.hand_counter][ply]
         if (event.type == 'tsumo') {
             GS.gs.drawnTile[event.actor] = event.pai
+        } else if (event.type == 'chi') {
+            let dp = GS.gs.discardPond[event.target]
+            dp[dp.length-1].called = true
+            GS.gs.hands[event.actor].push(event.pai)
+            let newCall = []
+            removeFromArray(GS.gs.hands[event.actor], event.pai)
+            newCall.push(event.pai)
+            newCall.push('rotate')
+            for (let i=0; i<2; i++) {
+                removeFromArray(GS.gs.hands[event.actor], event.consumed[i])
+                newCall.push(event.consumed[i])
+            }
+            GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
         } else if (event.type == 'call') {
             let dp = GS.gs.discardPond[event.draw.fromIdxAbs]
             dp[dp.length-1].called = true
@@ -1008,9 +1020,15 @@ function deepMap(obj, key, f) {
         }
     }
 }
-
+function convertConsumed(data) {
+    for (let i=0; i < data.length; i++) {
+        data[i] = tm2t(data[i])
+    }
+    return data
+}
 function convertPai2Tenhou(data) {
     deepMap(data, 'pai', tm2t)
+    deepMap(data, 'consumed', convertConsumed)
 }
 function setMortalJsonStr(data) {
     GS.ply_counter = 0 // TODO where does it make sense to reset this stuff?
