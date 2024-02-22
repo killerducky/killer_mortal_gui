@@ -12,6 +12,15 @@ const exactTranslation = {
     '自風牌': {
         'DEFAULT': 'Seat Wind',
     },
+
+    // Piggyback in some changes from mjai json to what I want to display
+    'dahai'   : { 'DEFAULT': 'Cut' },
+    'pon'     : { 'DEFAULT':  'Pon' },
+    'chi'     : { 'DEFAULT':  'Chi' },
+    'none'    : { 'DEFAULT':  'Skip' },
+    'hora'    : { 'DEFAULT':  'Tsumo' },
+    'reach'   : { 'DEFAULT':  'Riichi' },
+
     // End section added for killer mortal reviewer
     '流局滿貫': {
         'DEFAULT': 'Nagashi Mangan',

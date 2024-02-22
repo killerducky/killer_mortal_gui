@@ -152,8 +152,7 @@ class UI {
     }
     parseYakuString(yaku) {
         let s = yaku.split(/([\(\)])|([0-9:]+)/)
-        s = s.map(x => x in exactTranslation ? exactTranslation[x]['DEFAULT'] : x)
-        s = s.map(x => x in partialTranslationForStats ? partialTranslationForStats[x]['DEFAULT'] : x)
+        s = s.map(translate)
         return s.join(' ')
     }
     updateGridInfo() {
@@ -250,7 +249,11 @@ class UI {
         const callBars = document.querySelector('.killer-call-bars')
         let svgElement = callBars.firstElementChild
         let slot = 0
+        let heroDetail = null
         for (let detail of mortalEval.details) {
+            if (detail.action.type == mortalEval.actual.type && detail.action.pai == mortalEval.actual.pai) {
+                heroDetail = detail
+            }
             let Pval = detail.normProb*100
             let mortalQuackTile = !mortalEval.is_equal && detail.action.pai == mortalEval.expected.pai
             if (detail.action.type == 'dahai' && !mortalQuackTile) {
@@ -270,19 +273,16 @@ class UI {
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
             text.setAttribute("y", GS.C_db_height + 20)
             text.setAttribute("fill", GS.C_colorText)
-            text.textContent = detail.action.type == 'dahai' ? 'Cut' : 
-                               detail.action.type == 'pon' ? 'Pon' :
-                               detail.action.type == 'chi' ? 'Chi' :
-                               detail.action.type == 'none' ? 'Skip' :
-                               detail.action.type == 'hora' ? 'Tsumo' : // TODO Is Ron different?
-                               detail.action.type == 'reach' ? 'Riichi' :
-                               detail.action.type
+            text.textContent = translate(detail.action.type)
             svgElement.appendChild(text)
             if (detail.action.pai) {
-                let splitKey = [detail.action.pai] // TODO
-                let x_offset = splitKey.length == 1 ? 25 : 35 // why did I use svgs and now I have to write my own layout code!
-                for (let i=0; i<splitKey.length; i++) {
-                    let tileSvg = this.createTileSvg(xloc+(i+1)*20-GS.C_db_mortBarWidth/2-x_offset, GS.C_db_height + 30, splitKey[i])
+                let tiles = [detail.action.pai]
+                if (detail.action.consumed) {
+                    tiles = detail.action.consumed
+                }
+                let x_offset = tiles.length == 1 ? 25 : 35 // why did I use svgs and now I have to write my own layout code!
+                for (let i=0; i<tiles.length; i++) {
+                    let tileSvg = this.createTileSvg(xloc+(i+1)*20-GS.C_db_mortBarWidth/2-x_offset, GS.C_db_height + 30, tiles[i])
                     svgElement.appendChild(tileSvg[0])
                     svgElement.appendChild(tileSvg[1])
                 }
@@ -296,8 +296,7 @@ class UI {
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
             text.setAttribute("y", 60)
             text.setAttribute("fill", GS.C_colorText)
-            // TODO
-            if (false) {
+            if (heroDetail.normProb > .50) {
                 text.textContent = "Hmm..."
             } else {
                 text.textContent = "Quack!"
@@ -520,6 +519,12 @@ class UI {
             this.infoRoundModal.close()
         })
     }
+}
+
+function translate(s) {
+    s = s in exactTranslation ? exactTranslation[s]['DEFAULT'] : s
+    s = s in partialTranslationForStats ? partialTranslationForStats[s]['DEFAULT'] : s
+    return s
 }
 
 function sum(a) {
@@ -973,32 +978,23 @@ function connectUI() {
 }
 
 function mergeMortalEvals(data) {
-    let i, round
-    console.log('mortalEvals aka review.kyokus', data.review.kyokus)
-    for ([i, round] of GS.ge.entries()) {
+    for (let [i, round] of GS.ge.entries()) {
         let currReviewKyoku = data.review.kyokus[i]
         let reviewIdx = 0
         for (let event of round.entries()) {
             let mortalEval = currReviewKyoku.entries[reviewIdx]
             if (mortalEval === undefined) {
-                // console.log('out of events to merge')
-                break
+                break // out of events to merge
             }
-            if (event[1].actor == mortalEval.last_actor && event[1].pai == mortalEval.tile) {
-                if (event[1].actor != GS.heroPidx && event[1].type=='tsumo') {
-                    // console.log('maybe not merge?')
-                    // console.log(event)
-                    // console.log(mortalEval)
-                } else {
-                    if (event[1].actor != GS.heroPidx && event[1].type!='dahai') {
-                        console.log('check this merge:')
-                        console.log(event)
-                        console.log(mortalEval)
-                    }
-                    event[1].mortalEval = mortalEval
-                    // console.log("merge", event, mortalEval)
-                    reviewIdx++
+            let opponentTsumo = event[1].actor != GS.heroPidx && event[1].type=='tsumo'
+            if (event[1].actor == mortalEval.last_actor && event[1].pai == mortalEval.tile && !opponentTsumo) {
+                if (event[1].actor != GS.heroPidx && event[1].type!='dahai') {
+                    console.log('check this merge: could be robbing a kan?')
+                    console.log(event)
+                    console.log(mortalEval)
                 }
+                event[1].mortalEval = mortalEval
+                reviewIdx++
             }
         }
     }
