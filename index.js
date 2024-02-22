@@ -254,17 +254,18 @@ class UI {
         let svgElement = callBars.firstElementChild
         let slot = 0
         for (let detail of mortalEval.details) {
-            let Pval = detail.prob
-            if (detail.type == 'daihai' && (true)) {
+            let Pval = detail.prob*100
+            if (detail.action.type == 'dahai' && (mortalEval.is_equal || detail.action.pai != mortalEval.actual.pai)) {
                 // todo also check if there was mismatch on this discard
                 continue // Skip tiles (unless it's a mismatch)
             }
+            console.log('callbar', detail)
             let xloc = GS.C_db_tileWidth*1.3/2 + slot*GS.C_db_tileWidth*1.3
-            // if (fullKey == mortalEval.actual) {
-            //     svgElement.appendChild(this.createRect(
-            //         xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, GS.C_colorBarHero
-            //     ))
-            // }
+            if (detail.action.pai == mortalEval.actual.pai) {
+                svgElement.appendChild(this.createRect(
+                    xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, GS.C_colorBarHero
+                ))
+            }
             svgElement.appendChild(this.createRect(
                 xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_cb_heroBarHeight, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
             ))
@@ -272,19 +273,26 @@ class UI {
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
             text.setAttribute("y", GS.C_db_height + 20)
             text.setAttribute("fill", GS.C_colorText)
-            text.textContent = detail.type == 'daihai' ? 'Cut' : detail.type
+            text.textContent = detail.action.type == 'dahai' ? 'Cut' : 
+                               detail.action.type == 'pon' ? 'Pon' :
+                               detail.action.type == 'chi' ? 'Chi' :
+                               detail.action.type == 'none' ? 'Skip' :
+                               detail.action.type
             svgElement.appendChild(text)
-            let splitKey = [detail.action.pai] // TODO
-            let x_offset = splitKey.length-1 == 1 ? 25 : 35 // why did I use svgs and now I have to write my own layout code!
-            for (let i=1; i<splitKey.length; i++) {
-                let tileSvg = this.createTileSvg(xloc+i*20-GS.C_db_mortBarWidth/2-x_offset, GS.C_db_height + 30, splitKey[i])
-                svgElement.appendChild(tileSvg[0])
-                svgElement.appendChild(tileSvg[1])
+            if (detail.action.pai) {
+                let splitKey = [detail.action.pai] // TODO
+                let x_offset = splitKey.length == 1 ? 25 : 35 // why did I use svgs and now I have to write my own layout code!
+                console.log('yo', splitKey)
+                for (let i=0; i<splitKey.length; i++) {
+                    let tileSvg = this.createTileSvg(xloc+(i+1)*20-GS.C_db_mortBarWidth/2-x_offset, GS.C_db_height + 30, splitKey[i])
+                    svgElement.appendChild(tileSvg[0])
+                    svgElement.appendChild(tileSvg[1])
+                }
             }
             slot++
         }
-        // TODO I think this compare is wrong, need to compare fields such as tile/pai
-        if (mortalEval.actual != mortalEval.expected) {
+        console.log(mortalEval)
+        if (!mortalEval.is_equal) {
             let xloc = GS.C_db_tileWidth*1.3/2 + slot*GS.C_db_tileWidth*1.3
             let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
@@ -606,76 +614,6 @@ function fuzzyCompareTile(t1, t2) {
     let ft1 = Math.floor(tileInt2Float(t1))
     let ft2 = Math.floor(tileInt2Float(t2))
     return ft1 == ft2
-}
-
-class TurnNum {
-    constructor() {
-        this.ply = 0
-        this.pidx = GS.gs.dealerIdx
-        this.nextDiscardIdx = [0,0,0,0]
-        this.nextDrawIdx = [0,0,0,0]
-    }
-    stringState() {
-        return `TurnNum: ${this.ply} ${this.pidx} ${this.nextDiscardIdx} ${this.nextDrawIdx}`
-    }
-    getDraw() {
-        let draw = GS.gs.draws[this.pidx][this.nextDrawIdx[this.pidx]]
-        if (draw == null) {
-            //console.log('undefined out of draws')
-            return null
-        }
-        return new NewTile(draw)
-    }
-    getDiscard() {
-        let discard = GS.gs.discards[this.pidx][this.nextDiscardIdx[this.pidx]]
-        if (typeof discard == "undefined") {
-            return null
-        }
-        return new NewTile(discard)
-    }
-    incPly(discard, selfKan, openKan) {
-        if (discard !== null) {
-            this.nextDrawIdx[this.pidx]++
-            this.nextDiscardIdx[this.pidx]++
-            if (!selfKan) {
-                this.pidx = this.whoIsNext(discard)
-            }
-            if (openKan) {
-                this.nextDiscardIdx[this.pidx]++
-            }
-        } else if (selfKan) {
-            this.nextDrawIdx[this.pidx]++
-            this.nextDiscardIdx[this.pidx]++
-        }
-        this.ply++
-    }
-    whoIsNext(discard) {
-        // To know who is next we have to look at the other three players draw arrays
-        // and determine there were any calls to disrupt the normal turn order
-        for (let tmpPidx=0; tmpPidx<4; tmpPidx++) {
-            let offset = (4 + tmpPidx - this.pidx - 1) % 4
-            if (tmpPidx == this.pidx || offset == 0) {
-                // cannot call own tile. if offset is zero it will be our turn next unless someone else is doing e.g. pon
-                continue
-            }
-            let draw = GS.gs.draws[tmpPidx][this.nextDrawIdx[tmpPidx]]
-            if (typeof draw == 'string') {
-                let fancyDrawClass = new NewTile(draw)
-                // The call string encodes who they called from by putting e.g. 'p' in idx=0,2,4
-                // See if the timing is correct by comparing caller idx to current discarder idx
-                //        tmp                             this             v-- extra 4+ because e.g. -1%4 = -1 (we want 3)
-                // p212121 p0 pon from their kami/left     p3   idx/2=0   (4+0-3)%4 = 1-1 = 0
-                // 21p2121 p0 pon from their toimen/cross  p2   idx/2=1   (4+0-2)%4 = 2-1 = 1
-                // 2121p21 p0 pon from their shimo/right   p1   idx/2=2   (4+0-1)%4 = 3-1 = 2
-                if (fancyDrawClass.fromIdxRel == offset) {
-                    if (fuzzyCompareTile(fancyDrawClass.newTile, discard)) {
-                        return tmpPidx
-                    }
-                }
-            }
-        }
-        return (this.pidx+1) % 4
-    }
 }
 
 function removeFromArray(array, value) {
