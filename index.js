@@ -655,22 +655,23 @@ function updateState() {
                 }
             }
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
-        } else if (event.type == 'call') {
-            let dp = GS.gs.discardPond[event.draw.fromIdxAbs]
+        } else if (event.type == 'daiminkan') {
+            console.log('diaminkan', event)
+            let dp = GS.gs.discardPond[event.target]
             dp[dp.length-1].called = true
-            if (event.draw.type == 'm') {
-                GS.gs.thisRoundExtraDoras++ // openkan
-            }
-            GS.gs.hands[event.actor].push(event.draw.newTile)
-            let allMeldedTiles = event.draw.meldedTiles
+            GS.gs.thisRoundExtraDoras++
+            GS.gs.hands[event.actor].push(event.pai)
             let newCall = []
-            for (let i=0; i<allMeldedTiles.length; i++) {
-                removeFromArray(GS.gs.hands[event.actor], allMeldedTiles[i])
-                newCall.push(allMeldedTiles[i])
-                if (event.draw.fromIdxRel == i) {
+            let fromIdxRel = (4 + event.actor - event.target - 1) % 4
+            let consumed = [...event.consumed]
+            consumed.splice(fromIdxRel, 0, event.pai)
+            for (let i=0; i<consumed.length; i++) {
+                removeFromArray(GS.gs.hands[event.actor], consumed[i])
+                newCall.push(consumed[i])
+                if (fromIdxRel == i) {
                     newCall.push('rotate')
                 }
-                if (event.draw.type == 'm' && event.draw.fromIdxRel+1 == i) {
+                if (fromIdxRel+1 == i) {
                     newCall.push('rotate')
                     newCall.push('float')
                 }
@@ -678,16 +679,15 @@ function updateState() {
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
         } else if (event.type == 'kakan') {
             // kakan = added kan
-            console.assert(event.kanTile.meldedTiles.length==1)
             GS.gs.thisRoundExtraDoras++
             // Put the drawn tile into hand first, then remove the tile we are going to kakan
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
             GS.gs.hands[event.actor].sort(tileSort)
             GS.gs.drawnTile[event.actor] = null
-            removeFromArray(GS.gs.hands[event.actor], event.kanTile.meldedTiles[0])
+            removeFromArray(GS.gs.hands[event.actor], event.pai)
             let rotatedIdx = null
             for (let i=1; i<GS.gs.calls[event.actor].length; i++) {
-                if (GS.gs.calls[event.actor][i]=='rotate' && fuzzyCompareTile(GS.gs.calls[event.actor][i-1], event.kanTile.meldedTiles[0])) {
+                if (GS.gs.calls[event.actor][i]=='rotate' && fuzzyCompareTile(GS.gs.calls[event.actor][i-1], event.pai)) {
                     rotatedIdx = i
                     break
                 }
@@ -696,7 +696,7 @@ function updateState() {
                 console.log(event, GS.gs.calls[event.actor])
                 throw new Error('Cannot find meld to kakan to')
             }
-            GS.gs.calls[event.actor].splice(rotatedIdx+1, 0, event.kanTile.meldedTiles[0], 'rotate', 'float')
+            GS.gs.calls[event.actor].splice(rotatedIdx+1, 0, event.pai, 'rotate', 'float')
         } else if (event.type == 'ankan') {
             GS.gs.thisRoundExtraDoras++
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
@@ -741,7 +741,7 @@ function updateState() {
         } else if (event.type == 'reach_accepted') {
             GS.gs.thisRoundSticks[event.actor]++
             // console.log('reach_accepted', GS.ply_counter)
-        } else if (event.type == 'hora') {
+        } else if (event.type == 'hora' || event.type == 'ryukyoku') {
             GS.gs.handOver = true
         } else if (event.type == 'dora') {
             // TODO: I have my own logic for this, could remove now.
@@ -1060,6 +1060,7 @@ function parseMortalJsonStr(data) {
     GS.fullData = data
     console.log('Full data:', data)
     GS.heroPidx = GS.fullData.player_id
+    GS.ui.setPovPidx(GS.fullData.player_id)
     GS.ge = []
     let currGe = null
     for (let event of data.mjai_log) {
