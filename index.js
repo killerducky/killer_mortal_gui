@@ -163,12 +163,8 @@ class UI {
         let mortalEval = event.mortalEval
         // console.log('updateGridInfo', event, mortalEval)
         if (mortalEval) {
-            if (event.type == 'tsumo') {
-                this.updateDiscardBars()
-                this.updateCallBars() // For calls such as Kan or Riichi instead of discarding
-            } else {
-                this.updateCallBars()
-            }
+            this.updateDiscardBars()
+            this.updateCallBars() // For calls such as Kan or Riichi instead of discarding
         }
         for (let i=0; i<5; i++) {
             if (GS.gs.dora[i] == null || i > GS.gs.thisRoundExtraDoras) {
@@ -178,7 +174,7 @@ class UI {
             }
         }
         if (GS.gs.handOver) {
-            console.log('handOver', event)
+            // console.log('handOver', event)
             this.infoThisRoundTable.replaceChildren()
             let table = document.createElement("table")
             if (GS.gs.result == '和了') {
@@ -255,9 +251,9 @@ class UI {
         let svgElement = callBars.firstElementChild
         let slot = 0
         for (let detail of mortalEval.details) {
-            let Pval = detail.prob*100
-            if (detail.action.type == 'dahai' && (mortalEval.is_equal || detail.action.pai != mortalEval.actual.pai)) {
-                // todo also check if there was mismatch on this discard
+            let Pval = detail.normProb*100
+            let mortalQuackTile = !mortalEval.is_equal && detail.action.pai == mortalEval.expected.pai
+            if (detail.action.type == 'dahai' && !mortalQuackTile) {
                 continue // Skip tiles (unless it's a mismatch)
             }
             // console.log('callbar', detail)
@@ -330,13 +326,9 @@ class UI {
     updateDiscardBars() {
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = gameEvent.mortalEval
-        // console.log('updateDiscardBars', gameEvent, mortalEval)
         const discardBars = document.getElementById("discard-bars")
         let svgElement = discardBars.firstElementChild
         let heroSlotFound = false
-        if (mortalEval.actual.type == 'hora') {
-            console.log('udb', gameEvent)
-        }
         for (let i = -1; i < GS.gs.hands[gameEvent.actor].length; i++) {
             let tile = (i==-1) ? GS.gs.drawnTile[gameEvent.actor] : GS.gs.hands[gameEvent.actor][i]
             if (tile == null) {
@@ -346,7 +338,7 @@ class UI {
             if (matchingDetail == null) {
                 continue // TODO: Check code for this. For now assume due to illegal calls swaps
             }
-            let Pval = matchingDetail.prob*100
+            let Pval = matchingDetail.normProb*100
             let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+1
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (matchingDetail.action.pai == mortalEval.actual.pai) {
@@ -360,7 +352,7 @@ class UI {
             ));
         }
         if (!heroSlotFound) {
-            console.log('!heroSlotFound', gameEvent.mortalEval.actual.type, gameEvent)
+            // console.log('!heroSlotFound', gameEvent.mortalEval.actual.type, gameEvent)
             // console.log(GS.gs.drawnTile[gameEvent.actor])
             // console.log(GS.gs.drawnTile)
             // throw new Error()
@@ -656,7 +648,6 @@ function updateState() {
             }
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
         } else if (event.type == 'daiminkan') {
-            console.log('diaminkan', event)
             let dp = GS.gs.discardPond[event.target]
             dp[dp.length-1].called = true
             GS.gs.thisRoundExtraDoras++
@@ -680,7 +671,6 @@ function updateState() {
         } else if (event.type == 'kakan') {
             // kakan = added kan
             GS.gs.thisRoundExtraDoras++
-            // Put the drawn tile into hand first, then remove the tile we are going to kakan
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
             GS.gs.hands[event.actor].sort(tileSort)
             GS.gs.drawnTile[event.actor] = null
@@ -717,25 +707,17 @@ function updateState() {
             }
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
         } else if (event.type == 'dahai') {
-            let riichi = GS.ge[GS.hand_counter][ply-1].type == "reach"
-            if (event.tsumogiri) {
-                let tile = new Tile(GS.gs.drawnTile[event.actor])
-                tile.riichi = riichi
-                tile.tsumogiri = true
-                GS.gs.discardPond[event.actor].push(tile)
+            // for calls there will not be a drawnTile
+            if (GS.gs.drawnTile[event.actor]) {
+                GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
+                GS.gs.hands[event.actor].sort(tileSort)
                 GS.gs.drawnTile[event.actor] = null
-            } else {
-                let tile = new Tile(event.pai)
-                tile.riichi = riichi
-                GS.gs.discardPond[event.actor].push(tile)
-                removeFromArray(GS.gs.hands[event.actor], event.pai)
-                // for calls there will not be a drawnTile
-                if (GS.gs.drawnTile[event.actor]) {
-                    GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
-                    GS.gs.hands[event.actor].sort(tileSort)
-                    GS.gs.drawnTile[event.actor] = null
-                }
             }
+            let tile = new Tile(event.pai)
+            tile.riichi = GS.ge[GS.hand_counter][ply-1].type == "reach"
+            tile.tsumogiri = event.tsumogiri
+            GS.gs.discardPond[event.actor].push(tile)
+            removeFromArray(GS.gs.hands[event.actor], event.pai)
         } else if (event.type == 'reach') {
             // console.log('reach', GS.ply_counter)
         } else if (event.type == 'reach_accepted') {
@@ -1080,20 +1062,36 @@ function parseMortalJsonStr(data) {
     }
     return data
 }
+
+function normalizeMortalEvals(data) {
+    for (let kyoku of data.review.kyokus) {
+        for (let mortalEval of kyoku.entries) {
+            let probs = mortalEval.details.map(x => x.prob)
+            let normProbs = normalizeAndSoften(probs)
+            mortalEval.details = mortalEval.details.map((obj, idx) => {
+                return { ...obj, normProb: normProbs[idx]}
+            })
+        }
+    }
+}
+
 function setMortalJsonStr(data) {
     data = parseMortalJsonStr(data)
     convertPai2Tenhou(data)
     console.log('GS.ge premerge', GS.ge)
+    normalizeMortalEvals(data)
     mergeMortalEvals(data)
     console.log('GS.ge postmerge', GS.ge)
     addResult()
     GS.ui.updateResultsTable()
 }
 
-function soften(pdfs) {
+// Soften using temperature GS.C_soft_T
+// Then normalize so the highest entry is set to 1, others scaled relative to the highest
+function normalizeAndSoften(pdfs) {
     const hotter = pdfs.map(x => Math.pow(x, 1/GS.C_soft_T))
     const denom = Math.max(...hotter)
-    return hotter.map(x => x/denom*100)
+    return hotter.map(x => x/denom)
 }
 
 function getJsonData() {
