@@ -771,10 +771,10 @@ function updateState() {
                 GS.gs.discardPond[event.actor].push(tile)
                 GS.gs.drawnTile[event.actor] = null
             } else {
-                let tile = new Tile(event.discard)
+                let tile = new Tile(event.pai)
                 tile.riichi = riichi
                 GS.gs.discardPond[event.actor].push(tile)
-                removeFromArray(GS.gs.hands[event.actor], event.discard)
+                removeFromArray(GS.gs.hands[event.actor], event.pai)
                 // for calls there will not be a drawnTile
                 if (GS.gs.drawnTile[event.actor]) {
                     GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
@@ -849,71 +849,6 @@ class NewTile {
     }
 }
 
-function parseOneTenhouRound(round) {
-    let currGeList = []
-    GS.ge.push(currGeList)
-    GS.gs = new GameState(round['log'][0])
-    let openkanCnt = 0
-    let kakanCnt = 0
-    let ply = new TurnNum()
-
-    while (1) {
-        let draw = ply.getDraw(GS.gs.draws)
-        if (draw == null) {
-            break
-        }
-        if (draw.type == 'draw') {
-            currGeList.push(new GameEvent('draw', ply.pidx, {'draw':draw.newTile}))
-        } else {
-            let ge = new GameEvent('call', ply.pidx, {'draw':draw})
-            currGeList.push(ge)
-        }
-        ply.incPly(null, draw.type == 'm', draw.type == 'm')
-        if (draw.type == 'm') {
-            openkanCnt++
-            continue // skip discard, loop back around to draw again
-        }
-        let discard = ply.getDiscard()
-        if (discard === null) {
-            break
-        }
-        if (discard.type == 'k') {
-            console.assert(discard.meldedTiles.length==1)
-            currGeList.push(new GameEvent('kakan', ply.pidx, {'kanTile':discard}))
-            kakanCnt++
-            // kakan and ankan mean we get another draw
-            // kakan writes 0 to discard, and there is a chance someone Rons for Robbing a Kan
-            ply.incPly(discard.newTile, true, false)
-        } else if (discard.type == 'a') {
-            currGeList.push(new GameEvent('ankan', ply.pidx, {'meldedTiles':discard.meldedTiles}))
-            // kakan and ankan mean we get another draw
-            ply.incPly(discard.newTile, true, false)
-        } else {
-            if (discard.type == 'r') {
-                // split riichi into two events
-                currGeList.push(new GameEvent('riichi', ply.pidx))
-                // let the next if statement handle the discard
-            }
-            if (typeof discard.newTile == 'number') {
-                let ge = new GameEvent('discard', ply.pidx, {'discard':discard.newTile})
-                ge.actualTile = ge.discard
-                if (ge.discard == 60) {
-                    ge.actualTile = currGeList[currGeList.length-1].draw
-                }
-                currGeList.push(ge)
-            } else {
-                console.log(typeof discard, discard)
-                throw new Error('discard.newTile should be number')
-            }
-            if (discard.newTile == 60) {
-                discard.newTile = draw.newTile
-            }
-            ply.incPly(discard.newTile, false, false)
-        }
-    }
-    return [openkanCnt, kakanCnt, ply, currGeList]
-}
-
 function addResult(currGeList) {
     let result = new GameEvent('result', null)
     currGeList.push(result)
@@ -937,26 +872,6 @@ function addResult(currGeList) {
         result.scoreChangesPlusSticks[4] += sum(GS.gs.thisRoundSticks)*1000
     }
     console.assert(sum(result.scoreChangesPlusSticks)==0)
-}
-
-function preParseTenhouLogs(data) {
-    GS.ge = []
-    if (data == null) {
-        console.log('no data to parse yet')
-        return
-    }
-    for (let round of data) {
-        let currGeList
-        let openkanCnt
-        let kakanCnt
-        let ply
-        [openkanCnt, kakanCnt, ply, currGeList] = parseOneTenhouRound(round)
-        addResult(currGeList)
-        checkPlies(openkanCnt, kakanCnt, ply)
-    }
-    mergeMortalEvents()
-    console.log('preParseTenhouLogs done', GS.ge)
-    GS.ui.updateResultsTable()
 }
 
 function createTile(tileStr) {
@@ -1139,7 +1054,6 @@ function mergeMortalEvals(data) {
 
 function deepMap(obj, key, f) {
     const stack = [obj];
-    
     while (stack.length > 0) {
         const current = stack.pop();
         if (typeof current === 'object') {
@@ -1192,21 +1106,6 @@ function setMortalJsonStr(data) {
     console.log('GS.ge postmerge', GS.ge)
 }
 
-function setMortalHtmlStr(data) {
-    setMortalJsonStr(data)
-    return
-    const parser = new DOMParser()
-    GS.mortalHtmlDoc = parser.parseFromString(data, 'text/html')
-    GS.ply_counter = 0 // TODO where does it make sense to reset this stuff?
-    GS.hand_counter = 0
-    parseMortalHtml()
-    GS.json_data = []
-    for (let ta of GS.mortalHtmlDoc.querySelectorAll('textarea')) {
-        GS.json_data.push(JSON.parse(ta.value))
-    }
-    preParseTenhouLogs(GS.json_data)
-}
-
 function soften(pdfs) {
     const hotter = pdfs.map(x => Math.pow(x, 1/GS.C_soft_T))
     const denom = Math.max(...hotter)
@@ -1220,12 +1119,12 @@ function getJsonData() {
         let mortalFilename = localStorage.getItem('mortalFilename')
         label.innerHTML = "Choose Mortal File<br>" + mortalFilename
         data = LZString.decompressFromUTF16(data)
-        setMortalHtmlStr(data)
+        setMortalJsonStr(data)
         updateState()
         GS.newUser = false
     } else {
         data = LZString.decompressFromBase64(demo_data)
-        setMortalHtmlStr(data)
+        setMortalJsonStr(data)
         updateState()
         label.innerHTML = "Choose Mortal File<br>" + "(Demo file loaded)"
     }
@@ -1300,13 +1199,6 @@ function discardOverflowTest() {
 function tests() {
     console.assert(new NewTile('151515k51').newTile == 51)
     console.assert(new NewTile('151551k15').newTile == 15)
-    // crazy open kans
-    GS.json_data = '{"title":["",""],"name":["","","",""],"rule":{"aka":0,"aka51":1,"aka52":1,"aka53":1,"disp":"玉の間南喰赤"},"sx":["C","C","C","C"],"log":[[[0,0,0],[25000,25000,25000,25000],[47],[],[11,13,51,17,19,21,21,21,23,23,23,25,25],[25,42,42,42,42],[11,13,51,17,19],[31,31,31,31,33,33,33,33,35,35,35,53,37],[],[],[32,32,32,32,34,34,34,34,36,36,36,36,38],[],[],[11,11,11,13,13,13,15,15,15,17,17,17,19],["111111m11",41,"131313m13",41,"151515m51",41,"171717m17",41],[0,60,0,60,0,60,0,60],["不明"]]]}'
-    GS.json_data = [JSON.parse(GS.json_data)]
-    GS.mortalEvals = [[]]
-    preParseTenhouLogs(GS.json_data)
-    updateState()
-    console.log('tests done (remove from production)')
 }
 
 const GS = new GlobalState

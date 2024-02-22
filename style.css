@@ -306,6 +306,7 @@ button:hover {
     grid-column: span 2;
     display:flex;
     border-style:outset;
+    overflow:hidden;
 }
 .killer-call-div {
     display:grid;
