@@ -1032,6 +1032,25 @@ function mergeMortalEvals(data) {
     }
 }
 
+// Add a fake mortalEval for forced riichi discard
+// Mortal doesn't have these, but for UI consistency draw a 100% bar on actual discard
+function addRiichiDiscardEvals(data) {
+    return // TODO decide if we should do this or not
+    for (let [i, round] of GS.ge.entries()) {
+        for (let [j, event] of round.entries()) {
+            if (event.type == 'reach' && event.actor == GS.heroPidx && event.mortalEval === undefined) {
+                let actualPai = round[j+1].pai
+                let actualTsumogiri = round[j+1].tsumogiri
+                event.mortalEval = {type:'dahai', actor:GS.heroPidx, pai:round[j+1].pai}
+                event.mortalEval = {actual:{type:'dahai', actor:GS.heroPidx, pai:actualPai, tsumogiri:actualTsumogiri},
+                    details:[{action:{type:'dahai', actor:GS.heroPidx, pai:actualPai, tsumogiri:actualTsumogiri}, normProb:1, prob:1}],
+                    is_equal:true,
+                }
+            }
+        }
+    }
+}
+
 function deepMap(obj, key, f) {
     const stack = [obj];
     while (stack.length > 0) {
@@ -1109,6 +1128,7 @@ function setMortalJsonStr(data) {
     console.log('GS.ge premerge', GS.ge)
     normalizeMortalEvals(data)
     mergeMortalEvals(data)
+    addRiichiDiscardEvals(data)
     console.log('GS.ge postmerge', GS.ge)
     addResult()
     GS.ui.updateResultsTable()
