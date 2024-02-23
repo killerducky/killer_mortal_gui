@@ -15,11 +15,15 @@ const exactTranslation = {
 
     // Piggyback in some changes from mjai json to what I want to display
     'dahai'   : { 'DEFAULT': 'Cut' },
-    'pon'     : { 'DEFAULT':  'Pon' },
-    'chi'     : { 'DEFAULT':  'Chi' },
-    'none'    : { 'DEFAULT':  'Skip' },
-    'hora'    : { 'DEFAULT':  'Tsumo' },
-    'reach'   : { 'DEFAULT':  'Riichi' },
+    'pon'     : { 'DEFAULT': 'Pon' },
+    'chi'     : { 'DEFAULT': 'Chi' },
+    'none'    : { 'DEFAULT': 'Skip' },
+    'hora'    : { 'DEFAULT': 'Tsumo' },
+    'reach'   : { 'DEFAULT': 'Riichi' },
+    // No need to disambiguate these in the GUI display -- context will show which kind it is
+    'ankan'   : { 'DEFAULT': 'Kan' },
+    'daiminkan' : { 'DEFAULT': 'Kan' },
+    'kakan'   : { 'DEFAULT': 'Kan' },
 
     // End section added for killer mortal reviewer
     '流局滿貫': {

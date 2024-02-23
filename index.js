@@ -331,14 +331,14 @@ class UI {
             if (tile == null) {
                 continue // on calls there was no drawnTile
             }
-            let matchingDetail = mortalEval.details.find(x => x.action && x.action.pai && x.action.pai==tile)
+            let matchingDetail = mortalEval.details.find(x => x.action && x.action.type == 'dahai' && x.action.pai && x.action.pai==tile)
             if (matchingDetail == null) {
                 continue // TODO: Check code for this. For now assume due to illegal calls swaps
             }
             let Pval = matchingDetail.normProb*100
             let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+0.5
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
-            if (matchingDetail.action.pai == mortalEval.actual.pai) {
+            if (matchingDetail.type == mortalEval.actual.type && matchingDetail.action.pai == mortalEval.actual.pai) {
                 heroSlotFound = true
                 svgElement.appendChild(this.createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
@@ -1091,6 +1091,10 @@ function normalizeAndSoften(pdfs) {
     return hotter.map(x => x/denom)
 }
 
+function getCurrGe() {
+    return GS.ge[GS.hand_counter][GS.ply_counter]
+}
+
 function getJsonData() {
     let data = localStorage.getItem('mortalHtmlStr')
     let label = document.getElementById('mortal-html-label')
@@ -1180,12 +1184,27 @@ function tests() {
     console.assert(new NewTile('151551k15').newTile == 15)
 }
 
+function debugState() {
+    console.log('hand', GS.hand_counter)
+    console.log('ply', GS.ply_counter)
+    console.log(getCurrGe())
+}
+
+// one-off tests for a given problem
+function tmpTest() {
+    GS.hand_counter = 13
+    GS.ply_counter = 80
+    updateState()
+    debugState()
+}
+
 const GS = new GlobalState
 function main() {
     //tests()
     getJsonData()
     connectUI()
-    // discardOverflowTest()
+    //discardOverflowTest()
+    //tmpTest()
 }
 main()
 
