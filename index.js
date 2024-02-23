@@ -14,6 +14,7 @@ class GlobalState {
         this.json_data = null
         this.heroPidx = null   // player index mortal reviewed
         this.showHands = false
+        this.showMortal = true
 
         this.C_soft_T = 2
 
@@ -166,8 +167,7 @@ class UI {
         this.clearCallBars()
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = event.mortalEval
-        // console.log('updateGridInfo', event, mortalEval)
-        if (mortalEval) {
+        if (mortalEval && GS.showMortal) {
             this.updateDiscardBars()
             this.updateCallBars() // For calls such as Kan or Riichi instead of discarding
         }
@@ -179,7 +179,6 @@ class UI {
             }
         }
         if (GS.gs.handOver) {
-            // console.log('handOver', event)
             this.infoThisRoundTable.replaceChildren()
             let table = document.createElement("table")
             let resultTypeStr
@@ -273,7 +272,7 @@ class UI {
             if (detail.action.type == 'dahai' && !mortalQuackTile) {
                 continue // Skip tiles (unless it's a mismatch)
             }
-            if (slot>=GS.C_cb_maxShown && !mortalQuackTile) {
+            if (slot>=GS.C_cb_maxShown-1 && !mortalQuackTile && detail != heroDetail) {
                 continue // Not enough room in GUI to show more
             }
             let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/2 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
@@ -998,6 +997,16 @@ function connectUI() {
     closeAboutModal.addEventListener("click", () => {
         aboutModal.close()
     })
+    for (let pidx=1; pidx<4; pidx++) {
+        document.querySelector(`.grid-hand-p${pidx}`).addEventListener("click", () => {
+            GS.showHands = !GS.showHands
+            updateState()
+        })
+    }
+    document.querySelector(`.grid-hand-p0-container`).addEventListener("click", () => {
+        GS.showMortal = !GS.showMortal
+        updateState()
+    })
 }
 
 function mergeMortalEvals(data) {
@@ -1215,7 +1224,11 @@ function debugState() {
 // one-off tests for a given problem
 function tmpTest() {
     GS.hand_counter = 0
-    GS.ply_counter = 26
+    GS.ply_counter = 135
+    let currGe = getCurrGe()
+    currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.5})
+    currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.4})
+    currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.3})
     updateState()
     debugState()
 }
@@ -1226,7 +1239,7 @@ function main() {
     getJsonData()
     connectUI()
     //discardOverflowTest()
-    //tmpTest()
+    // tmpTest()
 }
 main()
 
