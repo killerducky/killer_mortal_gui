@@ -29,6 +29,8 @@ class GlobalState {
         this.C_cb_totHeight = 115
         this.C_cb_totWidth = 260
         this.C_cb_padding = 10
+        this.C_cb_widthFactor = 1.5
+        this.C_cb_maxShown = 3
 
         this.C_colorText = getComputedStyle(document.documentElement).getPropertyValue('--color-text')
         this.C_colorBarMortal = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-mortal')
@@ -66,17 +68,23 @@ class GameState {
         }
         this.resultArray = log[logIdx++]
         this.result = this.resultArray[0]
-        this.scoreChanges = this.resultArray[1] || [0,0,0,0]
-        if (this.resultArray.length > 2) {
-            this.winner = this.resultArray[2][0]
-            this.payer = this.resultArray[2][1]
-            this.pao = this.resultArray[2][2] // TODO: Find an example of this
-            this.yakuStrings = this.resultArray[2].slice(3)
-        } else {
-            this.winner = null
-            this.payer = null
-            this.pao = null
-            this.yakuStrings = []
+        this.scoreChanges = [0,0,0,0]
+        this.winner = []
+        this.payer = []
+        this.pao = []
+        this.yakuStrings = []
+        let idx = 1
+        let s = this.resultArray[idx]
+        while(this.resultArray[idx]) {
+            this.scoreChanges = this.scoreChanges.map((a, i) => a+this.resultArray[idx][i])
+            idx++
+            if (this.resultArray[idx]) {
+                this.winner.push(this.resultArray[idx][0])
+                this.payer.push(this.resultArray[idx][1])
+                this.pao.push(this.resultArray[idx][2]) // TODO: Find an example of this
+                this.yakuStrings.push(this.resultArray[idx].slice(3))
+            }
+            idx++
         }
         this.drawnTile = [null, null, null, null]
         this.calls = [[],[],[],[]]
@@ -174,25 +182,33 @@ class UI {
             // console.log('handOver', event)
             this.infoThisRoundTable.replaceChildren()
             let table = document.createElement("table")
-            if (GS.gs.result == '和了') {
-                if (GS.gs.winner == GS.gs.payer) {
-                    this.infoThisRoundTable.append(`Tsumo`)
-                    this.infoThisRoundTable.append(document.createElement("br"))
-                } else {
-                    this.infoThisRoundTable.append(`Ron`)
+            let resultTypeStr
+            for (let idx=0; idx<GS.gs.winner.length; idx++) {
+                if (idx>0) {
                     this.infoThisRoundTable.append(document.createElement("br"))
                 }
-            } else if (GS.gs.result == '流局') {
-                this.infoThisRoundTable.append('Draw')
+                if (GS.gs.result == '和了') {
+                    if (GS.gs.winner[0] == GS.gs.payer[0]) {
+                        resultTypeStr = `Tsumo by ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                    } else {
+                        resultTypeStr = `Ron by ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                    }
+                } else if (GS.gs.result == '流局') {
+                    resultTypeStr = "Draw"
+                } else if (GS.gs.result == '流し満貫') {
+                    resultTypeStr = "Nagashi Mangan" // TODO test
+                } else if (GS.gs.result == '九種九牌') {
+                    resultTypeStr = 'Nine Terminal Draw'
+                }
+                this.infoThisRoundTable.append(resultTypeStr)
+                if (resultTypeStr == "Ron" || resultTypeStr == "Tsumo") {
+                    this.infoThisRoundTable.append(` by ${this.relativeToHeroStr(GS.gs.winner[idx])}`)
+                }
                 this.infoThisRoundTable.append(document.createElement("br"))
-            } else if (GS.gs.result == '流し満貫') {
-                this.infoThisRoundTable.append('Nagashi Mangan (wow!) TODO test this')
-            } else if (GS.gs.result == '九種九牌') {
-                this.infoThisRoundTable.append('Nine Terminal Draw')
-            }
-            for (let yaku of GS.gs.yakuStrings) {
-                this.infoThisRoundTable.append(this.parseYakuString(yaku))
-                this.infoThisRoundTable.append(document.createElement("br"))
+                for (let yaku of GS.gs.yakuStrings[idx]) {
+                    this.infoThisRoundTable.append(this.parseYakuString(yaku))
+                    this.infoThisRoundTable.append(document.createElement("br"))
+                }
             }
             for (let pidx=0; pidx<4+1; pidx++) {
                 let tr = table.insertRow()
@@ -248,17 +264,19 @@ class UI {
         let svgElement = callBars.firstElementChild
         let slot = 0
         let heroDetail = null
-        for (let detail of mortalEval.details) {
+        for (let [idx, detail] of mortalEval.details.entries()) {
             if (detail.action.type == mortalEval.actual.type && detail.action.pai == mortalEval.actual.pai) {
                 heroDetail = detail
             }
             let Pval = detail.normProb*100
-            let mortalQuackTile = !mortalEval.is_equal && detail.action.pai == mortalEval.expected.pai
+            let mortalQuackTile = !mortalEval.is_equal && detail.action.type == mortalEval.expected.type && detail.action.pai == mortalEval.expected.pai
             if (detail.action.type == 'dahai' && !mortalQuackTile) {
                 continue // Skip tiles (unless it's a mismatch)
             }
-            // console.log('callbar', detail)
-            let xloc = GS.C_db_tileWidth*1.3/2 + slot*GS.C_db_tileWidth*1.3
+            if (slot>=GS.C_cb_maxShown && !mortalQuackTile) {
+                continue // Not enough room in GUI to show more
+            }
+            let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/2 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
             if (detail.action.pai == mortalEval.actual.pai) {
                 svgElement.appendChild(this.createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, GS.C_colorBarHero
@@ -272,6 +290,11 @@ class UI {
             text.setAttribute("y", GS.C_db_height + 20)
             text.setAttribute("fill", GS.C_colorText)
             text.textContent = translate(detail.action.type)
+            if (detail.action.type == 'hora') {
+                if (detail.action.actor != detail.action.target) {
+                    // text.textContent = 'Ron'                    
+                }
+            }
             svgElement.appendChild(text)
             if (detail.action.pai) {
                 let tiles = [detail.action.pai]
@@ -287,9 +310,8 @@ class UI {
             }
             slot++
         }
-        // console.log(mortalEval)
         if (!mortalEval.is_equal) {
-            let xloc = GS.C_db_tileWidth*1.3/2 + slot*GS.C_db_tileWidth*1.3
+            let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/5 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
             let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
             text.setAttribute("y", 60)
@@ -338,7 +360,7 @@ class UI {
             let Pval = matchingDetail.normProb*100
             let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+0.5
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
-            if (matchingDetail.type == mortalEval.actual.type && matchingDetail.action.pai == mortalEval.actual.pai) {
+            if (matchingDetail.action.type == mortalEval.actual.type && matchingDetail.action.pai == mortalEval.actual.pai) {
                 heroSlotFound = true
                 svgElement.appendChild(this.createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
@@ -889,7 +911,7 @@ function decHandCounter() {
 
 function stopCondition(onlyMismatches) {
     let mortalEval = GS.ge[GS.hand_counter][GS.ply_counter].mortalEval
-    let mismatch = mortalEval && (mortalEval.expected != mortalEval.actual)
+    let mismatch = mortalEval && !mortalEval.is_equal
     return mortalEval && (!onlyMismatches || mismatch) ||
         GS.ply_counter == GS.ge[GS.hand_counter].length-1
 }
@@ -1192,8 +1214,8 @@ function debugState() {
 
 // one-off tests for a given problem
 function tmpTest() {
-    GS.hand_counter = 13
-    GS.ply_counter = 80
+    GS.hand_counter = 0
+    GS.ply_counter = 26
     updateState()
     debugState()
 }
