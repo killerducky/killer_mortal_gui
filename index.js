@@ -182,7 +182,7 @@ class UI {
             this.infoThisRoundTable.replaceChildren()
             let table = document.createElement("table")
             let resultTypeStr
-            for (let idx=0; idx<GS.gs.winner.length; idx++) {
+            for (let idx=0; idx==0||idx<GS.gs.winner.length; idx++) {
                 if (idx>0) {
                     this.infoThisRoundTable.append(document.createElement("br"))
                 }
@@ -198,15 +198,17 @@ class UI {
                     resultTypeStr = "Nagashi Mangan" // TODO test
                 } else if (GS.gs.result == '九種九牌') {
                     resultTypeStr = 'Nine Terminal Draw'
+                } else {
+                    resultTypeStr = `Unknown result ${GS.gs.result}`
+                    throw new Error()
                 }
                 this.infoThisRoundTable.append(resultTypeStr)
-                if (resultTypeStr == "Ron" || resultTypeStr == "Tsumo") {
-                    this.infoThisRoundTable.append(` by ${this.relativeToHeroStr(GS.gs.winner[idx])}`)
-                }
-                this.infoThisRoundTable.append(document.createElement("br"))
-                for (let yaku of GS.gs.yakuStrings[idx]) {
-                    this.infoThisRoundTable.append(this.parseYakuString(yaku))
+                if (GS.gs.result == '和了') {
                     this.infoThisRoundTable.append(document.createElement("br"))
+                    for (let yaku of GS.gs.yakuStrings[idx]) {
+                        this.infoThisRoundTable.append(this.parseYakuString(yaku))
+                        this.infoThisRoundTable.append(document.createElement("br"))
+                    }
                 }
             }
             for (let pidx=0; pidx<4+1; pidx++) {
@@ -288,12 +290,11 @@ class UI {
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
             text.setAttribute("y", GS.C_db_height + 20)
             text.setAttribute("fill", GS.C_colorText)
-            text.textContent = translate(detail.action.type)
-            if (detail.action.type == 'hora') {
-                if (detail.action.actor != detail.action.target) {
-                    // text.textContent = 'Ron'                    
-                }
+            let textContent = translate(detail.action.type)
+            if (detail.action.type == 'hora' && detail.action.actor != detail.action.target) {
+                textContent = 'Ron'                    
             }
+            text.textContent = textContent
             svgElement.appendChild(text)
             if (detail.action.pai) {
                 let tiles = [detail.action.pai]
@@ -820,6 +821,11 @@ class NewTile {
 function addResult() {
     for (let [idx, currGeList] of GS.ge.entries()) {
         let gs = new GameState(GS.fullData.split_logs[idx].log[0])
+        // TODO: Currently using the tenhou split_logs to parse result
+        // And assuming there is only one hora event. Remove the extras (double/triple Ron)
+        while(currGeList.slice(-2)[0].type == 'hora') {
+            currGeList.splice(-2, 1)
+        }
         let result = currGeList.slice(-1)[0]
         for (let tmpPly=0; tmpPly<currGeList.length; tmpPly++) {
             if (currGeList[tmpPly].type == "reach_accepted") {
@@ -1087,7 +1093,6 @@ function parseMortalJsonStr(data) {
     let body = parser.parseFromString(data, 'text/html').querySelector('body').textContent
     data = JSON.parse(body)
     GS.fullData = data
-    console.log('Full data:', data)
     GS.heroPidx = GS.fullData.player_id
     GS.ui.setPovPidx(GS.fullData.player_id)
     GS.ge = []
@@ -1125,11 +1130,9 @@ function normalizeMortalEvals(data) {
 function setMortalJsonStr(data) {
     data = parseMortalJsonStr(data)
     convertPai2Tenhou(data)
-    console.log('GS.ge premerge', GS.ge)
     normalizeMortalEvals(data)
     mergeMortalEvals(data)
     addRiichiDiscardEvals(data)
-    console.log('GS.ge postmerge', GS.ge)
     addResult()
     GS.ui.updateResultsTable()
 }
@@ -1236,19 +1239,22 @@ function tests() {
 }
 
 function debugState() {
+    console.log('GS.fullData:', GS.fullData)
+    console.log('GS.ge', GS.ge)
+    console.log(`GS.ge[${GS.hand_counter}]`, GS.ge[GS.hand_counter])
     console.log('hand', GS.hand_counter)
     console.log('ply', GS.ply_counter)
-    console.log(getCurrGe())
+    console.log('event', getCurrGe())
 }
 
 // one-off tests for a given problem
 function tmpTest() {
-    GS.hand_counter = 0
-    GS.ply_counter = 135
-    let currGe = getCurrGe()
-    currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.5})
-    currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.4})
-    currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.3})
+    GS.hand_counter = 8
+    GS.ply_counter = 146
+    // let currGe = getCurrGe()
+    // currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.5})
+    // currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.4})
+    // currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.3})
     updateState()
     debugState()
 }
