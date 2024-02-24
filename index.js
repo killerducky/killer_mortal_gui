@@ -266,11 +266,11 @@ class UI {
         let slot = 0
         let heroDetail = null
         for (let [idx, detail] of mortalEval.details.entries()) {
-            if (JSON.stringify(detail.action) == JSON.stringify(mortalEval.actual)) {
+            if (compareActions(detail.action, mortalEval.actual)) {
                 heroDetail = detail
             }
             let Pval = detail.normProb*100
-            let mortalDetail = !mortalEval.is_equal && JSON.stringify(detail.action) == JSON.stringify(mortalEval.expected)
+            let mortalDetail = !mortalEval.is_equal && compareActions(detail.action, mortalEval.expected)
             if (detail.action.type == 'dahai' && !mortalDetail) {
                 continue // Skip tiles (unless it's a mismatch)
             }
@@ -296,9 +296,11 @@ class UI {
             }
             text.textContent = textContent
             svgElement.appendChild(text)
-            if (detail.action.pai) {
-                let tiles = [detail.action.pai]
-                if (detail.action.consumed) {
+            // Some kans include pai, some don't.
+            let pai = detail.action.type.endsWith('kan') ? detail.action.consumed[0] : detail.action.pai
+            if (pai) {
+                let tiles = [pai]
+                if (detail.action.consumed && !detail.action.type.endsWith('kan')) {
                     tiles = detail.action.consumed
                 }
                 let x_offset = tiles.length == 1 ? 25 : 35 // why did I use svgs and now I have to write my own layout code!
@@ -544,6 +546,15 @@ class UI {
     }
 }
 
+function compareActions(a, b) {
+    // TODO: Seems to be a mortal bug where actual action Kan type is wrong
+    // Do a fuzzy compare here instead for that case
+    // See E4-1 kakan a012872ba8b9d2f0 -- https://mahjongsoul.game.yo-star.com/?paipu=240224-9ec92c5b-bc87-40fd-bb7e-a1a87f0e36e0_a921008365
+    if (a.type.endsWith('kan') && b.type.endsWith('kan')) {
+        return (a.consumed[0] == b.consumed[0])
+    }
+    return JSON.stringify(a) == JSON.stringify(b)
+}
 function translate(s) {
     s = s in exactTranslation ? exactTranslation[s]['DEFAULT'] : s
     s = s in partialTranslationForStats ? partialTranslationForStats[s]['DEFAULT'] : s
@@ -697,7 +708,8 @@ function updateState() {
             }
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
         } else if (event.type == 'kakan') {
-            // kakan = added kan
+            // TODO: Extra dora doesn't count on Rinshan.
+            // For now it all works but not clean
             GS.gs.thisRoundExtraDoras++
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
             GS.gs.hands[event.actor].sort(tileSort)
@@ -1249,12 +1261,12 @@ function debugState() {
 
 // one-off tests for a given problem
 function tmpTest() {
-    GS.hand_counter = 4
-    GS.ply_counter = 19
-    let currGe = getCurrGe()
-    currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.5})
-    currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.4})
-    currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.3})
+    GS.hand_counter = 5
+    GS.ply_counter = 86
+    // let currGe = getCurrGe()
+    // currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.5})
+    // currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.4})
+    // currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.3})
     updateState()
     debugState()
 }
