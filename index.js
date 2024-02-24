@@ -31,7 +31,7 @@ class GlobalState {
         this.C_cb_totWidth = 260
         this.C_cb_padding = 10
         this.C_cb_widthFactor = 1.5
-        this.C_cb_maxShown = 3
+        this.C_cb_maxShown = 4
 
         this.C_colorText = getComputedStyle(document.documentElement).getPropertyValue('--color-text')
         this.C_colorBarMortal = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-mortal')
@@ -122,7 +122,7 @@ class UI {
         }
     }
     roundStr(showSticks) {
-        let str = GS.C_windStr[GS.gs.roundWind-41]
+        let str = GS.C_windStr[GS.gs.roundWind-tm2t('e')]
         str += (GS.gs.roundNum+1)
         if (GS.gs.honbas > 0) {
             str += "-" + GS.gs.honbas
@@ -266,19 +266,19 @@ class UI {
         let slot = 0
         let heroDetail = null
         for (let [idx, detail] of mortalEval.details.entries()) {
-            if (detail.action.type == mortalEval.actual.type && detail.action.pai == mortalEval.actual.pai) {
+            if (JSON.stringify(detail.action) == JSON.stringify(mortalEval.actual)) {
                 heroDetail = detail
             }
             let Pval = detail.normProb*100
-            let mortalQuackTile = !mortalEval.is_equal && detail.action.type == mortalEval.expected.type && detail.action.pai == mortalEval.expected.pai
-            if (detail.action.type == 'dahai' && !mortalQuackTile) {
+            let mortalDetail = !mortalEval.is_equal && JSON.stringify(detail.action) == JSON.stringify(mortalEval.expected)
+            if (detail.action.type == 'dahai' && !mortalDetail) {
                 continue // Skip tiles (unless it's a mismatch)
             }
-            if (slot>=GS.C_cb_maxShown-1 && !mortalQuackTile && detail != heroDetail) {
+            if (slot>=GS.C_cb_maxShown-1 && !mortalDetail && detail != heroDetail) {
                 continue // Not enough room in GUI to show more
             }
             let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/2 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
-            if (detail.action.pai == mortalEval.actual.pai) {
+            if (heroDetail == detail) {
                 svgElement.appendChild(this.createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, GS.C_colorBarHero
                 ))
@@ -1249,12 +1249,12 @@ function debugState() {
 
 // one-off tests for a given problem
 function tmpTest() {
-    GS.hand_counter = 8
-    GS.ply_counter = 146
-    // let currGe = getCurrGe()
-    // currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.5})
-    // currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.4})
-    // currGe.mortalEval.details.unshift({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.3})
+    GS.hand_counter = 4
+    GS.ply_counter = 19
+    let currGe = getCurrGe()
+    currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.5})
+    currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.4})
+    currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.3})
     updateState()
     debugState()
 }
