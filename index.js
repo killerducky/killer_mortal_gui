@@ -264,21 +264,17 @@ class UI {
         const callBars = document.querySelector('.killer-call-bars')
         let svgElement = callBars.firstElementChild
         let slot = 0
-        let heroDetail = null
         for (let [idx, detail] of mortalEval.details.entries()) {
-            if (compareActions(detail.action, mortalEval.actual)) {
-                heroDetail = detail
-            }
             let Pval = detail.normProb*100
-            let mortalDetail = !mortalEval.is_equal && compareActions(detail.action, mortalEval.expected)
+            let mortalDetail = !mortalEval.is_equal && idx==0
             if (detail.action.type == 'dahai' && !mortalDetail) {
                 continue // Skip tiles (unless it's a mismatch)
             }
-            if (slot>=GS.C_cb_maxShown-1 && !mortalDetail && detail != heroDetail) {
+            if (slot>=GS.C_cb_maxShown-1 && !mortalDetail && mortalEval.actual_index != idx) {
                 continue // Not enough room in GUI to show more
             }
             let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/2 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
-            if (heroDetail == detail) {
+            if (mortalEval.actual_index == idx) {
                 svgElement.appendChild(this.createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, GS.C_colorBarHero
                 ))
@@ -318,7 +314,7 @@ class UI {
             text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
             text.setAttribute("y", 60)
             text.setAttribute("fill", GS.C_colorText)
-            if (heroDetail.normProb > .50) {
+            if (mortalEval.details[mortalEval.actual_index].normProb > .50) {
                 text.textContent = "Hmm..."
             } else {
                 text.textContent = "Quack!"
@@ -349,21 +345,20 @@ class UI {
         let mortalEval = gameEvent.mortalEval
         const discardBars = document.getElementById("discard-bars")
         let svgElement = discardBars.firstElementChild
-        let heroSlotFound = false
         for (let i = -1; i < GS.gs.hands[gameEvent.actor].length; i++) {
             let tile = (i==-1) ? GS.gs.drawnTile[gameEvent.actor] : GS.gs.hands[gameEvent.actor][i]
             if (tile == null) {
                 continue // on calls there was no drawnTile
             }
-            let matchingDetail = mortalEval.details.find(x => x.action && x.action.type == 'dahai' && x.action.pai && x.action.pai==tile)
-            if (matchingDetail == null) {
+            let matchingDetailIdx = mortalEval.details.findIndex(x => x.action && x.action.type == 'dahai' && x.action.pai && x.action.pai==tile)
+            if (matchingDetailIdx == -1) {
                 continue // TODO: Check code for this. For now assume due to illegal calls swaps
             }
+            let matchingDetail = mortalEval.details[matchingDetailIdx]
             let Pval = matchingDetail.normProb*100
             let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+0.5
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
-            if (matchingDetail.action.type == mortalEval.actual.type && matchingDetail.action.pai == mortalEval.actual.pai) {
-                heroSlotFound = true
+            if (matchingDetailIdx == mortalEval.actual_index) {
                 svgElement.appendChild(this.createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
                 ))
@@ -371,12 +366,6 @@ class UI {
             svgElement.appendChild(this.createRect(
                 xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_db_height, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
             ));
-        }
-        if (!heroSlotFound) {
-            // console.log('!heroSlotFound', gameEvent.mortalEval.actual.type, gameEvent)
-            // console.log(GS.gs.drawnTile[gameEvent.actor])
-            // console.log(GS.gs.drawnTile)
-            // throw new Error()
         }
     }
     updateHandInfo() {
@@ -546,15 +535,6 @@ class UI {
     }
 }
 
-function compareActions(a, b) {
-    // TODO: Seems to be a mortal bug where actual action Kan type is wrong
-    // Do a fuzzy compare here instead for that case
-    // See E4-1 kakan a012872ba8b9d2f0 -- https://mahjongsoul.game.yo-star.com/?paipu=240224-9ec92c5b-bc87-40fd-bb7e-a1a87f0e36e0_a921008365
-    if (a.type.endsWith('kan') && b.type.endsWith('kan')) {
-        return (a.consumed[0] == b.consumed[0])
-    }
-    return JSON.stringify(a) == JSON.stringify(b)
-}
 function translate(s) {
     s = s in exactTranslation ? exactTranslation[s]['DEFAULT'] : s
     s = s in partialTranslationForStats ? partialTranslationForStats[s]['DEFAULT'] : s
@@ -575,12 +555,6 @@ class Tile {
     }
 }
              
-function mortalHashTile2tenhou(tileStr) {
-    tileStr = tileStr.replace('#pai-', '')
-    tileStr = tm2t(tileStr)
-    return tileStr
-}
-
 //take '2m' and return 2 + 10 etc.
 function tm2t(str) { 
     if (str == undefined) {
