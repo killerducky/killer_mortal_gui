@@ -778,58 +778,6 @@ function updateState() {
     GS.ui.updateGridInfo()
 }
 
-class GameEvent {
-    constructor(type, pidx, args) {
-        this.type = type
-        this.pidx = pidx
-        if (this.type == 'call') {
-            this.draw = args['draw']
-            this.draw.fromIdxAbs = (4 + pidx - this.draw.fromIdxRel - 1) % 4
-        } else if (this.type == 'draw') {
-            this.draw = args['draw']
-        } else if (this.type == 'discard') {
-            this.discard = args['discard']
-        } else if (this.type == 'ankan') {
-            this.meldedTiles = args['meldedTiles']
-        } else if (this.type == 'kakan') {
-            this.kanTile = args['kanTile']
-        } else if (this.type == 'riichi') {
-            // do nothing
-        } else if (this.type == 'result') {
-        } else {
-            throw new Error('invalid')
-        }
-    }
-}
-
-class NewTile {
-    constructor(callStr) {
-        this.callStr = callStr // save original string/number for debug
-        if (typeof callStr == 'number') {
-            this.type = 'draw'
-            this.newTile = parseInt(callStr)
-            return
-        }
-        this.fromIdxRel = callStr.search(/[a-z]/)
-        this.type = callStr[this.fromIdxRel]
-        this.fromIdxRel = this.fromIdxRel/2
-        if (this.type == 'r') {
-            this.newTile = parseInt(callStr[1]+callStr[2])
-            this.fromIdxRel = null
-            return
-        }
-        this.meldedTiles = callStr.replace(/[a-z]/, '').match(/../g).map(x => parseInt(x))
-        this.newTile = this.meldedTiles[this.fromIdxRel]
-        if (this.type == 'k') {
-            // only one of the tiles is actually new
-            this.meldedTiles = [this.meldedTiles[this.fromIdxRel]]
-        }
-        // e.g. 151515k51 -- 51 (red 5) was called from relative p2 (there is no p3)
-        // But wait until after we got the real called tile
-        this.fromIdxRel = Math.min(this.fromIdxRel, 2)
-    }
-}
-
 function addResult() {
     for (let [idx, currGeList] of GS.ge.entries()) {
         let gs = new GameState(GS.fullData.split_logs[idx].log[0])
@@ -1245,11 +1193,6 @@ function discardOverflowTest() {
     }
 }
 
-function tests() {
-    console.assert(new NewTile('151515k51').newTile == 51)
-    console.assert(new NewTile('151551k15').newTile == 15)
-}
-
 function debugState() {
     console.log('GS.fullData:', GS.fullData)
     console.log('GS.ge', GS.ge)
@@ -1273,7 +1216,6 @@ function tmpTest() {
 
 const GS = new GlobalState
 function main() {
-    //tests()
     getJsonData()
     connectUI()
     //discardOverflowTest()
