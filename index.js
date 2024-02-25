@@ -953,19 +953,23 @@ function mergeMortalEvals(data) {
     for (let [i, round] of GS.ge.entries()) {
         let currReviewKyoku = data.review.kyokus[i]
         let reviewIdx = 0
-        for (let event of round.entries()) {
+        for (let event of round) {
             let mortalEval = currReviewKyoku.entries[reviewIdx]
             if (mortalEval === undefined) {
                 break // out of events to merge
             }
-            let opponentTsumo = event[1].actor != GS.heroPidx && event[1].type=='tsumo'
-            if (event[1].actor == mortalEval.last_actor && event[1].pai == mortalEval.tile && !opponentTsumo) {
-                if (event[1].actor != GS.heroPidx && event[1].type!='dahai') {
+            let opponentTsumo = event.actor != GS.heroPidx && event.type=='tsumo'
+            let heroDahai = event.actor == GS.heroPidx && event.type=='dahai'
+            if (opponentTsumo || heroDahai) {
+                continue
+            }
+            if (event.actor == mortalEval.last_actor && event.pai == mortalEval.tile) {
+                if (event.actor != GS.heroPidx && event.type!='dahai') {
                     console.log('check this merge: could be robbing a kan?')
                     console.log(event)
                     console.log(mortalEval)
                 }
-                event[1].mortalEval = mortalEval
+                event.mortalEval = mortalEval
                 reviewIdx++
             }
         }
