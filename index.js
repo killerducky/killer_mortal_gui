@@ -167,7 +167,7 @@ class UI {
         this.clearCallBars()
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = event.mortalEval
-        if (mortalEval && GS.showMortal) {
+        if (mortalEval) {
             this.updateDiscardBars()
             this.updateCallBars() // For calls such as Kan or Riichi instead of discarding
         }
@@ -259,6 +259,9 @@ class UI {
         return [backgroundRect, tileSvg]
     }
     updateCallBars() {
+        if (!GS.showMortal) {
+            return
+        }
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = gameEvent.mortalEval
         const callBars = document.querySelector('.killer-call-bars')
@@ -275,23 +278,18 @@ class UI {
             }
             let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/2 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
             if (mortalEval.actual_index == idx) {
-                svgElement.appendChild(this.createRect(
+                svgElement.appendChild(createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, GS.C_colorBarHero
                 ))
             }
-            svgElement.appendChild(this.createRect(
+            svgElement.appendChild(createRect(
                 xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_cb_heroBarHeight, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
             ))
-            let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
-            text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2-10)
-            text.setAttribute("y", GS.C_db_height + 20)
-            text.setAttribute("fill", GS.C_colorText)
             let textContent = translate(detail.action.type)
             if (detail.action.type == 'hora' && detail.action.actor != detail.action.target) {
-                textContent = 'Ron'                    
+                textContent = 'Ron' // translate defaults to Tsumo. Change to Ron in this case            
             }
-            text.textContent = textContent
-            svgElement.appendChild(text)
+            svgElement.appendChild(createSvgText(xloc-GS.C_db_mortBarWidth/2-10, GS.C_db_height + 20, textContent))
             // Some kans include pai, some don't.
             let pai = detail.action.type.endsWith('kan') ? detail.action.consumed[0] : detail.action.pai
             if (pai) {
@@ -310,16 +308,8 @@ class UI {
         }
         if (!mortalEval.is_equal) {
             let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/5 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
-            let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
-            text.setAttribute("x", xloc-GS.C_db_mortBarWidth/2)
-            text.setAttribute("y", 60)
-            text.setAttribute("fill", GS.C_colorText)
-            if (mortalEval.details[mortalEval.actual_index].normProb > .50) {
-                text.textContent = "Hmm..."
-            } else {
-                text.textContent = "Quack!"
-            }
-            svgElement.appendChild(text)
+            let textContent = (mortalEval.details[mortalEval.actual_index].normProb > .50) ? "Hmm..." : "Quack!"
+            svgElement.appendChild(createSvgText(xloc-GS.C_db_mortBarWidth/2, 60, textContent))
         }
     }
     clearDiscardBars() {
@@ -330,21 +320,15 @@ class UI {
         svgElement.setAttribute("padding", GS.C_db_padding)
         discardBars.replaceChildren(svgElement)
     }
-    createRect(x, width, totHeight, fillRatio, fill) {
-        let y = (1-fillRatio)*totHeight
-        let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-        rect.setAttribute("x", x)
-        rect.setAttribute("y", y)
-        rect.setAttribute("width", width)
-        rect.setAttribute("height", totHeight*fillRatio)
-        rect.setAttribute("fill", fill)
-        return rect
-    }
     updateDiscardBars() {
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = gameEvent.mortalEval
         const discardBars = document.getElementById("discard-bars")
         let svgElement = discardBars.firstElementChild
+        if (!GS.showMortal) {
+            svgElement.appendChild(createSvgText(60,30,"(Spoiler: Mortal evaluations hidden. Click to show)"))
+            return
+        }
         for (let i = -1; i < GS.gs.hands[gameEvent.actor].length; i++) {
             let tile = (i==-1) ? GS.gs.drawnTile[gameEvent.actor] : GS.gs.hands[gameEvent.actor][i]
             if (tile == null) {
@@ -359,11 +343,11 @@ class UI {
             let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+0.5
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (matchingDetailIdx == mortalEval.actual_index) {
-                svgElement.appendChild(this.createRect(
+                svgElement.appendChild(createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
                 ))
             }
-            svgElement.appendChild(this.createRect(
+            svgElement.appendChild(createRect(
                 xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_db_height, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
             ));
         }
@@ -533,6 +517,25 @@ class UI {
             this.infoRoundModal.close()
         })
     }
+}
+
+function createRect(x, width, totHeight, fillRatio, fill) {
+    let y = (1-fillRatio)*totHeight
+    let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+    rect.setAttribute("x", x)
+    rect.setAttribute("y", y)
+    rect.setAttribute("width", width)
+    rect.setAttribute("height", totHeight*fillRatio)
+    rect.setAttribute("fill", fill)
+    return rect
+}
+function createSvgText(x, y, text) {
+    let svg = document.createElementNS("http://www.w3.org/2000/svg", "text")
+    svg.setAttribute("x", x)
+    svg.setAttribute("y", y)
+    svg.setAttribute("fill", GS.C_colorText)
+    svg.textContent = text
+    return svg
 }
 
 function translate(s) {
