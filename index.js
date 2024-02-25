@@ -1118,6 +1118,8 @@ function getJsonData() {
                 let data = LZString.compressToUTF16(fr.result)
                 localStorage.setItem('mortalHtmlStr', data)
                 localStorage.setItem('mortalFilename', file.name)
+                // let z = LZString.compressToBase64(fr.result)
+                // console.log(z)
                 setMortalJsonStr(fr.result)
                 updateState()
             }
