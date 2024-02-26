@@ -166,11 +166,8 @@ class UI {
         this.clearDiscardBars()
         this.clearCallBars()
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
-        let mortalEval = event.mortalEval
-        if (mortalEval) {
-            this.updateDiscardBars()
-            this.updateCallBars() // For calls such as Kan or Riichi instead of discarding
-        }
+        this.updateDiscardBars()
+        this.updateCallBars()
         for (let i=0; i<5; i++) {
             if (GS.gs.dora[i] == null || i > GS.gs.thisRoundExtraDoras) {
                 this.doras.append(createTile('back'))
@@ -259,11 +256,11 @@ class UI {
         return [backgroundRect, tileSvg]
     }
     updateCallBars() {
-        if (!GS.showMortal) {
-            return
-        }
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
         let mortalEval = gameEvent.mortalEval
+        if (!GS.showMortal || !mortalEval) {
+            return
+        }
         const callBars = document.querySelector('.killer-call-bars')
         let svgElement = callBars.firstElementChild
         let slot = 0
@@ -328,6 +325,9 @@ class UI {
         if (!GS.showMortal) {
             svgElement.appendChild(createSvgText(60,30,"(Spoiler: Mortal evaluations hidden. Click to show)"))
             return
+        }
+        if (!mortalEval) {
+            return // nothing to display
         }
         for (let i = -1; i < GS.gs.hands[gameEvent.actor].length; i++) {
             let tile = (i==-1) ? GS.gs.drawnTile[gameEvent.actor] : GS.gs.hands[gameEvent.actor][i]
@@ -645,6 +645,9 @@ function updateState() {
     GS.gs = new GameState(GS.fullData.split_logs[GS.hand_counter].log[0])
     for (let ply=0; ply <= GS.ply_counter; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
+        if (event.dora_marker) {
+            GS.gs.thisRoundExtraDoras++
+        }
         if (event.type == 'tsumo') {
             GS.gs.drawnTile[event.actor] = event.pai
         } else if (event.type == 'chi' || event.type == 'pon') {
@@ -666,7 +669,6 @@ function updateState() {
         } else if (event.type == 'daiminkan') {
             let dp = GS.gs.discardPond[event.target]
             dp[dp.length-1].called = true
-            GS.gs.thisRoundExtraDoras++
             GS.gs.hands[event.actor].push(event.pai)
             let newCall = []
             let fromIdxRel = (4 + event.actor - event.target - 1) % 4
@@ -685,9 +687,6 @@ function updateState() {
             }
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
         } else if (event.type == 'kakan') {
-            // TODO: Extra dora doesn't count on Rinshan.
-            // For now it all works but not clean
-            GS.gs.thisRoundExtraDoras++
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
             GS.gs.hands[event.actor].sort(tileSort)
             GS.gs.drawnTile[event.actor] = null
@@ -705,7 +704,6 @@ function updateState() {
             }
             GS.gs.calls[event.actor].splice(rotatedIdx+1, 0, event.pai, 'rotate', 'float')
         } else if (event.type == 'ankan') {
-            GS.gs.thisRoundExtraDoras++
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
             GS.gs.hands[event.actor].sort(tileSort)
             GS.gs.drawnTile[event.actor] = null
@@ -950,6 +948,21 @@ function connectUI() {
         GS.showMortal = !GS.showMortal
         updateState()
     })
+    document.addEventListener('keydown', function(event) {
+        if (event.key == 'h') {
+            GS.showHands = !GS.showHands
+            updateState()
+        } else if (event.key == 'm') {
+            GS.showMortal = !GS.showMortal
+            updateState()
+        // } else if (event.key == 'g') {
+        //     const roundGraphModel = document.querySelector('#round-graph-modal')
+        //     roundGraphModel.show()
+        //     roundGraphModel.addEventListener('click', (event) => {
+        //         roundGraphModel.close()
+        //     })
+        }
+    });
 }
 
 function mergeMortalEvals(data) {
@@ -966,7 +979,8 @@ function mergeMortalEvals(data) {
             if (opponentTsumo || heroDahai) {
                 continue
             }
-            if (event.actor == mortalEval.last_actor && event.pai == mortalEval.tile) {
+            let heroRiichiDiscard = event.actor == GS.heroPidx && event.type == 'reach' && mortalEval.junme == currReviewKyoku.entries[reviewIdx-1].junme
+            if (event.actor == mortalEval.last_actor && (event.pai == mortalEval.tile || heroRiichiDiscard)) {
                 if (event.actor != GS.heroPidx && event.type!='dahai') {
                     console.log('check this merge: could be robbing a kan?')
                     console.log(event)
@@ -1038,7 +1052,7 @@ function parseMortalJsonStr(data) {
     GS.ui.setPovPidx(GS.fullData.player_id)
     GS.ge = []
     let currGe = null
-    for (let event of data.mjai_log) {
+    for (let [idx, event] of data.mjai_log.entries()) {
         if (event.type == 'end_game' || event.type == 'start_game' || event.type == 'dora') {
             continue
         }
@@ -1050,6 +1064,9 @@ function parseMortalJsonStr(data) {
             GS.ge.push(currGe)
             currGe = null
             continue
+        }
+        if (data.mjai_log[idx-1].type == 'dora') {
+            event.dora_marker = data.mjai_log[idx-1].dora_marker
         }
         currGe.push(event)
     }
@@ -1187,8 +1204,8 @@ function debugState() {
 
 // one-off tests for a given problem
 function tmpTest() {
-    GS.hand_counter = 5
-    GS.ply_counter = 86
+    GS.hand_counter = 7
+    GS.ply_counter = 24
     // let currGe = getCurrGe()
     // currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.5})
     // currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.4})
