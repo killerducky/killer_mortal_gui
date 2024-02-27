@@ -990,6 +990,10 @@ function mergeMortalEvals(data) {
                 reviewIdx++
             }
         }
+        if (reviewIdx < currReviewKyoku.entries.length) {
+            console.log("Didn't merge all events", round, currReviewKyoku.entries, reviewIdx)
+            throw new Error
+        }
     }
 }
 
@@ -1041,12 +1045,15 @@ function convertPai2Tenhou(data) {
     deepMap(data, 'tile', tm2t)
     deepMap(data, 'consumed', convertConsumed)
 }
-function parseMortalJsonStr(data) {
-    GS.ply_counter = 0 // TODO where does it make sense to reset this stuff?
-    GS.hand_counter = 0
+function getBody(data) {
     const parser = new DOMParser()
     let body = parser.parseFromString(data, 'text/html').querySelector('body').textContent
     data = JSON.parse(body)
+    return data
+}
+function parseMortalJsonStr(data) {
+    GS.ply_counter = 0 // TODO where does it make sense to reset this stuff?
+    GS.hand_counter = 0
     GS.fullData = data
     GS.heroPidx = GS.fullData.player_id
     GS.ui.setPovPidx(GS.fullData.player_id)
@@ -1110,18 +1117,24 @@ function getCurrGe() {
 function getJsonData() {
     let data = localStorage.getItem('mortalHtmlStr')
     let label = document.getElementById('mortal-html-label')
-    if (data) {
-        let mortalFilename = localStorage.getItem('mortalFilename')
-        label.innerHTML = "Choose Mortal File<br>" + mortalFilename
-        data = LZString.decompressFromUTF16(data)
-        setMortalJsonStr(data)
+    if (mjai_json_data) {
+        setMortalJsonStr(mjai_json_data)
         updateState()
         GS.newUser = false
     } else {
-        data = LZString.decompressFromBase64(demo_data)
-        setMortalJsonStr(data)
-        updateState()
-        label.innerHTML = "Choose Mortal File<br>" + "(Demo file loaded)"
+        if (data) {
+            let mortalFilename = localStorage.getItem('mortalFilename')
+            label.innerHTML = "Choose Mortal File<br>" + mortalFilename
+            data = LZString.decompressFromUTF16(data)
+            setMortalJsonStr(getBody(data))
+            updateState()
+            GS.newUser = false
+        } else {
+            data = LZString.decompressFromBase64(demo_data)
+            setMortalJsonStr(getBody(data))
+            updateState()
+            label.innerHTML = "Choose Mortal File<br>" + "(Demo file loaded)"
+        }
     }
 
     let fileInput = document.getElementById('mortal-html-file')
@@ -1137,7 +1150,7 @@ function getJsonData() {
                 localStorage.setItem('mortalFilename', file.name)
                 // let z = LZString.compressToBase64(fr.result)
                 // console.log(z)
-                setMortalJsonStr(fr.result)
+                setMortalJsonStr(getBody(fr.result))
                 updateState()
             }
         } else {
@@ -1214,12 +1227,48 @@ function tmpTest() {
     debugState()
 }
 
-const GS = new GlobalState
-function main() {
+function parseUrl(useHttp) {
+    const urlParams = new URLSearchParams(window.location.search)
+    let dataParam = urlParams.get('data')
+    if (!dataParam) {
+        parseUrlDone()
+        return
+    }
+    if (useHttp) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', `${dataParam}.json`, true);
+        xhr.responseType = 'json';
+        xhr.onload = function() {
+            var status = xhr.status;
+            if (status == 200) {
+                mjai_json_data = xhr.response
+                parseUrlDone()
+            } else {
+                console.error('Error:', xhr.statusText);
+            }
+        };
+        xhr.send();
+    } else {
+        let script = document.createElement('script')
+        script.src = `${dataParam}.js`
+        script.addEventListener('load', parseUrlDone)
+        document.head.appendChild(script)
+    }
+}
+
+function parseUrlDone() {
     getJsonData()
     connectUI()
     //discardOverflowTest()
     // tmpTest()
+}
+
+
+
+let mjai_json_data = null
+const GS = new GlobalState
+function main() {
+    parseUrl(true)
 }
 main()
 
