@@ -6,7 +6,6 @@ class GlobalState {
         this.fullData = null // Full json -- maybe split this up some, super redundant!
         this.gs = null // current round GameState
         this.ge = null // array of array of GameEvent
-        this.newUser = true
 
         this.ply_counter = 0
         this.hand_counter = 0
@@ -923,9 +922,6 @@ function connectUI() {
         GS.showHands = !GS.showHands
         updateState()
     })
-    if (GS.newUser) {
-        showModalAndWait(aboutModal)
-    }
     about.addEventListener("click", () => {
         showModalAndWait(aboutModal)
     })
@@ -1114,12 +1110,6 @@ function getCurrGe() {
     return GS.ge[GS.hand_counter][GS.ply_counter]
 }
 
-function getJsonData() {
-    setMortalJsonStr(mjai_json_data)
-    updateState()
-    GS.newUser = false
-}
-
 function discardOverflowTest() {
     for (let pidx=0; pidx<4; pidx++) {
         for (let i=0; i<27; i++) {
@@ -1193,13 +1183,14 @@ function parseUrl() {
     let dataParam = urlParams.get('data')
     console.assert(dataParam)
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', `${dataParam}.json`, true);
+    xhr.open('GET', `${dataParam}`, true);
     xhr.responseType = 'json';
     xhr.onload = function() {
         var status = xhr.status;
         if (status == 200) {
-            mjai_json_data = xhr.response
-            parseUrlDone()
+            setMortalJsonStr(xhr.response)
+            updateState()
+            connectUI()
         } else {
             console.error('Error:', xhr.statusText);
         }
@@ -1207,14 +1198,6 @@ function parseUrl() {
     xhr.send();
 }
 
-function parseUrlDone() {
-    getJsonData()
-    connectUI()
-    //discardOverflowTest()
-    // tmpTest()
-}
-
-let mjai_json_data = null
 const GS = new GlobalState
 function main() {
     parseUrl(true)
