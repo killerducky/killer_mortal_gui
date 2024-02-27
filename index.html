@@ -8,14 +8,6 @@
     <title>Killer Mortal Reviewer</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XMY6T9SSE8"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-XMY6T9SSE8');
-</script>
 <body>
     <main>
         <div class="outer">
@@ -54,10 +46,6 @@
             </div>
         <div class="sidebar">
             <div class="controls">
-                <div id="mortal-file-div">
-                    <label id="mortal-html-label" for="mortal-html-file">Choose Mortal File<br>No file loaded</label>
-                    <input type="file" id="mortal-html-file" accept=".html" style="display:none;">
-                </div>
                 <button id="hand-dec">&lt; Prev Hand</button>
                 <button id="hand-inc">Next Hand &gt;</button>
                 <button id="prev-mismatch">&lt; Prev Error</button>
@@ -71,13 +59,17 @@
                 <dialog id="about-modal">
                     <div> <!-- Container just to capture clicks -->
                     <button class="close about-close" style="float:right">&times</button>
-                    Usage:
-                    <ol>
-                        <li>Generate a Mortal review <a href="https://mjai.ekyu.moe" target="_blank">https://mjai.ekyu.moe</a></li>
-                        <li>Click "Save this page"</li>
-                        <li>Return here and click "Choose Mortal File"</li>
-                    </ol>
-                    More info: <a href="https://killerducky.github.io/mahjong/killer_mortal/intro" target="_blank">here</a>
+                    <ul>
+                        <li>Mortal's opinions shown with green bars</li>
+                        <li>Top choice always 100% height</li>
+                        <li>Others relative to the top choice</li>
+                        <li>User's choice show with a yellow bar</li>
+                        <li>Click on the discard bars toggle spoiler-free WWYD mode</li>
+                        <li>Click on round indiator to show score table</li>
+                        <ul>
+                            <li>Click on a row in the table to skip to that round</li>
+                        </ul>
+                    </ul>
                     </div>
                 </dialog>
             </div>

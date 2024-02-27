@@ -306,12 +306,6 @@ h1{
 button:hover {
     background:var(--color-hover);
 }
-#mortal-file-div {
-    grid-column: span 2;
-    display:flex;
-    border-style:outset;
-    overflow:hidden;
-}
 .killer-call-div {
     display:grid;
 }

@@ -1115,48 +1115,9 @@ function getCurrGe() {
 }
 
 function getJsonData() {
-    let data = localStorage.getItem('mortalHtmlStr')
-    let label = document.getElementById('mortal-html-label')
-    if (mjai_json_data) {
-        setMortalJsonStr(mjai_json_data)
-        updateState()
-        GS.newUser = false
-    } else {
-        if (data) {
-            let mortalFilename = localStorage.getItem('mortalFilename')
-            label.innerHTML = "Choose Mortal File<br>" + mortalFilename
-            data = LZString.decompressFromUTF16(data)
-            setMortalJsonStr(getBody(data))
-            updateState()
-            GS.newUser = false
-        } else {
-            data = LZString.decompressFromBase64(demo_data)
-            setMortalJsonStr(getBody(data))
-            updateState()
-            label.innerHTML = "Choose Mortal File<br>" + "(Demo file loaded)"
-        }
-    }
-
-    let fileInput = document.getElementById('mortal-html-file')
-    fileInput.addEventListener('change', function(event) {
-        let file = event.target.files[0]
-        if (file) {
-            label.innerHTML = "Choose Mortal File<br>" + file.name
-            let fr = new FileReader()
-            fr.readAsText(file)
-            fr.onload = function() {
-                let data = LZString.compressToUTF16(fr.result)
-                localStorage.setItem('mortalHtmlStr', data)
-                localStorage.setItem('mortalFilename', file.name)
-                // let z = LZString.compressToBase64(fr.result)
-                // console.log(z)
-                setMortalJsonStr(getBody(fr.result))
-                updateState()
-            }
-        } else {
-            console.log('no file')
-        }
-    })
+    setMortalJsonStr(mjai_json_data)
+    updateState()
+    GS.newUser = false
 }
 
 function discardOverflowTest() {
@@ -1227,33 +1188,23 @@ function tmpTest() {
     debugState()
 }
 
-function parseUrl(useHttp) {
+function parseUrl() {
     const urlParams = new URLSearchParams(window.location.search)
     let dataParam = urlParams.get('data')
-    if (!dataParam) {
-        parseUrlDone()
-        return
-    }
-    if (useHttp) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', `${dataParam}.json`, true);
-        xhr.responseType = 'json';
-        xhr.onload = function() {
-            var status = xhr.status;
-            if (status == 200) {
-                mjai_json_data = xhr.response
-                parseUrlDone()
-            } else {
-                console.error('Error:', xhr.statusText);
-            }
-        };
-        xhr.send();
-    } else {
-        let script = document.createElement('script')
-        script.src = `${dataParam}.js`
-        script.addEventListener('load', parseUrlDone)
-        document.head.appendChild(script)
-    }
+    console.assert(dataParam)
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', `${dataParam}.json`, true);
+    xhr.responseType = 'json';
+    xhr.onload = function() {
+        var status = xhr.status;
+        if (status == 200) {
+            mjai_json_data = xhr.response
+            parseUrlDone()
+        } else {
+            console.error('Error:', xhr.statusText);
+        }
+    };
+    xhr.send();
 }
 
 function parseUrlDone() {
@@ -1262,8 +1213,6 @@ function parseUrlDone() {
     //discardOverflowTest()
     // tmpTest()
 }
-
-
 
 let mjai_json_data = null
 const GS = new GlobalState
