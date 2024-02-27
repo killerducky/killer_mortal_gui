@@ -456,6 +456,35 @@ class UI {
     lastDiscardWasCalled(pidx) {
         this.discards[pidx].lastChild.classList.add('called')
     }
+    addTableRow(table, str, value){
+        let tr = table.insertRow()
+        let cell = tr.insertCell()
+        cell.textContent = `${str}`
+        cell = tr.insertCell()
+        cell.textContent = `${value}`
+    }
+    updateAbout() {
+        let table = document.createElement("table")
+        let metadata = document.querySelector('.about-metadata')
+        metadata.replaceChildren(table)
+        this.addTableRow(table, 'Engine', GS.fullData['engine'])
+        this.addTableRow(table, 'Model tag', GS.fullData['review']['model_tag'])
+        this.addTableRow(table, 'Mjai-reviewer version', GS.fullData['version'])
+        this.addTableRow(table, 'Game length', GS.fullData['game_length'])
+        this.addTableRow(table, 'Loading time', GS.fullData['loading_time'])
+        this.addTableRow(table, 'Review time', GS.fullData['review_time'])
+        this.addTableRow(table, 'Temperature', GS.fullData['review']['temperature'])
+        {
+            let m = GS.fullData['review']['total_matches']
+            let r = GS.fullData['review']['total_reviewed']
+            let p = (m/r*100).toFixed(1)
+            let s = `${m}/${r} = ${p}%`
+            this.addTableRow(table, 'Matches/total', s)
+        }
+        if (GS.fullData.review.rating) {
+            this.addTableRow(table, 'Rating', (GS.fullData.review.rating*100).toFixed(1))
+        }
+    }
     updateResultsTable() {
         let table = document.createElement("table")
         this.infoRoundTable.replaceChildren(table)
@@ -819,7 +848,7 @@ function incPlyCounter() {
     if (GS.ply_counter < GS.ge[GS.hand_counter].length-1) {
         GS.ply_counter++
     } else {
-        incHandCounter()
+        incRoundCounter()
     }
 }
 
@@ -827,12 +856,12 @@ function decPlyCounter() {
     if (GS.ply_counter > 0) {
         GS.ply_counter--
     } else {
-        decHandCounter()
+        incRoundCounter()
         GS.ply_counter = GS.ge[GS.hand_counter].length-1
     }
 }
 
-function incHandCounter() {
+function incRoundCounter() {
     GS.hand_counter++
     if (GS.hand_counter >= GS.ge.length) {
         GS.hand_counter = 0
@@ -840,7 +869,7 @@ function incHandCounter() {
     GS.ply_counter = 0
 }
 
-function decHandCounter() {
+function incRoundCounter() {
     GS.hand_counter--
     if (GS.hand_counter < 0) {
         GS.hand_counter = GS.ge.length-1
@@ -863,8 +892,8 @@ function showModalAndWait(modal) {
     })
 }
 function connectUI() {
-    const handInc = document.getElementById("hand-inc")
-    const handDec = document.getElementById("hand-dec")
+    const roundInc = document.getElementById("round-inc")
+    const roundDec = document.getElementById("round-dec")
     const prevMismatch = document.getElementById("prev-mismatch")
     const nextMismatch = document.getElementById("next-mismatch")
     const inc2 = document.getElementById("ply-inc2");
@@ -910,12 +939,12 @@ function connectUI() {
         } while (!stopCondition(true))
         updateState()
     });
-    handInc.addEventListener("click", () => {
-        incHandCounter();
+    roundInc.addEventListener("click", () => {
+        incRoundCounter();
         updateState()
     });
-    handDec.addEventListener("click", () => {
-        decHandCounter();
+    roundDec.addEventListener("click", () => {
+        incRoundCounter();
         updateState()
     });
     showHands.addEventListener("click", () => {
@@ -1096,6 +1125,7 @@ function setMortalJsonStr(data) {
     addRiichiDiscardEvals(data)
     addResult()
     GS.ui.updateResultsTable()
+    GS.ui.updateAbout()
 }
 
 // Soften using temperature GS.C_soft_T

@@ -316,7 +316,20 @@ button:hover {
 }
 .killer-call-img {
     margin: auto;
+    width:128px;
     margin-top: 20px;
+}
+.about-metadata table {
+    margin:auto;
+}
+.about-metadata table, th, td {
+    border-collapse:collapse;
+}
+.about-metadata td:first-child {
+    text-align: right;
+}
+.about-metadata td:nth-child(2) {
+    text-align: left;
 }
 
 @media screen and (max-width: 900px) {
