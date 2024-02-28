@@ -856,7 +856,7 @@ function decPlyCounter() {
     if (GS.ply_counter > 0) {
         GS.ply_counter--
     } else {
-        incRoundCounter()
+        decRoundCounter()
         GS.ply_counter = GS.ge[GS.hand_counter].length-1
     }
 }
@@ -869,7 +869,7 @@ function incRoundCounter() {
     GS.ply_counter = 0
 }
 
-function incRoundCounter() {
+function decRoundCounter() {
     GS.hand_counter--
     if (GS.hand_counter < 0) {
         GS.hand_counter = GS.ge.length-1
@@ -944,7 +944,7 @@ function connectUI() {
         updateState()
     });
     roundDec.addEventListener("click", () => {
-        incRoundCounter();
+        decRoundCounter();
         updateState()
     });
     showHands.addEventListener("click", () => {
