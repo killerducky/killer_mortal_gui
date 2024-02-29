@@ -196,7 +196,6 @@ class UI {
                     resultTypeStr = 'Nine Terminal Draw'
                 } else {
                     resultTypeStr = `Unknown result ${GS.gs.result}`
-                    throw new Error()
                 }
                 this.infoThisRoundTable.append(resultTypeStr)
                 if (GS.gs.result == '和了') {
@@ -304,7 +303,7 @@ class UI {
         }
         if (!mortalEval.is_equal) {
             let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/5 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
-            let textContent = (mortalEval.details[mortalEval.actual_index].normProb > .50) ? "Hmm..." : "Quack!"
+            let textContent = (mortalEval.details[mortalEval.actual_index].normProb > .50) ? "Hmm..." : "Clack!"
             svgElement.appendChild(createSvgText(xloc-GS.C_db_mortBarWidth/2, 60, textContent))
         }
     }
@@ -483,6 +482,8 @@ class UI {
         }
         if (GS.fullData.review.rating) {
             this.addTableRow(table, 'Rating', (GS.fullData.review.rating*100).toFixed(1))
+        } else {
+            console.log('Missing rating')
         }
     }
     updateResultsTable() {
@@ -1211,7 +1212,10 @@ function tmpTest() {
 function parseUrl() {
     const urlParams = new URLSearchParams(window.location.search)
     let dataParam = urlParams.get('data')
-    console.assert(dataParam)
+    if (!dataParam) {
+        alert("Invalid URL: data parameter not given")
+        return
+    }
     var xhr = new XMLHttpRequest();
     xhr.open('GET', `${dataParam}`, true);
     xhr.responseType = 'json';
@@ -1222,7 +1226,7 @@ function parseUrl() {
             updateState()
             connectUI()
         } else {
-            console.error('Error:', xhr.statusText);
+            alert(`Invalid URL: ${dataParam} ${xhr.statusText}`)
         }
     };
     xhr.send();
