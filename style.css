@@ -296,6 +296,10 @@ h1{
 .info-round-table tr:hover td {
     background:var(--color-hover);
 }
+.info-this-round-table > * {
+    margin: 2px;
+    text-wrap: nowrap;
+}
 .info-round-close {
     margin: 0.5rem;
 }

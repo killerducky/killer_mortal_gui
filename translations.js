@@ -1,3 +1,42 @@
+// Translators: Add to this structure
+const i18next_data = {
+    lng: 'en',
+    debug: true,
+    resources: {
+        en: {
+            translation: {
+                "round-dec": "&lt; Prev Round",
+                "round-inc": "Next Round &gt",
+                "prev-mismatch": "&lt; Prev Error",
+                "next-mismatch": "Next Error &gt;",
+                "ply-dec2": "&lt; Prev Choice",
+                "ply-inc2": "Next Choice &gt;",
+                "ply-dec": "&lt; Prev",
+                "ply-inc": "Next &gt;",
+                "show-hands": "Show hands",
+                "about": "About",
+            }
+        },
+        ko: {
+            translation: {
+                "round-dec": "&lt; 이전 라운드", // 라운드? 국? 
+                "round-inc": "다음 라운드 &gt",
+                "prev-mismatch": "&lt; 이전 실수",
+                "next-mismatch": "다음 실수 &gt;",
+                "ply-dec2": "&lt; 이전 선택",
+                "ply-inc2": "다음 선택 &gt;",
+                "ply-dec": "&lt; 이전",
+                "ply-inc": "다음 &gt;",
+                "show-hands": "손패 표시",
+                "about": "정보",
+            }
+        },
+    }
+}
+
+// Translators: Ignore below here. 
+// The long term plan is to remove everything below here and use the above section instead.
+
 // Taken from Tenhou English UI Chrome extension
 // https://chromewebstore.google.com/detail/tenhou-english-ui/cbomnmkpjmleifejmnjhfnfnpiileiin
 const exactTranslation = {

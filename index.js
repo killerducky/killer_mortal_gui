@@ -14,6 +14,7 @@ class GlobalState {
         this.heroPidx = null   // player index mortal reviewed
         this.showHands = false
         this.showMortal = true
+        this.uiConnected = false
 
         this.C_soft_T = 2
 
@@ -160,6 +161,11 @@ class UI {
         s = s.map(translate)
         return s.join(' ')
     }
+    createParaElem(text) {
+        let p = document.createElement("p")
+        p.append(text)
+        return p
+    }
     updateGridInfo() {
         this.clearDiscardBars()
         this.clearCallBars()
@@ -179,7 +185,7 @@ class UI {
             let resultTypeStr
             for (let idx=0; idx==0||idx<GS.gs.winner.length; idx++) {
                 if (idx>0) {
-                    this.infoThisRoundTable.append(document.createElement("br"))
+                    this.infoThisRoundTable.append(document.createElement("p"))
                 }
                 if (GS.gs.result == '和了') {
                     if (GS.gs.winner[0] == GS.gs.payer[0]) {
@@ -200,12 +206,10 @@ class UI {
                 } else {
                     resultTypeStr = `Unknown result ${GS.gs.result}`
                 }
-                this.infoThisRoundTable.append(resultTypeStr)
+                this.infoThisRoundTable.append(this.createParaElem(resultTypeStr))
                 if (GS.gs.result == '和了') {
-                    this.infoThisRoundTable.append(document.createElement("br"))
                     for (let yaku of GS.gs.yakuStrings[idx]) {
-                        this.infoThisRoundTable.append(this.parseYakuString(yaku))
-                        this.infoThisRoundTable.append(document.createElement("br"))
+                        this.infoThisRoundTable.append(this.createParaElem(this.parseYakuString(yaku)))
                     }
                 }
             }
@@ -795,7 +799,10 @@ function addResult() {
         }
         let result = currGeList.slice(-1)[0]
         for (let tmpPly=0; tmpPly<currGeList.length; tmpPly++) {
-            if (currGeList[tmpPly].type == "reach_accepted") {
+            let fourRiichiDraw = sum(gs.thisRoundSticks) == 3 && currGeList[tmpPly].type == "ryukyoku" && currGeList[tmpPly-2].type == 'reach'
+            if (fourRiichiDraw) {
+                gs.thisRoundSticks[currGeList[tmpPly-2].actor]++
+            } else if (currGeList[tmpPly].type == "reach_accepted") {
                 gs.thisRoundSticks[currGeList[tmpPly].actor]++
             }
         }
@@ -895,17 +902,26 @@ function showModalAndWait(modal) {
         }
     })
 }
+function i18nElem(key) {
+    const elem = document.getElementById(key)
+    elem.innerHTML = i18next.t(key)
+    return elem
+}
 function connectUI() {
-    const roundInc = document.getElementById("round-inc")
-    const roundDec = document.getElementById("round-dec")
-    const prevMismatch = document.getElementById("prev-mismatch")
-    const nextMismatch = document.getElementById("next-mismatch")
-    const inc2 = document.getElementById("ply-inc2");
-    const dec2 = document.getElementById("ply-dec2");
-    const inc = document.getElementById("ply-inc");
-    const dec = document.getElementById("ply-dec");
-    const showHands =  document.getElementById("show-hands")
-    const about =  document.getElementById("about")
+    const roundInc = i18nElem("round-inc")
+    const roundDec = i18nElem("round-dec")
+    const prevMismatch = i18nElem("prev-mismatch")
+    const nextMismatch = i18nElem("next-mismatch")
+    const inc2 = i18nElem("ply-inc2");
+    const dec2 = i18nElem("ply-dec2");
+    const inc = i18nElem("ply-inc");
+    const dec = i18nElem("ply-dec");
+    const showHands =  i18nElem("show-hands")
+    const about =  i18nElem("about")
+    if (GS.uiConnected) {
+        return
+    }
+    GS.uiConnected = true
     const aboutModal =  document.getElementById("about-modal")
     const infoRound = document.querySelector('.info-round')
     const infoRoundModal = document.querySelector('.info-round-modal')
@@ -1237,7 +1253,7 @@ function parseUrl() {
 
 const GS = new GlobalState
 function main() {
-    parseUrl(true)
+    i18next.init(i18next_data).then(parseUrl(true))
 }
 main()
 
