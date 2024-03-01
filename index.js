@@ -64,7 +64,6 @@ class GameState {
             this.hands.push(Array.from(log[logIdx++]))
             this.draws.push(log[logIdx++])
             this.discards.push(log[logIdx++])
-            this.hands[pnum].sort(tileSort)
         }
         this.resultArray = log[logIdx++]
         this.result = this.resultArray[0]
@@ -194,6 +193,10 @@ class UI {
                     resultTypeStr = "Nagashi Mangan" // TODO test
                 } else if (GS.gs.result == '九種九牌') {
                     resultTypeStr = 'Nine Terminal Draw'
+                } else if (GS.gs.result == '四家立直') {
+                    resultTypeStr = "Draw: Quadruple riichi"
+                } else if (GS.gs.result == '三家和了') {
+                    resultTypeStr = "Draw: Triple Ron"
                 } else {
                     resultTypeStr = `Unknown result ${GS.gs.result}`
                 }
@@ -717,7 +720,6 @@ function updateState() {
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
         } else if (event.type == 'kakan') {
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
-            GS.gs.hands[event.actor].sort(tileSort)
             GS.gs.drawnTile[event.actor] = null
             removeFromArray(GS.gs.hands[event.actor], event.pai)
             let rotatedIdx = null
@@ -734,7 +736,6 @@ function updateState() {
             GS.gs.calls[event.actor].splice(rotatedIdx+1, 0, event.pai, 'rotate', 'float')
         } else if (event.type == 'ankan') {
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
-            GS.gs.hands[event.actor].sort(tileSort)
             GS.gs.drawnTile[event.actor] = null
             let newCall = []
             for (let i=0; i<event.consumed.length; i++) {
@@ -754,7 +755,6 @@ function updateState() {
             // for calls there will not be a drawnTile
             if (GS.gs.drawnTile[event.actor]) {
                 GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
-                GS.gs.hands[event.actor].sort(tileSort)
                 GS.gs.drawnTile[event.actor] = null
             }
             let tile = new Tile(event.pai)
@@ -775,6 +775,9 @@ function updateState() {
             console.log(event)
             throw new Error('unknown type')
         }
+    }
+    for (const hand of GS.gs.hands) {
+        hand.sort(tileSort)
     }
     GS.ui.reset()
     GS.ui.updateHandInfo()
