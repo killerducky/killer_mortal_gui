@@ -155,7 +155,8 @@ class UI {
     }
     relativeToHeroStr(pidx) {
         let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
-        return ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
+        let key = ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
+        return i18next.t(`position-rel.${key}`)
     }
     parseYakuString(yaku) {
         let s = yaku.split(/([\(\)])|([0-9:]+)/)
@@ -190,26 +191,16 @@ class UI {
             let resultTypeStr
             for (let idx=0; idx==0||idx<GS.gs.winner.length; idx++) {
                 if (idx>0) {
-                    this.infoThisRoundTable.append(document.createElement("p"))
+                    this.infoThisRoundTable.append(document.createElement("br"))
                 }
                 if (GS.gs.result == '和了') {
                     if (GS.gs.winner[0] == GS.gs.payer[0]) {
-                        resultTypeStr = `Tsumo by ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                        resultTypeStr = `${i18next.t('Tsumo')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
                     } else {
-                        resultTypeStr = `Ron by ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                        resultTypeStr = `${i18next.t('Ron')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
                     }
-                } else if (GS.gs.result == '流局') {
-                    resultTypeStr = "Draw"
-                } else if (GS.gs.result == '流し満貫') {
-                    resultTypeStr = "Nagashi Mangan" // TODO test
-                } else if (GS.gs.result == '九種九牌') {
-                    resultTypeStr = 'Nine Terminal Draw'
-                } else if (GS.gs.result == '四家立直') {
-                    resultTypeStr = "Draw: Quadruple riichi"
-                } else if (GS.gs.result == '三家和了') {
-                    resultTypeStr = "Draw: Triple Ron"
                 } else {
-                    resultTypeStr = `Unknown result ${GS.gs.result}`
+                    resultTypeStr = i18next.t(GS.gs.result)
                 }
                 this.infoThisRoundTable.append(this.createParaElem(resultTypeStr))
                 if (GS.gs.result == '和了') {
@@ -492,11 +483,7 @@ class UI {
             let s = `${m}/${r} = ${p}%`
             this.addTableRow(table, 'Matches/total', s)
         }
-        if (GS.fullData.review.rating) {
-            this.addTableRow(table, 'Rating', (GS.fullData.review.rating*100).toFixed(1))
-        } else {
-            console.log('Missing rating')
-        }
+        this.addTableRow(table, 'Rating', (GS.fullData.review.rating*100).toFixed(1))
     }
     updateResultsTable() {
         let table = document.createElement("table")
@@ -504,7 +491,7 @@ class UI {
         let hand_counter = 0
         let tr = table.insertRow()
         let cell = tr.insertCell()
-        cell.textContent = 'Round'
+        cell.textContent = i18next.t('Round')
         for (let i=0; i<2; i++) {
             for (let pidx=0; pidx<4+1; pidx++) {
                 cell = tr.insertCell()
@@ -546,7 +533,7 @@ class UI {
         }
         tr = table.insertRow()
         cell = tr.insertCell()
-        cell.textContent = "Final"
+        cell.textContent = i18next.t("Final")
         let lastResult = GS.ge.slice(-1)[0].slice(-1)[0]
         for (let pidx=0; pidx<4+1; pidx++) {
             let finalScore = lastResult.scoreChangesPlusSticks[pidx]
@@ -923,12 +910,13 @@ function connectUI() {
     const dec2 = i18nElem("ply-dec2")
     const inc = i18nElem("ply-inc")
     const dec = i18nElem("ply-dec")
-    const optionsLabel = i18nElem("options-label")
+    const options = i18nElem("options")
     const toggleShowHands =  i18nElem("toggle-hands")
     const toggleMortalAdvice = i18nElem("toggle-mortal-advice")
     const about =  i18nElem("about")
     const aboutBody = document.getElementById("about-body")
     const langLabel = i18nElem("langLabel")
+    const optionsLabel = i18nElem("options-label")
     aboutBody.appendChild(document.createElement("ul"))
     let aboutBodyList = i18next.t("about-body", {returnObjects:true})
     for (let i=2; i<aboutBodyList.length; i++) {
@@ -964,6 +952,7 @@ function connectUI() {
             return
         }
         i18next.changeLanguage(langSelect.value)
+        localStorage.setItem("lang", langSelect.value)
         connectUI()
         updateState
     })
@@ -1303,6 +1292,8 @@ function parseUrl() {
 
 const GS = new GlobalState
 function main() {
+    const lang = localStorage.getItem("lang") || "en"
+    i18next_data.lng = lang
     i18next.init(i18next_data).then(parseUrl(true))
 }
 main()

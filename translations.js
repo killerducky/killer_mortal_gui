@@ -1,6 +1,5 @@
 // Translators: Add to this structure
 const i18next_data = {
-    lng: 'en',
     debug: true,
     resources: {
         en: {
@@ -16,6 +15,7 @@ const i18next_data = {
                 "toggle-hands": "Toggle show hands",
                 "toggle-mortal-advice": "Toggle Mortal advice",
                 "options-label": "Options",
+                "options": "Options",
                 "langLabel": "Language",
                 "about": "About",
                 "about-body": [
@@ -28,7 +28,25 @@ const i18next_data = {
                     "Click on discard bars to toggle spoiler-free WWYD mode",
                     "Click on round indiator to show score table",
                     "Click on a row in the table to skip to that round",
-                ]
+                ],
+                "position-rel": {
+                    "Hero" : "Hero",
+                    "Shimo" : "Shimo",
+                    "Toimen" : "Toimen",
+                    "Kami" : "Kami",
+                    "Pot" : "Pot",
+                },
+                // Results
+                "Final"   : "Final", // Final score in score table
+                "Round"   : "Round",
+                "Ron"     : "Ron",
+                "Tsumo"   : "Tsumo",
+                "by"      : "by", // e.g. Ron by Kami
+                "流局"    : "Draw",
+                "流し満貫" : "Nagashi Mangan",
+                "九種九牌" : 'Nine Terminal Draw',
+                "四家立直" : "Draw: Quadruple riichi",
+                "三家和了" : "Draw: Triple Ron",
             }
         },
         ko: {
@@ -41,8 +59,41 @@ const i18next_data = {
                 "ply-inc2": "다음 선택 &gt;",
                 "ply-dec": "&lt; 이전",
                 "ply-inc": "다음 &gt;",
-                "show-hands": "손패 표시",
+                "toggle-hands": "손패 표시",
+                "toggle-mortal-advice": "Toggle Mortal advice",
+                "options-label": "선택",
+                "options": "선택",
+                "langLabel": "언어",
                 "about": "정보",
+                "about-body": [
+                    "Report issues with GUI on the ",
+                    "Github project",
+                    "Mortal's opinions shown with green bars",
+                    "Top choice always 100% height",
+                    "Others relative to the top choice",
+                    "User's choice shown with a yellow bar",
+                    "Click on discard bars to toggle spoiler-free WWYD mode",
+                    "Click on round indiator to show score table",
+                    "Click on a row in the table to skip to that round",
+                ],
+                "position-rel": {
+                    "Hero" : "Hero",
+                    "Shimo" : "Shimo",
+                    "Toimen" : "Toimen",
+                    "Kami" : "Kami",
+                    "Pot" : "Pot",
+                },
+                // Results
+                "Final"   : "Final", // Final score in score table
+                "Round"   : "Round",
+                "Ron"     : "Ron",
+                "Tsumo"   : "Tsumo",
+                "by"      : "by", // e.g. Ron by Kami
+                "流局"    : "Draw",
+                "流し満貫" : "Nagashi Mangan",
+                "九種九牌" : 'Nine Terminal Draw',
+                "四家立直" : "Draw: Quadruple riichi",
+                "三家和了" : "Draw: Triple Ron",
             }
         },
     }
