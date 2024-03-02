@@ -13,8 +13,22 @@ const i18next_data = {
                 "ply-inc2": "Next Choice &gt;",
                 "ply-dec": "&lt; Prev",
                 "ply-inc": "Next &gt;",
-                "show-hands": "Show hands",
+                "toggle-hands": "Toggle show hands",
+                "toggle-mortal-advice": "Toggle Mortal advice",
+                "options-label": "Options",
+                "langLabel": "Language",
                 "about": "About",
+                "about-body": [
+                    "Report issues with GUI on the ",
+                    "Github project",
+                    "Mortal's opinions shown with green bars",
+                    "Top choice always 100% height",
+                    "Others relative to the top choice",
+                    "User's choice shown with a yellow bar",
+                    "Click on discard bars to toggle spoiler-free WWYD mode",
+                    "Click on round indiator to show score table",
+                    "Click on a row in the table to skip to that round",
+                ]
             }
         },
         ko: {

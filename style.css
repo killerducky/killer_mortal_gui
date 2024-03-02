@@ -23,7 +23,7 @@
 .medium-win  { background: hsl(120, 60%, 16%); } */
 .medium-loss { background: hsl(60, 60%, 16%); }
 .big-loss    { background: hsl(30, 60%, 16%); }
-body, .info-round-modal, .close, .info-this-round-modal, #about-modal {
+body, .modal {
     font-family: sans-serif;
     max-width: var(--max-width);
     margin: auto;
@@ -31,14 +31,26 @@ body, .info-round-modal, .close, .info-this-round-modal, #about-modal {
     line-height: 1.5;
     background: var(--color-main);
 }
-.info-round-close {
+.options-div {
+    display:grid;
+    gap:10px;
+}
+.options-div > * {
+    padding:10px;
+}
+.close {
     background: var(--color-accent2);
 }
 a {
     color: var(--color-text);
 }
-#about-modal {
+.modal, button, select, option {
     background: var(--color-accent2);
+    color: var(--color-text);
+}
+select, option {
+    padding:5px;
+    font-size: 15px;
 }
 h1{
     background: var(--color-accent);
@@ -269,10 +281,9 @@ h1{
     border-color:black;
     border-width:2px;
 }
-.info-round-modal::backdrop, .info-this-round-modal::backdrop, #about-modal::backdrop {
+.modal::backdrop {
     background: rgb(0 0 0 / .3);
 }
-/*.info-round-modal {}   TODO maybe change border? */
 .info-this-round-modal {
     background: var(--color-accent);
     border-color: var(--color-accent2);
@@ -303,11 +314,10 @@ h1{
 .info-round-close {
     margin: 0.5rem;
 }
-
 .controls > *:hover {
     background:var(--color-hover);
 }
-button:hover {
+button:hover, select:hover {
     background:var(--color-hover);
 }
 .killer-call-div {
@@ -325,6 +335,7 @@ button:hover {
 }
 .about-metadata table {
     margin:auto;
+    margin-top:20px;
 }
 .about-metadata table, th, td {
     border-collapse:collapse;

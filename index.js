@@ -908,25 +908,59 @@ function i18nElem(key) {
     return elem
 }
 function connectUI() {
+    // first part might run more than once when people change language
     const roundInc = i18nElem("round-inc")
     const roundDec = i18nElem("round-dec")
     const prevMismatch = i18nElem("prev-mismatch")
     const nextMismatch = i18nElem("next-mismatch")
-    const inc2 = i18nElem("ply-inc2");
-    const dec2 = i18nElem("ply-dec2");
-    const inc = i18nElem("ply-inc");
-    const dec = i18nElem("ply-dec");
-    const showHands =  i18nElem("show-hands")
+    const inc2 = i18nElem("ply-inc2")
+    const dec2 = i18nElem("ply-dec2")
+    const inc = i18nElem("ply-inc")
+    const dec = i18nElem("ply-dec")
+    const optionsLabel = i18nElem("options-label")
+    const toggleShowHands =  i18nElem("toggle-hands")
+    const toggleMortalAdvice = i18nElem("toggle-mortal-advice")
     const about =  i18nElem("about")
+    const aboutBody = document.getElementById("about-body")
+    const langLabel = i18nElem("langLabel")
+    aboutBody.appendChild(document.createElement("ul"))
+    let aboutBodyList = i18next.t("about-body", {returnObjects:true})
+    for (let i=2; i<aboutBodyList.length; i++) {
+        let ul = document.createElement("li")
+        ul.appendChild(document.createTextNode(aboutBodyList[i]))
+        aboutBody.appendChild(ul)
+    }
+    let ul = document.createElement("li")
+    let aElem = document.createElement("a")
+    aElem.setAttribute("href", "https://github.com/killerducky/killer_mortal_gui")
+    aElem.setAttribute("target", "_blank")
+    const textNode = document.createTextNode(aboutBodyList[0])
+    ul.appendChild(textNode)
+    aElem.appendChild(document.createTextNode(aboutBodyList[1]))
+    ul.appendChild(aElem)
+    aboutBody.appendChild(ul)
+
+    // only run the rest once ever
     if (GS.uiConnected) {
         return
     }
     GS.uiConnected = true
+    const optionsModal = document.getElementById("options-modal")
+    const closeOptionsModal = document.querySelector(".options-close")
     const aboutModal =  document.getElementById("about-modal")
     const infoRound = document.querySelector('.info-round')
     const infoRoundModal = document.querySelector('.info-round-modal')
     const closeModal = document.querySelector('.info-round-close')
     const closeAboutModal = document.querySelector('.about-close')
+    const langSelect = document.getElementById("langSelect")
+    langSelect.addEventListener("click", () => {
+        if (i18next.language == langSelect.value) {
+            return
+        }
+        i18next.changeLanguage(langSelect.value)
+        connectUI()
+        updateState
+    })
     inc.addEventListener("click", () => {
         incPlyCounter();
         updateState()
@@ -967,8 +1001,15 @@ function connectUI() {
         decRoundCounter();
         updateState()
     });
-    showHands.addEventListener("click", () => {
+    options.addEventListener('click', () => {
+        showModalAndWait(optionsModal)
+    })
+    toggleShowHands.addEventListener("click", () => {
         GS.showHands = !GS.showHands
+        updateState()
+    })
+    toggleMortalAdvice.addEventListener("click", () => {
+        GS.showMortal = !GS.showMortal
         updateState()
     })
     about.addEventListener("click", () => {
@@ -982,6 +1023,9 @@ function connectUI() {
     })
     closeAboutModal.addEventListener("click", () => {
         aboutModal.close()
+    })
+    closeOptionsModal.addEventListener("click", () => {
+        optionsModal.close()
     })
     for (let pidx=1; pidx<4; pidx++) {
         document.querySelector(`.grid-hand-p${pidx}`).addEventListener("click", () => {

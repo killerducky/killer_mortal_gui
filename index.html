@@ -26,13 +26,13 @@
                 <span class="grid-discard pov-p1 grid-discard-p1"></span>
                 <div class="grid-info">
                     <button class="info-round"></button>
-                    <dialog class="info-round-modal">
+                    <dialog class="modal info-round-modal">
                         <div>Score table
                         <button class="close info-round-close" style="float:right">&times</button>
                         </div>
                         <div class="info-round-table"></div>
                     </dialog>
-                    <dialog class="info-this-round-modal">
+                    <dialog class="modal info-this-round-modal">
                         <button class="close info-this-round-close" style="float:right">&times</button>
                         <div class="info-this-round-table"></div>
                     </dialog>
@@ -55,26 +55,8 @@
                 <button id="ply-inc2">Next Choice &gt;</button>
                 <button id="ply-dec">&lt; Prev</button>
                 <button id="ply-inc">Next &gt;</button>
-                <button id="show-hands">Show hands</button>
+                <button id="options">Options</button>
                 <button id="about">About</button>
-                <dialog id="about-modal">
-                    <div> <!-- Container just to capture clicks -->
-                    <button class="close about-close" style="float:right">&times</button>
-                    <ul>
-                        <li>Mortal's opinions shown with green bars</li>
-                        <li>Top choice always 100% height</li>
-                        <li>Others relative to the top choice</li>
-                        <li>User's choice shown with a yellow bar</li>
-                        <li>Click on discard bars to toggle spoiler-free WWYD mode</li>
-                        <li>Click on round indiator to show score table</li>
-                        <ul>
-                            <li>Click on a row in the table to skip to that round</li>
-                        </ul>
-                        <li>Report issues with GUI on the <a href="https://github.com/killerducky/killer_mortal_gui" target="_blank">Github project</a></li>
-                    </ul>
-                    <div class="about-metadata"></div>
-                    </div>
-                </dialog>
             </div>
             <div class="killer-call-div">
                 <div class="killer-call-bars"></div>
@@ -82,6 +64,29 @@
             </div>
         </div>
     </main>
+    <dialog id="about-modal" class="modal">
+        <div> <!-- Container just to capture clicks -->
+        <button class="close about-close" style="float:right">&times</button>
+        <div id="about-body"></div>
+        <div class="about-metadata"></div>
+        </div>
+    </dialog>
+    <dialog id="options-modal" class="modal">
+        <div class="options-div">
+            <div class="options-header">
+                <span id="options-label"></span><button class="close options-close" style="float:right">&times</button>
+            </div>
+            <button id="toggle-hands"></button>
+            <button id="toggle-mortal-advice"></button>
+            <div>
+                <label for="lang" id="langLabel">test</label>
+                <select id="langSelect" name="lang">
+                    <option value="en">English</option>
+                    <option value="ko">한국어</option>
+                </select>
+            </div>
+        </div>
+    </dialog>
     <script src="https://unpkg.com/i18next@23.10.0/dist/umd/i18next.min.js"></script>
     <script src="translations.js"></script>
     <script src="index.js"></script>
