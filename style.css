@@ -189,7 +189,7 @@ h1{
     grid-template-areas:
       "ai-p3 ai-p2 ai-p2   ai-p2 ai-p2"
       "ai-p3 .    ai-round   .     ai-p1"
-      "ai-p3 .    ai-sticks  .     ai-p1"
+      "ai-p3 .    ai-tiles   .     ai-p1"
       "ai-p3 .    ai-doras   .     ai-p1"
       "ai-p0 ai-p0 ai-p0   ai-p0 ai-p1";
     background: var(--color-accent);
@@ -197,8 +197,9 @@ h1{
 .info-round {
     grid-area: ai-round;
 }
-.info-sticks {
-    grid-area: ai-sticks;
+.info-tiles-left {
+    grid-area: ai-tiles;
+    margin:auto;
 }
 .info-doras {
     grid-area: ai-doras;

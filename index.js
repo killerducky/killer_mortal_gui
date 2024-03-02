@@ -54,6 +54,7 @@ class GameState {
         this.prevRoundSticks = this.rawRound[2]
         this.thisRoundSticks = [0,0,0,0]
         this.thisRoundExtraDoras = 0
+        this.tilesLeft = 70
         this.scores = log[logIdx++]
         this.dora = log[logIdx++]
         this.uradora = log[logIdx++]
@@ -100,7 +101,7 @@ class UI {
         this.pInfoResult = [[],[],[],[]]
         this.gridInfo = document.querySelector('.grid-info')
         this.round = document.querySelector('.info-round')
-        this.prevRoundSticks = document.querySelector('.info-sticks')
+        this.tilesLeft = document.querySelector('.info-tiles-left')
         this.doras = document.querySelector('.info-doras')
         this.aboutModal = document.querySelector('.about-modal')
         this.infoRoundModal = document.querySelector('.info-round-modal')
@@ -133,8 +134,8 @@ class UI {
     }
     reset() {
         this.round.replaceChildren(this.roundStr(true))
-        this.prevRoundSticks.replaceChildren()
         this.doras.replaceChildren()
+        this.tilesLeft.replaceChildren()
         for (let pidx=0; pidx<4; pidx++) {
             this.discards[pidx].replaceChildren()
             let seatWind = (4 + pidx - GS.gs.roundNum) % 4
@@ -172,6 +173,10 @@ class UI {
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
         this.updateDiscardBars()
         this.updateCallBars()
+        this.tilesLeft.append(`x${GS.gs.tilesLeft}`)
+        if (event.mortalEval && event.mortalEval.tiles_left != GS.gs.tilesLeft) {
+            console.log('tiles left mismatch:', event.mortalEval.tiles_left, GS.gs.tilesLeft)
+        }
         for (let i=0; i<5; i++) {
             if (GS.gs.dora[i] == null || i > GS.gs.thisRoundExtraDoras) {
                 this.doras.append(createTile('back'))
@@ -686,6 +691,7 @@ function updateState() {
         }
         if (event.type == 'tsumo') {
             GS.gs.drawnTile[event.actor] = event.pai
+            GS.gs.tilesLeft--
         } else if (event.type == 'chi' || event.type == 'pon') {
             let dp = GS.gs.discardPond[event.target]
             dp[dp.length-1].called = true
