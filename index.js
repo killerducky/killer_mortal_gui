@@ -947,6 +947,7 @@ function connectUI() {
     const closeModal = document.querySelector('.info-round-close')
     const closeAboutModal = document.querySelector('.about-close')
     const langSelect = document.getElementById("langSelect")
+    langSelect.value = i18next.language
     langSelect.addEventListener("click", () => {
         if (i18next.language == langSelect.value) {
             return
