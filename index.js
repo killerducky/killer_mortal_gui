@@ -15,6 +15,9 @@ class GlobalState {
         this.showHands = false
         this.showMortal = true
 
+        this.C_badMoveUpperLimit = 5
+        this.C_badMoveUpperCustom = 10
+
         this.C_soft_T = 2
 
         this.C_db_height = 60
@@ -462,6 +465,29 @@ class UI {
         cell = tr.insertCell()
         cell.textContent = `${value}`
     }
+    calculateBadMoves(badMoveUpperLimit = 5, badMoveUpperCustom = 10) {
+        let badMoveNum = 0
+        let badMoveCustom = 0
+
+        for (const currGeList of GS.ge) {
+            for (const currentEvent of currGeList) {
+                const mortalEval = currentEvent.mortalEval
+                const mismatch = mortalEval && !mortalEval.is_equal
+
+                if (mismatch) {
+                    if (mortalEval.details[mortalEval.actual_index].prob * 100 <= parseFloat(badMoveUpperLimit)) {
+                        badMoveNum++
+                    }
+
+                    if (mortalEval.details[mortalEval.actual_index].prob * 100 <= parseFloat(badMoveUpperCustom)) {
+                        badMoveCustom++
+                    }
+                }
+            }
+        }
+
+        return [badMoveNum, badMoveCustom]
+    }
     updateAbout() {
         let table = document.createElement("table")
         let metadata = document.querySelector('.about-metadata')
@@ -479,6 +505,16 @@ class UI {
             let p = (m/r*100).toFixed(1)
             let s = `${m}/${r} = ${p}%`
             this.addTableRow(table, 'Matches/total', s)
+        }
+        {
+            const totalReviewedNum = GS.fullData.review.total_reviewed
+            const [badMoveNum, badMoveCustom] = this.calculateBadMoves(GS.C_badMoveUpperLimit, GS.C_badMoveUpperCustom)
+            const badMoveNumRate = (badMoveNum / totalReviewedNum * 100).toFixed(1)
+            const badMoveNumStr = `${badMoveNum}/${totalReviewedNum} = ${badMoveNumRate}%`
+            const badMoveCustomRate = (badMoveCustom / totalReviewedNum * 100).toFixed(1)
+            const badMoveCustomStr = `${badMoveCustom}/${totalReviewedNum} = ${badMoveCustomRate}%`
+            this.addTableRow(table, `${GS.C_badMoveUpperLimit}% moves/total`, badMoveNumStr)
+            this.addTableRow(table, `${GS.C_badMoveUpperCustom}% moves/total`, badMoveCustomStr)
         }
         if (GS.fullData.review.rating) {
             this.addTableRow(table, 'Rating', (GS.fullData.review.rating*100).toFixed(1))
