@@ -35,6 +35,7 @@ class GlobalState {
         this.C_colorText = getComputedStyle(document.documentElement).getPropertyValue('--color-text')
         this.C_colorBarMortal = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-mortal')
         this.C_colorBarHero = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-hero')
+        this.C_colorBarHeroMismatch = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-hero-mismatch')
         this.C_colorTsumogiri = getComputedStyle(document.documentElement).getPropertyValue('--color-tsumogiri')
         this.C_colorTileBg = getComputedStyle(document.documentElement).getPropertyValue('--color-tile-bg')
 
@@ -273,8 +274,10 @@ class UI {
             }
             let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/2 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
             if (mortalEval.actual_index == idx) {
+                const mismatch = mortalEval && !mortalEval.is_equal
+                const fillColor = mismatch ? GS.C_colorBarHeroMismatch : GS.C_colorBarHero
                 svgElement.appendChild(createRect(
-                    xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, GS.C_colorBarHero
+                    xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, fillColor
                 ))
             }
             svgElement.appendChild(createRect(
@@ -341,8 +344,10 @@ class UI {
             let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+0.5
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (matchingDetailIdx == mortalEval.actual_index) {
+                const mismatch = mortalEval && !mortalEval.is_equal
+                const fillColor = mismatch ? GS.C_colorBarHeroMismatch : GS.C_colorBarHero
                 svgElement.appendChild(createRect(
-                    xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
+                    xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, fillColor
                 ))
             }
             svgElement.appendChild(createRect(

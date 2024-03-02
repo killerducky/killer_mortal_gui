@@ -11,9 +11,10 @@
     --color-hover: rgba(0, 0, 0, 0.3);
     --color-text:    hsla(190, 0%, 100%, 0.70);
 
-    /* Analagous to main: -> green-yellow -> yellow */
+    /* Analagous to main: -> green-yellow -> yellow -> red */
     --color-bar-mortal: hsl(120, 70%, 34%);
     --color-bar-hero: hsl(70, 60%, 48%);
+    --color-bar-hero-mismatch: hsl(0, 50%, 62%);
     /* Discard background */
     --color-tsumogiri: hsl(30, 60%, 80%);
     --color-tile-bg: hsl(0, 0%, 93%);
