@@ -948,14 +948,14 @@ function connectUI() {
     const closeAboutModal = document.querySelector('.about-close')
     const langSelect = document.getElementById("langSelect")
     langSelect.value = i18next.language
-    langSelect.addEventListener("click", () => {
+    langSelect.addEventListener("change", () => {
         if (i18next.language == langSelect.value) {
             return
         }
         i18next.changeLanguage(langSelect.value)
         localStorage.setItem("lang", langSelect.value)
         connectUI()
-        updateState
+        updateState()
     })
     inc.addEventListener("click", () => {
         incPlyCounter();
