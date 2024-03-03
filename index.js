@@ -555,6 +555,14 @@ function createRect(x, width, totHeight, fillRatio, fill) {
     rect.setAttribute("width", width)
     rect.setAttribute("height", totHeight*fillRatio)
     rect.setAttribute("fill", fill)
+
+    if (fill === GS.C_colorBarMortal) {
+        const tooltip = document.createElementNS("http://www.w3.org/2000/svg", "title")
+        const Pval = (fillRatio * 100 / GS.C_cb_mortBarHeightRatio).toFixed(0)
+        tooltip.textContent = Pval
+        rect.appendChild(tooltip)
+    }
+
     return rect
 }
 function createSvgText(x, y, text) {
