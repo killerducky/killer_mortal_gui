@@ -915,6 +915,9 @@ function connectUI() {
     const toggleMortalAdvice = i18nElem("toggle-mortal-advice")
     const about =  i18nElem("about")
     const aboutBody = document.getElementById("about-body")
+    // connectUI can be called multiple times via i18n change,
+    // so we empty the aboutBody here.
+    aboutBody.innerHTML = ""
     const langLabel = i18nElem("langLabel")
     const optionsLabel = i18nElem("options-label")
     aboutBody.appendChild(document.createElement("ul"))
