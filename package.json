@@ -1,0 +1,30 @@
+{
+  "name": "killer_mortal_gui",
+  "version": "0.1.0",
+  "description": "Killer Mortal Reviewer is a GUI frontend to the Mortal AI engine.",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run dev",
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/killerducky/killer_mortal_gui"
+  },
+  "keywords": [
+    "Mahjong",
+    "AI",
+    "GUI",
+    "Mortal"
+  ],
+  "author": "killerducky",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/killerducky/killer_mortal_gui/issues"
+  },
+  "homepage": "https://github.com/killerducky/killer_mortal_gui#readme",
+  "devDependencies": {
+    "vite": "^5.1.4"
+  }
+}

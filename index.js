@@ -247,7 +247,7 @@ class UI {
         backgroundRect.setAttribute("height", "26")
         backgroundRect.setAttribute("fill", GS.C_colorTileBg)
         const tileSvg = document.createElementNS("http://www.w3.org/2000/svg", "image")
-        tileSvg.setAttribute('href', `media/Regular_shortnames/${tenhou2str(tile)}.svg`)
+        tileSvg.setAttribute('href', `${import.meta.env.BASE_URL}Regular_shortnames/${tenhou2str(tile)}.svg`)
         tileSvg.setAttribute("x", x)
         tileSvg.setAttribute("y", y)
         tileSvg.style.background = GS.C_colorTileBg
@@ -824,7 +824,7 @@ function createTile(tileStr) {
     const tileImg = document.createElement('img')
     tileDiv.append(tileImg)
     tileDiv.classList.add('tileDiv')
-    tileImg.src = `media/Regular_shortnames/${tileStr}.svg`
+    tileImg.src = `${import.meta.env.BASE_URL}Regular_shortnames/${tileStr}.svg`
     tileImg.classList.add('tileImg')
     return tileDiv
 }
@@ -1291,11 +1291,25 @@ function parseUrl() {
     xhr.send();
 }
 
+async function runE2eTest() {
+    const response = await fetch('/e2e/report.json')
+    const data = await response.json()
+    setMortalJsonStr(data)
+    updateState()
+    connectUI()
+}
+
 const GS = new GlobalState
 function main() {
     const lang = localStorage.getItem("lang") || "en"
     i18next_data.lng = lang
-    i18next.init(i18next_data).then(parseUrl(true))
+    i18next.init(i18next_data).then(() => {
+        if (import.meta.env.MODE === 'development') {
+            runE2eTest()
+        } else {
+            parseUrl(true)
+        }
+    })
 }
 main()
 
