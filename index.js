@@ -930,7 +930,7 @@ function connectUI() {
     aboutBody.innerHTML = ""
     const langLabel = i18nElem("langLabel")
     const optionsLabel = i18nElem("options-label")
-    aboutBody.appendChild(document.createElement("ul"))
+    aboutBody.replaceChildren(document.createElement("ul"))
     let aboutBodyList = i18next.t("about-body", {returnObjects:true})
     for (let i=2; i<aboutBodyList.length; i++) {
         let ul = document.createElement("li")
@@ -1088,11 +1088,6 @@ function mergeMortalEvals(data) {
             }
             let heroRiichiDiscard = event.actor == GS.heroPidx && event.type == 'reach' && mortalEval.junme == currReviewKyoku.entries[reviewIdx-1].junme
             if (event.actor == mortalEval.last_actor && (event.pai == mortalEval.tile || heroRiichiDiscard)) {
-                if (event.actor != GS.heroPidx && event.type!='dahai') {
-                    console.log('check this merge: could be robbing a kan?')
-                    console.log(event)
-                    console.log(mortalEval)
-                }
                 event.mortalEval = mortalEval
                 reviewIdx++
             }
