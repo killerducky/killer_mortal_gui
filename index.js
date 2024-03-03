@@ -194,11 +194,21 @@ class UI {
                     this.infoThisRoundTable.append(document.createElement("br"))
                 }
                 if (GS.gs.result == '和了') {
-                    if (GS.gs.winner[0] == GS.gs.payer[0]) {
-                        resultTypeStr = `${i18next.t('Tsumo')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                    const lang = localStorage.getItem("lang") || "en"
+                    if (lang === "ko") {
+                        if (GS.gs.winner[0] === GS.gs.payer[0]) {
+                            resultTypeStr = `${this.relativeToHeroStr(GS.gs.winner[idx])}${i18next.t('by')} ${i18next.t('Tsumo')}`
+                        } else {
+                            resultTypeStr = `${this.relativeToHeroStr(GS.gs.winner[idx])}${i18next.t('by')} ${i18next.t('Ron')}`
+                        }
                     } else {
-                        resultTypeStr = `${i18next.t('Ron')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                        if (GS.gs.winner[0] === GS.gs.payer[0]) {
+                            resultTypeStr = `${i18next.t('Tsumo')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                        } else {
+                            resultTypeStr = `${i18next.t('Ron')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                        }
                     }
+
                 } else {
                     resultTypeStr = i18next.t(GS.gs.result)
                 }
@@ -917,7 +927,7 @@ function connectUI() {
     const aboutBody = document.getElementById("about-body")
     const langLabel = i18nElem("langLabel")
     const optionsLabel = i18nElem("options-label")
-    aboutBody.appendChild(document.createElement("ul"))
+    aboutBody.replaceChildren(document.createElement("ul"))
     let aboutBodyList = i18next.t("about-body", {returnObjects:true})
     for (let i=2; i<aboutBodyList.length; i++) {
         let ul = document.createElement("li")
@@ -928,10 +938,19 @@ function connectUI() {
     let aElem = document.createElement("a")
     aElem.setAttribute("href", "https://github.com/killerducky/killer_mortal_gui")
     aElem.setAttribute("target", "_blank")
+
     const textNode = document.createTextNode(aboutBodyList[0])
-    ul.appendChild(textNode)
     aElem.appendChild(document.createTextNode(aboutBodyList[1]))
-    ul.appendChild(aElem)
+
+    const lang = localStorage.getItem("lang") || "en"
+    if (lang === "ko") {
+       ul.appendChild(aElem)
+       ul.appendChild(textNode)
+    } else {
+       ul.appendChild(textNode)
+       ul.appendChild(aElem)
+    }
+
     aboutBody.appendChild(ul)
 
     // only run the rest once ever
@@ -948,14 +967,14 @@ function connectUI() {
     const closeAboutModal = document.querySelector('.about-close')
     const langSelect = document.getElementById("langSelect")
     langSelect.value = i18next.language
-    langSelect.addEventListener("click", () => {
+    langSelect.addEventListener("change", () => {
         if (i18next.language == langSelect.value) {
             return
         }
         i18next.changeLanguage(langSelect.value)
         localStorage.setItem("lang", langSelect.value)
         connectUI()
-        updateState
+        updateState()
     })
     inc.addEventListener("click", () => {
         incPlyCounter();
@@ -1066,11 +1085,6 @@ function mergeMortalEvals(data) {
             }
             let heroRiichiDiscard = event.actor == GS.heroPidx && event.type == 'reach' && mortalEval.junme == currReviewKyoku.entries[reviewIdx-1].junme
             if (event.actor == mortalEval.last_actor && (event.pai == mortalEval.tile || heroRiichiDiscard)) {
-                if (event.actor != GS.heroPidx && event.type!='dahai') {
-                    console.log('check this merge: could be robbing a kan?')
-                    console.log(event)
-                    console.log(mortalEval)
-                }
                 event.mortalEval = mortalEval
                 reviewIdx++
             }
