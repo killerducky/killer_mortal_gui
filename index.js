@@ -194,11 +194,21 @@ class UI {
                     this.infoThisRoundTable.append(document.createElement("br"))
                 }
                 if (GS.gs.result == '和了') {
-                    if (GS.gs.winner[0] == GS.gs.payer[0]) {
-                        resultTypeStr = `${i18next.t('Tsumo')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                    const lang = localStorage.getItem("lang") || "en"
+                    if (lang === "ko") {
+                        if (GS.gs.winner[0] === GS.gs.payer[0]) {
+                            resultTypeStr = `${this.relativeToHeroStr(GS.gs.winner[idx])}${i18next.t('by')} ${i18next.t('Tsumo')}`
+                        } else {
+                            resultTypeStr = `${this.relativeToHeroStr(GS.gs.winner[idx])}${i18next.t('by')} ${i18next.t('Ron')}`
+                        }
                     } else {
-                        resultTypeStr = `${i18next.t('Ron')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                        if (GS.gs.winner[0] === GS.gs.payer[0]) {
+                            resultTypeStr = `${i18next.t('Tsumo')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                        } else {
+                            resultTypeStr = `${i18next.t('Ron')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
+                        }
                     }
+
                 } else {
                     resultTypeStr = i18next.t(GS.gs.result)
                 }
@@ -931,10 +941,19 @@ function connectUI() {
     let aElem = document.createElement("a")
     aElem.setAttribute("href", "https://github.com/killerducky/killer_mortal_gui")
     aElem.setAttribute("target", "_blank")
+
     const textNode = document.createTextNode(aboutBodyList[0])
-    ul.appendChild(textNode)
     aElem.appendChild(document.createTextNode(aboutBodyList[1]))
-    ul.appendChild(aElem)
+
+    const lang = localStorage.getItem("lang") || "en"
+    if (lang === "ko") {
+       ul.appendChild(aElem)
+       ul.appendChild(textNode)
+    } else {
+       ul.appendChild(textNode)
+       ul.appendChild(aElem)
+    }
+
     aboutBody.appendChild(ul)
 
     // only run the rest once ever
