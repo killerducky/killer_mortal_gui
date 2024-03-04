@@ -1,9 +1,11 @@
 // Translators: Add to this structure
 const i18next_data = {
     debug: true,
+    fallbackLng: "en",
     resources: {
         en: {
             translation: {
+                "title": "Killer Mortal Reviewer",
                 "round-dec": "&lt; Prev Round",
                 "round-inc": "Next Round &gt",
                 "prev-mismatch": "&lt; Prev Error",
@@ -29,6 +31,15 @@ const i18next_data = {
                     "Click on round indicator to show score table",
                     "Click on a row in the table to skip to that round",
                 ],
+                'Engine'                : 'Engine'                     ,
+                'Model tag'             : 'Model tag'                  ,
+                'Mjai-reviewer version' : 'Mjai-reviewer version'      ,
+                'Game length'           : 'Game length'                ,
+                'Loading time'          : 'Loading time'               ,
+                'Review time'           : 'Review time'                ,
+                'Temperature'           : 'Temperature'                ,
+                'Matches/total'         : 'Matches/total'          ,
+                'Rating'                : 'Rating'                 ,
                 "position-rel": {
                     "Hero" : "Hero",
                     "Shimo" : "Shimo",
@@ -36,6 +47,25 @@ const i18next_data = {
                     "Kami" : "Kami",
                     "Pot" : "Pot",
                 },
+                "E":"E",
+                "S":"S",
+                "W":"W",
+                "N":"N",
+                "spoiler": "(Spoiler: Mortal evaluations hidden. Click to show)",
+                // Advice words
+                'dahai'   : 'Cut',
+                'pon'     : 'Pon',
+                'chi'     : 'Chi',
+                'none'    : 'Skip',
+                'hora'    : 'Tsumo', // Default to Tsumo. If ron, javascript will change it.
+                'ron'     : 'Ron',
+                'reach'   : 'Riichi',
+                "Hmm..."  : "Hmm...",
+                "Clack!"  : "Clack!",
+                // No need to disambiguate these in the GUI display -- context will show which kind it is
+                'ankan'   : 'Kan',
+                'daiminkan' : 'Kan',
+                'kakan'   : 'Kan',
                 // Results
                 "Final"   : "Final", // Final score in score table
                 "Round"   : "Round",
@@ -51,6 +81,7 @@ const i18next_data = {
         },
         'zh-CN': {
             translation: {
+                "title": "Killer Mortal Reviewer",
                 "round-dec": "&lt; 上一局",
                 "round-inc": "下一局 &gt;",
                 "prev-mismatch": "&lt; 上一错误",
@@ -76,6 +107,15 @@ const i18next_data = {
                     "点击局数指示器, 显示得点表",
                     "点击得点表任意一行, 可跳转至该小局",
                 ],
+                'Engine'                : 'Engine'                     ,
+                'Model tag'             : 'Model tag'                  ,
+                'Mjai-reviewer version' : 'Mjai-reviewer version'      ,
+                'Game length'           : 'Game length'                ,
+                'Loading time'          : 'Loading time'               ,
+                'Review time'           : 'Review time'                ,
+                'Temperature'           : 'Temperature'                ,
+                'Matches/total'         : 'Matches/total'          ,
+                'Rating'                : 'Rating'                 ,
                 "position-rel": {
                     "Hero" : "自家",
                     "Shimo" : "下家",
@@ -83,6 +123,25 @@ const i18next_data = {
                     "Kami" : "上家",
                     "Pot" : "场供",
                 },
+                "E":"E",
+                "S":"S",
+                "W":"W",
+                "N":"N",
+                "spoiler": "(Spoiler: Mortal evaluations hidden. Click to show)",
+                // Advice words
+                'dahai'   : 'Cut',
+                'pon'     : 'Pon',
+                'chi'     : 'Chi',
+                'none'    : 'Skip',
+                'hora'    : 'Tsumo', // Default to Tsumo. If ron, javascript will change it.
+                'ron'     : 'Ron',
+                'reach'   : 'Riichi',
+                "Hmm..."  : "Hmm...",
+                "Clack!"  : "Clack!",
+                // No need to disambiguate these in the GUI display -- context will show which kind it is
+                'ankan'   : 'Kan',
+                'daiminkan' : 'Kan',
+                'kakan'   : 'Kan',
                 // Results
                 "Final"   : "结果", // Final score in score table
                 "Round"   : "局",
@@ -98,6 +157,7 @@ const i18next_data = {
         },
         ko: {
             translation: {
+                "title": "Killer Mortal Reviewer",
                 "round-dec": "&lt; 이전 대국",
                 "round-inc": "다음 대국 &gt",
                 "prev-mismatch": "&lt; 이전 실수",
@@ -123,6 +183,15 @@ const i18next_data = {
                     "화면 중앙의 대국 표시를 클릭하면 점수표를 볼 수 있습니다.",
                     "점수표에서 특정 대국을 클릭하면 그 대국으로 이동할 수 있습니다.",
                 ],
+                'Engine'                : 'Engine'                 ,
+                'Model tag'             : 'Model tag'              ,
+                'Mjai-reviewer version' : 'Mjai-reviewer version'  ,
+                'Game length'           : 'Game length'            ,
+                'Loading time'          : 'Loading time'           ,
+                'Review time'           : 'Review time'            ,
+                'Temperature'           : 'Temperature'            ,
+                'Matches/total'         : 'Matches/total'          ,
+                'Rating'                : 'Rating'                 ,
                 "position-rel": {
                     "Hero" : "나",
                     "Shimo" : "하가",
@@ -130,6 +199,25 @@ const i18next_data = {
                     "Kami" : "상가",
                     "Pot" : "공탁금",
                 },
+                "E":"E",
+                "S":"S",
+                "W":"W",
+                "N":"N",
+                "spoiler": "(Spoiler: Mortal evaluations hidden. Click to show)",
+                // Advice words
+                'dahai'   : 'Cut',
+                'pon'     : 'Pon',
+                'chi'     : 'Chi',
+                'none'    : 'Skip',
+                'hora'    : 'Tsumo', // Default to Tsumo. If ron, javascript will change it.
+                'ron'     : 'Ron',
+                'reach'   : 'Riichi',
+                "Hmm..."  : "Hmm...",
+                "Clack!"  : "Clack!",
+                // No need to disambiguate these in the GUI display -- context will show which kind it is
+                'ankan'   : 'Kan',
+                'daiminkan' : 'Kan',
+                'kakan'   : 'Kan',
                 // Results
                 "Final"   : "최종", // Final score in score table
                 "Round"   : "국",
@@ -163,18 +251,6 @@ const exactTranslation = {
     '自風牌': {
         'DEFAULT': 'Seat Wind',
     },
-
-    // Piggyback in some changes from mjai json to what I want to display
-    'dahai'   : { 'DEFAULT': 'Cut' },
-    'pon'     : { 'DEFAULT': 'Pon' },
-    'chi'     : { 'DEFAULT': 'Chi' },
-    'none'    : { 'DEFAULT': 'Skip' },
-    'hora'    : { 'DEFAULT': 'Tsumo' },
-    'reach'   : { 'DEFAULT': 'Riichi' },
-    // No need to disambiguate these in the GUI display -- context will show which kind it is
-    'ankan'   : { 'DEFAULT': 'Kan' },
-    'daiminkan' : { 'DEFAULT': 'Kan' },
-    'kakan'   : { 'DEFAULT': 'Kan' },
 
     // End section added for killer mortal reviewer
     '流局滿貫': {

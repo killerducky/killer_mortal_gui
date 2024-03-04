@@ -122,7 +122,7 @@ class UI {
         }
     }
     roundStr(showSticks) {
-        let str = GS.C_windStr[GS.gs.roundWind-tm2t('e')]
+        let str = i18next.t(GS.C_windStr[GS.gs.roundWind-tm2t('e')])
         str += (GS.gs.roundNum+1)
         if (GS.gs.honbas > 0) {
             str += "-" + GS.gs.honbas
@@ -139,7 +139,7 @@ class UI {
         for (let pidx=0; pidx<4; pidx++) {
             this.discards[pidx].replaceChildren()
             let seatWind = (4 + pidx - GS.gs.roundNum) % 4
-            this.pInfo[pidx].replaceChildren(GS.C_windStr[seatWind])
+            this.pInfo[pidx].replaceChildren(i18next.t(GS.C_windStr[seatWind]))
             this.pInfo[pidx].append(' ', GS.gs.scores[pidx]-GS.gs.thisRoundSticks[pidx]*1000)
             this.pInfoResult[pidx].replaceChildren()
             this.pInfoResult[pidx].append(this.formatString(-GS.gs.thisRoundSticks[pidx]*1000, false, true))
@@ -293,9 +293,9 @@ class UI {
             svgElement.appendChild(createRect(
                 xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_cb_heroBarHeight, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
             ))
-            let textContent = translate(detail.action.type)
+            let textContent = i18next.t(detail.action.type)
             if (detail.action.type == 'hora' && detail.action.actor != detail.action.target) {
-                textContent = 'Ron' // translate defaults to Tsumo. Change to Ron in this case            
+                textContent = i18next.t('ron') // translate defaults to Tsumo. Change to Ron in this case            
             }
             svgElement.appendChild(createSvgText(xloc-GS.C_db_mortBarWidth/2-10, GS.C_db_height + 20, textContent))
             // Some kans include pai, some don't.
@@ -316,7 +316,7 @@ class UI {
         }
         if (!mortalEval.is_equal) {
             let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/5 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
-            let textContent = (mortalEval.details[mortalEval.actual_index].normProb > .50) ? "Hmm..." : "Clack!"
+            let textContent = (mortalEval.details[mortalEval.actual_index].normProb > .50) ? i18next.t("Hmm...") : i18next.t("Clack!")
             svgElement.appendChild(createSvgText(xloc-GS.C_db_mortBarWidth/2, 60, textContent))
         }
     }
@@ -334,7 +334,7 @@ class UI {
         const discardBars = document.getElementById("discard-bars")
         let svgElement = discardBars.firstElementChild
         if (!GS.showMortal) {
-            svgElement.appendChild(createSvgText(60,30,"(Spoiler: Mortal evaluations hidden. Click to show)"))
+            svgElement.appendChild(createSvgText(60,30,i18next.t("spoiler")))
             return
         }
         if (!mortalEval) {
@@ -479,21 +479,21 @@ class UI {
         let table = document.createElement("table")
         let metadata = document.querySelector('.about-metadata')
         metadata.replaceChildren(table)
-        this.addTableRow(table, 'Engine', GS.fullData['engine'])
-        this.addTableRow(table, 'Model tag', GS.fullData['review']['model_tag'])
-        this.addTableRow(table, 'Mjai-reviewer version', GS.fullData['version'])
-        this.addTableRow(table, 'Game length', GS.fullData['game_length'])
-        this.addTableRow(table, 'Loading time', GS.fullData['loading_time'])
-        this.addTableRow(table, 'Review time', GS.fullData['review_time'])
-        this.addTableRow(table, 'Temperature', GS.fullData['review']['temperature'])
+        this.addTableRow(table, i18next.t('Engine'), GS.fullData['engine'])
+        this.addTableRow(table, i18next.t('Model tag'), GS.fullData['review']['model_tag'])
+        this.addTableRow(table, i18next.t('Mjai-reviewer version'), GS.fullData['version'])
+        this.addTableRow(table, i18next.t('Game length'), GS.fullData['game_length'])
+        this.addTableRow(table, i18next.t('Loading time'), GS.fullData['loading_time'])
+        this.addTableRow(table, i18next.t('Review time'), GS.fullData['review_time'])
+        this.addTableRow(table, i18next.t('Temperature'), GS.fullData['review']['temperature'])
         {
             let m = GS.fullData['review']['total_matches']
             let r = GS.fullData['review']['total_reviewed']
             let p = (m/r*100).toFixed(1)
             let s = `${m}/${r} = ${p}%`
-            this.addTableRow(table, 'Matches/total', s)
+            this.addTableRow(table, i18next.t('Matches/total'), s)
         }
-        this.addTableRow(table, 'Rating', (GS.fullData.review.rating*100).toFixed(1))
+        this.addTableRow(table, i18next.t('Rating'), (GS.fullData.review.rating*100).toFixed(1))
     }
     updateResultsTable() {
         let table = document.createElement("table")
@@ -912,6 +912,7 @@ function i18nElem(key) {
 }
 function connectUI() {
     // first part might run more than once when people change language
+    document.title = i18next.t("title")
     const roundInc = i18nElem("round-inc")
     const roundDec = i18nElem("round-dec")
     const prevMismatch = i18nElem("prev-mismatch")
@@ -974,6 +975,8 @@ function connectUI() {
         i18next.changeLanguage(langSelect.value)
         localStorage.setItem("lang", langSelect.value)
         connectUI()
+        GS.ui.updateResultsTable()
+        GS.ui.updateAbout()
         updateState()
     })
     inc.addEventListener("click", () => {
