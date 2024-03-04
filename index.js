@@ -194,21 +194,9 @@ class UI {
                     this.infoThisRoundTable.append(document.createElement("br"))
                 }
                 if (GS.gs.result == '和了') {
-                    const lang = localStorage.getItem("lang") || "en"
-                    if (lang === "zh-CN" || lang === "ko") {
-                        if (GS.gs.winner[0] === GS.gs.payer[0]) {
-                            resultTypeStr = `${this.relativeToHeroStr(GS.gs.winner[idx])}${i18next.t('by')} ${i18next.t('Tsumo')}`
-                        } else {
-                            resultTypeStr = `${this.relativeToHeroStr(GS.gs.winner[idx])}${i18next.t('by')} ${i18next.t('Ron')}`
-                        }
-                    } else {
-                        if (GS.gs.winner[0] === GS.gs.payer[0]) {
-                            resultTypeStr = `${i18next.t('Tsumo')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
-                        } else {
-                            resultTypeStr = `${i18next.t('Ron')} ${i18next.t('by')} ${this.relativeToHeroStr(GS.gs.winner[idx])}`
-                        }
-                    }
-
+                    const winnerStr = this.relativeToHeroStr(GS.gs.winner[idx])
+                    const typeStr = GS.gs.winner[0] === GS.gs.payer[0] ? "Tsumo" : "Ron"
+                    resultTypeStr = i18next.t('win-by', {type:i18next.t(typeStr), winner:winnerStr})
                 } else {
                     resultTypeStr = i18next.t(GS.gs.result)
                 }
@@ -930,29 +918,13 @@ function connectUI() {
     const optionsLabel = i18nElem("options-label")
     aboutBody.replaceChildren(document.createElement("ul"))
     let aboutBodyList = i18next.t("about-body", {returnObjects:true})
-    for (let i=2; i<aboutBodyList.length; i++) {
+    for (let i=0; i<aboutBodyList.length; i++) {
         let ul = document.createElement("li")
-        ul.appendChild(document.createTextNode(aboutBodyList[i]))
+        let node = document.createElement("span")
+        node.innerHTML = aboutBodyList[i]
+        ul.appendChild(node)
         aboutBody.appendChild(ul)
     }
-    let ul = document.createElement("li")
-    let aElem = document.createElement("a")
-    aElem.setAttribute("href", "https://github.com/killerducky/killer_mortal_gui")
-    aElem.setAttribute("target", "_blank")
-
-    const textNode = document.createTextNode(aboutBodyList[0])
-    aElem.appendChild(document.createTextNode(aboutBodyList[1]))
-
-    const lang = localStorage.getItem("lang") || "en"
-    if (lang === "ko") {
-       ul.appendChild(aElem)
-       ul.appendChild(textNode)
-    } else {
-       ul.appendChild(textNode)
-       ul.appendChild(aElem)
-    }
-
-    aboutBody.appendChild(ul)
 
     // only run the rest once ever
     if (GS.uiConnected) {

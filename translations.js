@@ -21,8 +21,6 @@ const i18next_data = {
                 "langLabel": "Language",
                 "about": "About",
                 "about-body": [
-                    "Report issues with GUI on the ",
-                    "Github project",
                     "Mortal's opinions shown with green bars",
                     "Top choice always 100% height",
                     "Others relative to the top choice",
@@ -30,6 +28,7 @@ const i18next_data = {
                     "Click on discard bars to toggle spoiler-free WWYD mode",
                     "Click on round indicator to show score table",
                     "Click on a row in the table to skip to that round",
+                    'Report issues with GUI on the <a href="https://github.com/killerducky/killer_mortal_gui" target="_blank">Github project</a>',
                 ],
                 'Engine'                : 'Engine'                     ,
                 'Model tag'             : 'Model tag'                  ,
@@ -70,8 +69,8 @@ const i18next_data = {
                 "Final"   : "Final", // Final score in score table
                 "Round"   : "Round",
                 "Ron"     : "Ron",
+                "win-by"  : "{{type}} by {{winner}}",
                 "Tsumo"   : "Tsumo",
-                "by"      : "by", // e.g. Ron by Kami
                 "流局"    : "Draw",
                 "流し満貫" : "Nagashi Mangan",
                 "九種九牌" : 'Nine Terminal Draw',
@@ -97,8 +96,6 @@ const i18next_data = {
                 "langLabel": "语言",
                 "about": "关于",
                 "about-body": [
-                    "如遇界面 Bug, 请提交问题至",
-                    "GitHub",
                     "Mortal 切牌选择显示为绿条",
                     "第一切牌选择固定为 100% 高度",
                     "其他切牌选择为相对高度",
@@ -106,6 +103,7 @@ const i18next_data = {
                     "点击手牌区域, 切换无提示何切模式",
                     "点击局数指示器, 显示得点表",
                     "点击得点表任意一行, 可跳转至该小局",
+                    '<a href="https://github.com/killerducky/killer_mortal_gui" target="_blank">GitHub</a> 如遇界面 Bug, 请提交问题至',
                 ],
                 'Engine'                : 'Engine'                     ,
                 'Model tag'             : 'Model tag'                  ,
@@ -147,7 +145,7 @@ const i18next_data = {
                 "Round"   : "局",
                 "Ron"     : "荣和",
                 "Tsumo"   : "自摸",
-                "by"      : "", // No need for zh-CN.
+                "win-by"  : "{{type}} {{winner}}",
                 "流局"    : "荒牌流局",
                 "流し満貫" : "流局满贯",
                 "九種九牌" : "九种九牌",
@@ -173,8 +171,6 @@ const i18next_data = {
                 "langLabel": "언어",
                 "about": "정보",
                 "about-body": [
-                    "에서 복기 UI 버그 제보하기",
-                    "Github 프로젝트",
                     "모탈의 선택 확률은 초록색 막대로 표시됩니다.",
                     "가장 확률이 높은 선택지가 항상 100%의 높이를 가지고,",
                     "다른 선택지는 비례해서 높이를 계산합니다.",
@@ -182,6 +178,7 @@ const i18next_data = {
                     "확률 막대를 클릭하면 모탈의 선택 확률을 숨길 수 있습니다.",
                     "화면 중앙의 대국 표시를 클릭하면 점수표를 볼 수 있습니다.",
                     "점수표에서 특정 대국을 클릭하면 그 대국으로 이동할 수 있습니다.",
+                    '<a href="https://github.com/killerducky/killer_mortal_gui" target="_blank">Github 프로젝트</a>에서 복기 UI 버그 제보하기',
                 ],
                 'Engine'                : 'Engine'                 ,
                 'Model tag'             : 'Model tag'              ,
@@ -223,7 +220,7 @@ const i18next_data = {
                 "Round"   : "국",
                 "Ron"     : "론",
                 "Tsumo"   : "쯔모",
-                "by"      : "의", // e.g. Ron by Kami
+                "win-by"  : "{{winner}}의 {{type}}",
                 "流局"    : "유국",
                 "流し満貫" : "유국만관",
                 "九種九牌" : '구종구패',
