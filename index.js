@@ -195,7 +195,7 @@ class UI {
                 }
                 if (GS.gs.result == '和了') {
                     const lang = localStorage.getItem("lang") || "en"
-                    if (lang === "ko") {
+                    if (lang === "zh-CN" || lang === "ko") {
                         if (GS.gs.winner[0] === GS.gs.payer[0]) {
                             resultTypeStr = `${this.relativeToHeroStr(GS.gs.winner[idx])}${i18next.t('by')} ${i18next.t('Tsumo')}`
                         } else {
