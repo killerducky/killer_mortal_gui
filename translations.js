@@ -88,7 +88,7 @@ const i18next_data = {
                 "Round"   : "局",
                 "Ron"     : "荣和",
                 "Tsumo"   : "自摸",
-                "by"      : "", // e.g. Ron by Kami
+                "by"      : "", // No need for zh-CN.
                 "流局"    : "荒牌流局",
                 "流し満貫" : "流局满贯",
                 "九種九牌" : "九种九牌",
