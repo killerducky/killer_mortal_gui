@@ -9,7 +9,6 @@ class GlobalState {
 
         this.ply_counter = 0
         this.hand_counter = 0
-        this.mortalHtmlDoc = null
         this.json_data = null
         this.heroPidx = null   // player index mortal reviewed
         this.showHands = false
