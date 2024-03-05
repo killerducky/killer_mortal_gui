@@ -158,8 +158,8 @@ class UI {
         return i18next.t(`position-rel.${key}`)
     }
     parseYakuString(yaku) {
-        let s = yaku.split(/([\(\)])|([0-9:]+)/)
-        s = s.map(translate)
+        let s = yaku.split(/([\(\)])|([0-9]+)/)
+        s = s.map(x => { return !x ? '' : x.match(/[0-9\(\)]/) ? x : i18next.t(x) })
         return s.join(' ')
     }
     createParaElem(text) {
@@ -561,12 +561,6 @@ function createSvgText(x, y, text) {
     svg.setAttribute("fill", GS.C_colorText)
     svg.textContent = text
     return svg
-}
-
-function translate(s) {
-    s = s in exactTranslation ? exactTranslation[s]['DEFAULT'] : s
-    s = s in partialTranslationForStats ? partialTranslationForStats[s]['DEFAULT'] : s
-    return s
 }
 
 function sum(a) {
