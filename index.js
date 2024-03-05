@@ -469,7 +469,7 @@ class UI {
         this.addTableRow(table, i18next.t('Engine'), GS.fullData['engine'])
         this.addTableRow(table, i18next.t('Model tag'), GS.fullData['review']['model_tag'])
         this.addTableRow(table, i18next.t('Mjai-reviewer version'), GS.fullData['version'])
-        this.addTableRow(table, i18next.t('Game length'), GS.fullData['game_length'])
+        this.addTableRow(table, i18next.t('Game length'), i18next.t(GS.fullData['game_length']))
         this.addTableRow(table, i18next.t('Loading time'), GS.fullData['loading_time'])
         this.addTableRow(table, i18next.t('Review time'), GS.fullData['review_time'])
         this.addTableRow(table, i18next.t('Temperature'), GS.fullData['review']['temperature'])
