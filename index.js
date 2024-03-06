@@ -159,7 +159,7 @@ class UI {
     }
     parseYakuString(yaku) {
         let s = yaku.split(/([\(\)])|([0-9]+)/)
-        s = s.map(x => { return !x ? '' : x.match(/[0-9\(\)]/) ? x : i18next.t(x) })
+        s = s.map(x => { return !x ? '' : x.match(/[0-9\-\(\)]/) ? x : i18next.t(x) })
         return s.join(' ')
     }
     createParaElem(text) {
