@@ -216,6 +216,9 @@ class UI {
             table.style.margin = "10px auto"
             this.infoThisRoundTable.append(table)
 
+            let rect = document.querySelector('.controls').getBoundingClientRect()
+            this.infoThisRoundModal.style.marginRight = `${window.innerWidth - rect.right}px`
+            this.infoThisRoundModal.style.marginTop = `${rect.top}px`
             this.infoThisRoundModal.showModal()
             this.infoThisRoundModal.addEventListener('click', (event) => {
                 this.infoThisRoundModal.close()
@@ -869,7 +872,7 @@ function decRoundCounter() {
     if (GS.hand_counter < 0) {
         GS.hand_counter = GS.ge.length-1
     }
-    GS.ply_counter = 0
+    GS.ply_counter = GS.ge[GS.hand_counter].length-1
 }
 
 function stopCondition(onlyMismatches) {
