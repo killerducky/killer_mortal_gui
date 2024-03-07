@@ -14,10 +14,12 @@
     /* Analagous to main: -> green-yellow -> yellow */
     --color-bar-mortal: hsl(120, 70%, 34%);
     --color-bar-hero: hsl(70, 60%, 48%);
-    /* Discard background */
-    --color-tsumogiri: hsl(30, 22%, 70%);
-    --color-tile-bg: hsl(0, 0%, 94%);
-    --opacity-called: 0.3;
+    /* Discard tsumogiri background: Mix in some color and make less bright */
+    /* The brightness affects both background and foreground, the color only affects the background */
+    --color-tsumogiri: hsl(30, 100%, 92%);
+    --brightness-tsumogiri: 75%;
+    --color-tile-bg: hsl(0, 0%, 92%);
+    --opacity-called: 0.25;
 }
 /* .big-win     { background: hsl(120, 60%, 24%); }
 .medium-win  { background: hsl(120, 60%, 16%); } */
@@ -115,9 +117,17 @@ h1{
 .tileImg {
     width:30px;
     height:40px;
-    background:var(--color-tile-bg);
+    background:white;
+    filter:brightness(92%) saturate(80%);
     border: 1px solid grey;
     padding: 1px;
+}
+.tsumogiri {
+    background:var(--color-tsumogiri);
+    filter:brightness(var(--brightness-tsumogiri)) saturate(80%);
+}
+.called {
+    opacity:var(--opacity-called);
 }
 .tileDiv { width:34px; height:44px; }
 .pov-p1 > div { width:44px; height:34px; }
@@ -233,12 +243,6 @@ h1{
 .rotate > img {
     transform: rotate(99deg);
     /* Adjust so these rotated tiles are next to each other */
-}
-.tsumogiri {
-    background:var(--color-tsumogiri);
-}
-.called {
-    opacity:var(--opacity-called);
 }
 .info-doras > * > * {
     width:20px;
