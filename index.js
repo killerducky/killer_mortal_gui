@@ -577,7 +577,7 @@ function relativeToHeroStr(pidx) {
 }
 
 function sum(a) {
-    return a.reduce((a,b)=>a+b)
+    return a.reduce((a,b)=>a+b,0)
 }
 
 class Tile {
@@ -699,7 +699,7 @@ function updateState() {
                 }
             }
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
-        } else if (event.type == 'daiminkan') {
+        } else if (event.type == 'daiminkan') { // open kan
             let dp = GS.gs.discardPond[event.target]
             dp[dp.length-1].called = true
             GS.gs.hands[event.actor].push(event.pai)
@@ -719,7 +719,7 @@ function updateState() {
                 }
             }
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
-        } else if (event.type == 'kakan') {
+        } else if (event.type == 'kakan') { // added kan
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
             GS.gs.drawnTile[event.actor] = null
             removeFromArray(GS.gs.hands[event.actor], event.pai)
@@ -735,7 +735,7 @@ function updateState() {
                 throw new Error('Cannot find meld to kakan to')
             }
             GS.gs.calls[event.actor].splice(rotatedIdx+1, 0, event.pai, 'rotate', 'float')
-        } else if (event.type == 'ankan') {
+        } else if (event.type == 'ankan') { // closed kan
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
             GS.gs.drawnTile[event.actor] = null
             let newCall = []
@@ -771,7 +771,8 @@ function updateState() {
         } else if (event.type == 'hora' || event.type == 'ryukyoku') {
             GS.gs.handOver = true
         } else if (event.type == 'dora') {
-            // TODO: I have my own logic for this, could remove now.
+            console.log('ERROR?')
+            throw new Error()
         } else {
             console.log(event)
             throw new Error('unknown type')
@@ -894,57 +895,93 @@ function tenpaiEstimate(pidx) {
     return GS.gs.thisRoundSticks[pidx]
 }
 
-function getUnseenTiles(pidx) {
+function initUnseenTiles(pidx, gs) {
     let allTiles = [11,12,13,14,15,16,17,18,19,21,22,23,24,25,26,27,28,29,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46,47]
     let numT = {}
     for (let t of allTiles) {
         numT[t] = 4
     }
     let seenTiles = []
-    seenTiles.push(...GS.gs.dora.slice(0,GS.gs.thisRoundExtraDoras+1))
-    seenTiles.push(...GS.gs.hands[pidx])
-    for (pidx=0; pidx<4; pidx++) {
-        seenTiles.push(...GS.gs.discardPond[pidx].map(x => {return x.tile}))
-        seenTiles.push(...GS.gs.calls[pidx].filter(x => {return !isNaN(x)}))
-    }
+    seenTiles.push(...gs.hands[pidx])
+    seenTiles.push(gs.dora[0])
     for (let t of seenTiles) {
         numT[Math.floor(tileInt2Float(t))]--
     }
     return numT
 }
 
-function getGenbutsuTiles(pidx) {
-    let genbutsuTiles = []
-    genbutsuTiles.push(...GS.gs.discardPond[pidx].map(x => {return x.tile}))
-    let reach_accepted = false
-    for (let ply=0; ply <= GS.ply_counter; ply++) {
-        let event = GS.ge[GS.hand_counter][ply]
-        if (!reach_accepted) {
-            reach_accepted = event.type == 'reach_accepted' && event.actor == pidx
+function weseeitnow(unseenTiles, tile, pidxAlreadySaw) {
+    for (let pidx=0; pidx<4; pidx++) {
+        if (pidx==pidxAlreadySaw) {
             continue
         }
-        if (event.type == 'dahai') {
-            genbutsuTiles.push(event.pai)
+        unseenTiles[pidx][Math.floor(tileInt2Float(tile))]--
+    }
+}
+function incrementalCalcDangerHelper() {
+    let unseenTiles = []
+    let genbutsu = []
+    let reach_accepted = [false, false, false, false]
+    let gs = new GameState(GS.fullData.split_logs[GS.hand_counter].log[0])
+    for (let pidx=0; pidx<4; pidx++) {
+        unseenTiles[pidx] = initUnseenTiles(pidx, gs)
+        genbutsu[pidx] = []
+    }
+    for (let ply=0; ply <= GS.ply_counter; ply++) {
+        let event = GS.ge[GS.hand_counter][ply]
+        if (event.dora_marker) {
+            console.log('dora:', event.dora_marker)
+            weseeitnow(unseenTiles, event.dora_marker, -1)
+        }
+        if (event.type == 'tsumo') { // draw
+            unseenTiles[event.actor][Math.floor(tileInt2Float(event.pai))]--
+        } else if (['chi', 'pon', 'daiminikan', 'ankan'].includes(event.type)) {
+            // the other players will see the consumed tiles
+            for (let tile of event.consumed) {
+                weseeitnow(unseenTiles, tile, event.actor)
+            }
+        } else if (event.type == 'kakan') {
+            weseeitnow(unseenTiles, event.pai, event.actor)
+            for (let pidx=0; pidx<4; pidx++) {
+                // genbutsu if reach_accepted player doesn't Rob the Kan
+                if (reach_accepted[pidx]) {
+                    genbutsu[pidx].push(event.pai)
+                }
+            }
+        } else if (event.type == 'dahai') { // discard
+            weseeitnow(unseenTiles, event.pai, event.actor)
+            for (let pidx=0; pidx<4; pidx++) {
+                /// genbutsu = we discarded it ourselves, or we reach_accepted and anyone discarded it
+                if (event.actor == pidx || reach_accepted[pidx]) {
+                    genbutsu[pidx].push(event.pai)
+                }
+            }
+        } else if (event.type == 'reach_accepted') {
+            reach_accepted[event.actor] = true
+        }
+        console.log('e', event)
+        for (let pidx=0; pidx<4; pidx++) {
+            console.log(pidx, 'u', sum(Object.values(unseenTiles[pidx])), unseenTiles[pidx])
+            console.log(pidx, 'g', genbutsu[pidx].length, genbutsu[pidx])
         }
     }
-    genbutsuTiles.map(x => Math.floor(tileInt2Float(x)))
-    genbutsuTiles = [...new Set(genbutsuTiles)].sort()
-    return genbutsuTiles
+    return [unseenTiles, genbutsu, reach_accepted]
 }
-
 function calcDanger() {
-    let heroUnseenTiles = getUnseenTiles(GS.heroPidx)
+    let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper()
+    let heroUnseenTiles = unseenTiles[GS.heroPidx]
     for (let pidx=0; pidx<4; pidx++) {
+        console.assert(reach_accepted[pidx] == tenpaiEstimate(pidx))
         if (!tenpaiEstimate(pidx)) {
             continue
         }
-        console.log(`${relativeToHeroStr(pidx)} is tenpai!`)
-        let genbutsu = getGenbutsuTiles(pidx)
-        let sujiCnt = showSujis(genbutsu)
+        console.log('------------------------------------------')
+        console.log(`${relativeToHeroStr(pidx)} is tenpai! hero:p${GS.heroPidx} villian:p${pidx}`)
+        let sujiCnt = showSujis(genbutsu[pidx])
         console.log(`sujis left ${sujiCnt}/18 ${(sujiCnt/18*100).toFixed(0)}%`)
         console.log(`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)
         let waits = generateWaits()
-        let combos = calcCombos(waits, genbutsu, heroUnseenTiles)
+        let combos = calcCombos(waits, genbutsu[pidx], heroUnseenTiles)
         console.log('wait pattern combos:')
         for (let [key,combo] of Object.entries(combos)) {
             if (key=='all') {
