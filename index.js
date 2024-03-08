@@ -152,11 +152,6 @@ class UI {
         s += num
         return s
     }
-    relativeToHeroStr(pidx) {
-        let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
-        let key = ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
-        return i18next.t(`position-rel.${key}`)
-    }
     parseYakuString(yaku) {
         let s = yaku.split(/([\(\)])|([0-9]+)/)
         s = s.map(x => { return !x ? '' : x.match(/[0-9\-\(\)]/) ? x : i18next.t(x) })
@@ -193,7 +188,7 @@ class UI {
                     this.infoThisRoundTable.append(document.createElement("br"))
                 }
                 if (GS.gs.result == '和了') {
-                    const winnerStr = this.relativeToHeroStr(GS.gs.winner[idx])
+                    const winnerStr = relativeToHeroStr(GS.gs.winner[idx])
                     const typeStr = GS.gs.winner[0] === GS.gs.payer[0] ? "Tsumo" : "Ron"
                     resultTypeStr = i18next.t('win-by', {type:i18next.t(typeStr), winner:winnerStr})
                 } else {
@@ -209,7 +204,7 @@ class UI {
             for (let pidx=0; pidx<4+1; pidx++) {
                 let tr = table.insertRow()
                 let cell = tr.insertCell()
-                cell.textContent = `${this.relativeToHeroStr(pidx)}`
+                cell.textContent = `${relativeToHeroStr(pidx)}`
                 cell = tr.insertCell()
                 cell.textContent = `${event.scoreChangesPlusSticks[pidx]}`
             }
@@ -504,7 +499,7 @@ class UI {
         for (let i=0; i<2; i++) {
             for (let pidx=0; pidx<4+1; pidx++) {
                 cell = tr.insertCell()
-                cell.textContent = `${this.relativeToHeroStr(pidx)}`
+                cell.textContent = `${relativeToHeroStr(pidx)}`
             }
             if (i==0) {cell = tr.insertCell()}
         }
@@ -575,8 +570,14 @@ function createSvgText(x, y, text) {
     return svg
 }
 
+function relativeToHeroStr(pidx) {
+    let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
+    let key = ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
+    return i18next.t(`position-rel.${key}`)
+}
+
 function sum(a) {
-    return a.reduce((a,b)=>a+b) // javascript really doesn't have this by default?
+    return a.reduce((a,b)=>a+b)
 }
 
 class Tile {
@@ -779,10 +780,180 @@ function updateState() {
     for (const hand of GS.gs.hands) {
         hand.sort(tileSort)
     }
+    calcDanger()
     GS.ui.reset()
     GS.ui.updateHandInfo()
     GS.ui.updateDiscardPond()
     GS.ui.updateGridInfo()
+}
+
+function generateWaits() {
+    let waits = []
+    for (let ryanmen of [[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]]) {
+        for (let suit=1; suit<=3; suit++) {
+            let wait = {}
+            wait.tiles = [suit*10+ryanmen[0], suit*10+ryanmen[1]]
+            wait.waits = [suit*10+ryanmen[0]-1, suit*10+ryanmen[1]+1]
+            waits.push(wait)
+        }
+    }
+    for (let kanchan of [[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9]]) {
+        for (let suit=1; suit<=3; suit++) {
+            let wait = {}
+            wait.tiles = [suit*10+kanchan[0], suit*10+kanchan[1]]
+            wait.waits = [suit*10+kanchan[0]+1]
+            waits.push(wait)
+        }
+    }
+    for (let tankiShanpon of ([1,2,3,4,5,6,7,8,9])) {
+        for (let suit=1; suit<=4; suit++) {
+            if (suit==4 && tankiShanpon>7) {
+                continue // honors are 41-47 only
+            }
+            let waitT = {}
+            waitT.tiles = [suit*10+tankiShanpon]
+            waitT.waits = [suit*10+tankiShanpon]
+            waits.push(waitT)
+            let waitS = {}
+            waitS.tiles = [suit*10+tankiShanpon, suit*10+tankiShanpon]
+            waitS.waits = [suit*10+tankiShanpon]
+            waits.push(waitS)
+        }
+    }
+    return waits
+}
+
+function calcCombos(waits, genbutsu, heroUnseenTiles) {
+    let combos = {'all':0}
+    for (let wait of waits) {
+        console.assert(wait.tiles.length <= 2)
+        wait.combos = 1
+        for (let [i,t] of wait.tiles.entries()) {
+            if (i>0 && wait.tiles[0] == wait.tiles[1]) {
+                wait.combos *= heroUnseenTiles[t]-1 // Shanpons pull the same tile, so after the first one there is 1 less remaining
+            } else {
+                wait.combos *= heroUnseenTiles[t]
+            }
+        }
+        // Shanpons: Order doesn't matter
+        if (wait.tiles[1] && wait.tiles[0] == wait.tiles[1]) {
+            wait.combos /= wait.tiles.length // Technically Math.exp(length) but it's always 2 for this case
+        }
+        let thisGenbutsu = wait.waits.reduce((accum,t) => accum || genbutsu.includes(t), false)
+        if (thisGenbutsu) {
+            continue
+        }
+        combos['all'] += wait.combos
+        for (let t of wait.waits) {
+            if (!combos[t]) { combos[t]={'all':0, 'types':[]} }
+            combos[t]['all'] += wait.combos
+            combos[t]['types'].push(wait)
+        }
+    }
+    return combos
+}
+
+function combo2str(key, combos) {
+    let combo = combos[key]
+    let p = (combo['all']/combos['all']*100).toFixed(1)
+    let str = `${tenhou2str(key)}: ${String(combo['all']).padStart(2)}/${String(combos['all']).padStart(3)}`
+    str += ` = ${String(p).padStart(4)}%`
+    for (let type of combo.types) {
+        str += ' '
+        str += (type.tiles.map(x => tenhou2str(x)).join('')).padStart(4)
+        str += ':'+String(type.combos).padStart(2)
+    }
+    return str
+}
+
+function showSujis(genbutsu) {
+    for (let ta of [[1,2,3], [4,5,6], [7,8,9]]) {
+        let str = ''
+        for (let suit=1; suit<=3; suit++) {
+            for (let t of ta) {
+                str += genbutsu.includes(suit*10+t) ? '-- ' : tenhou2str(suit*10+t) + ' '
+            }
+            str += '  '
+        }
+        console.log(str)
+    }
+    let sujiCnt = 18
+    for (let t of [4,5,6]) {
+        for (let suit=1; suit<=3; suit++) {
+            (genbutsu.includes(suit*10+t) || genbutsu.includes(suit*10+t-3)) && sujiCnt--
+            (genbutsu.includes(suit*10+t) || genbutsu.includes(suit*10+t+3)) && sujiCnt--
+        }
+    }
+    return sujiCnt
+}
+
+// For now just return true if they called riichi
+// Maybe could also do it for people who called twice?
+// Or called dora pon?
+function tenpaiEstimate(pidx) {
+    return GS.gs.thisRoundSticks[pidx]
+}
+
+function getUnseenTiles(pidx) {
+    let allTiles = [11,12,13,14,15,16,17,18,19,21,22,23,24,25,26,27,28,29,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46,47]
+    let numT = {}
+    for (let t of allTiles) {
+        numT[t] = 4
+    }
+    let seenTiles = []
+    seenTiles.push(...GS.gs.dora.slice(0,GS.gs.thisRoundExtraDoras+1))
+    seenTiles.push(...GS.gs.hands[pidx])
+    for (pidx=0; pidx<4; pidx++) {
+        seenTiles.push(...GS.gs.discardPond[pidx].map(x => {return x.tile}))
+        seenTiles.push(...GS.gs.calls[pidx].filter(x => {return !isNaN(x)}))
+    }
+    for (let t of seenTiles) {
+        numT[Math.floor(tileInt2Float(t))]--
+    }
+    return numT
+}
+
+function getGenbutsuTiles(pidx) {
+    let genbutsuTiles = []
+    genbutsuTiles.push(...GS.gs.discardPond[pidx].map(x => {return x.tile}))
+    let reach_accepted = false
+    for (let ply=0; ply <= GS.ply_counter; ply++) {
+        let event = GS.ge[GS.hand_counter][ply]
+        if (!reach_accepted) {
+            reach_accepted = event.type == 'reach_accepted' && event.actor == pidx
+            continue
+        }
+        if (event.type == 'dahai') {
+            genbutsuTiles.push(event.pai)
+        }
+    }
+    genbutsuTiles.map(x => Math.floor(tileInt2Float(x)))
+    genbutsuTiles = [...new Set(genbutsuTiles)].sort()
+    return genbutsuTiles
+}
+
+function calcDanger() {
+    let heroUnseenTiles = getUnseenTiles(GS.heroPidx)
+    for (let pidx=0; pidx<4; pidx++) {
+        if (!tenpaiEstimate(pidx)) {
+            continue
+        }
+        console.log(`${relativeToHeroStr(pidx)} is tenpai!`)
+        let genbutsu = getGenbutsuTiles(pidx)
+        let sujiCnt = showSujis(genbutsu)
+        console.log(`sujis left ${sujiCnt}/18 ${(sujiCnt/18*100).toFixed(0)}%`)
+        console.log(`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)
+        let waits = generateWaits()
+        let combos = calcCombos(waits, genbutsu, heroUnseenTiles)
+        console.log('wait pattern combos:')
+        for (let [key,combo] of Object.entries(combos)) {
+            if (key=='all') {
+                continue
+            }
+            console.log(combo2str(key,combos))
+        }
+        console.log('------------------------------------------')
+    }
 }
 
 function addResult() {
