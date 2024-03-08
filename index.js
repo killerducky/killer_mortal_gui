@@ -641,6 +641,14 @@ function tenhou2str(tileInt) {
     return output
 }
 
+function tenhou2strH(tileInt) {
+    let output = tenhou2str(tileInt)
+    if (tileInt >= 41 && tileInt <= 47) {
+        output = i18next.t(output)
+    }
+    return output
+}
+
 // take 51 (0m) and return 15.1 for sorting
 function tileInt2Float(tileInt) {
     let f = tileInt == 51 ? 15.1 : tileInt == 52 ? 25.1 : tileInt == 53 ? 35.1 : tileInt
@@ -789,21 +797,30 @@ function updateState() {
 }
 
 function generateWaits() {
-    let waits = []
+    let waitsArray = []
     for (let ryanmen of [[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]]) {
         for (let suit=1; suit<=3; suit++) {
             let wait = {}
             wait.tiles = [suit*10+ryanmen[0], suit*10+ryanmen[1]]
-            wait.waits = [suit*10+ryanmen[0]-1, suit*10+ryanmen[1]+1]
-            waits.push(wait)
+            wait.waitsOn = [suit*10+ryanmen[0]-1, suit*10+ryanmen[1]+1]
+            waitsArray.push(wait)
         }
     }
     for (let kanchan of [[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9]]) {
         for (let suit=1; suit<=3; suit++) {
             let wait = {}
             wait.tiles = [suit*10+kanchan[0], suit*10+kanchan[1]]
-            wait.waits = [suit*10+kanchan[0]+1]
-            waits.push(wait)
+            wait.waitsOn = [suit*10+kanchan[0]+1]
+            waitsArray.push(wait)
+        }
+    }
+    // Beware this is getting a little more ad-hoc...
+    for (let penchan of [[1,2,3],[8,9,7]]) {
+        for (let suit=1; suit<=3; suit++) {
+            let wait = {}
+            wait.tiles = [suit*10+penchan[0], suit*10+penchan[1]]
+            wait.waitsOn = [suit*10+penchan[2]]
+            waitsArray.push(wait)
         }
     }
     for (let tankiShanpon of ([1,2,3,4,5,6,7,8,9])) {
@@ -813,20 +830,20 @@ function generateWaits() {
             }
             let waitT = {}
             waitT.tiles = [suit*10+tankiShanpon]
-            waitT.waits = [suit*10+tankiShanpon]
-            waits.push(waitT)
+            waitT.waitsOn = [suit*10+tankiShanpon]
+            waitsArray.push(waitT)
             let waitS = {}
             waitS.tiles = [suit*10+tankiShanpon, suit*10+tankiShanpon]
-            waitS.waits = [suit*10+tankiShanpon]
-            waits.push(waitS)
+            waitS.waitsOn = [suit*10+tankiShanpon]
+            waitsArray.push(waitS)
         }
     }
-    return waits
+    return waitsArray
 }
 
-function calcCombos(waits, genbutsu, heroUnseenTiles) {
+function calcCombos(waitsArray, genbutsu, heroUnseenTiles) {
     let combos = {'all':0}
-    for (let wait of waits) {
+    for (let wait of waitsArray) {
         console.assert(wait.tiles.length <= 2)
         wait.combos = 1
         for (let [i,t] of wait.tiles.entries()) {
@@ -840,12 +857,12 @@ function calcCombos(waits, genbutsu, heroUnseenTiles) {
         if (wait.tiles[1] && wait.tiles[0] == wait.tiles[1]) {
             wait.combos /= wait.tiles.length // Technically Math.exp(length) but it's always 2 for this case
         }
-        let thisGenbutsu = wait.waits.reduce((accum,t) => accum || genbutsu.includes(t), false)
+        let thisGenbutsu = wait.waitsOn.reduce((accum,t) => accum || genbutsu.includes(t), false)
         if (thisGenbutsu) {
             continue
         }
         combos['all'] += wait.combos
-        for (let t of wait.waits) {
+        for (let t of wait.waitsOn) {
             if (!combos[t]) { combos[t]={'all':0, 'types':[]} }
             combos[t]['all'] += wait.combos
             combos[t]['types'].push(wait)
@@ -857,11 +874,11 @@ function calcCombos(waits, genbutsu, heroUnseenTiles) {
 function combo2str(key, combos) {
     let combo = combos[key]
     let p = (combo['all']/combos['all']*100).toFixed(1)
-    let str = `${tenhou2str(key)}: ${String(combo['all']).padStart(2)}/${String(combos['all']).padStart(3)}`
+    let str = `${String(tenhou2strH(key)).padStart(2)}: ${String(combo['all']).padStart(2)}/${String(combos['all']).padStart(3)}`
     str += ` = ${String(p).padStart(4)}%`
     for (let type of combo.types) {
         str += ' '
-        str += (type.tiles.map(x => tenhou2str(x)).join('')).padStart(4)
+        str += (type.tiles.map(x => tenhou2strH(x)).join('')).padStart(4)
         str += ':'+String(type.combos).padStart(2)
     }
     return str
@@ -918,7 +935,7 @@ function weseeitnow(unseenTiles, tile, pidxAlreadySaw) {
         unseenTiles[pidx][Math.floor(tileInt2Float(tile))]--
     }
 }
-function incrementalCalcDangerHelper() {
+function incrementalCalcDangerHelper(currPly) {
     let unseenTiles = []
     let genbutsu = []
     let reach_accepted = [false, false, false, false]
@@ -927,7 +944,7 @@ function incrementalCalcDangerHelper() {
         unseenTiles[pidx] = initUnseenTiles(pidx, gs)
         genbutsu[pidx] = []
     }
-    for (let ply=0; ply <= GS.ply_counter; ply++) {
+    for (let ply=0; ply <= currPly; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
         if (event.dora_marker) {
             console.log('dora:', event.dora_marker)
@@ -968,7 +985,7 @@ function incrementalCalcDangerHelper() {
     return [unseenTiles, genbutsu, reach_accepted]
 }
 function calcDanger() {
-    let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper()
+    let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(GS.ply_counter)
     let heroUnseenTiles = unseenTiles[GS.heroPidx]
     for (let pidx=0; pidx<4; pidx++) {
         console.assert(reach_accepted[pidx] == tenpaiEstimate(pidx))
@@ -980,15 +997,18 @@ function calcDanger() {
         let sujiCnt = showSujis(genbutsu[pidx])
         console.log(`sujis left ${sujiCnt}/18 ${(sujiCnt/18*100).toFixed(0)}%`)
         console.log(`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)
-        let waits = generateWaits()
-        let combos = calcCombos(waits, genbutsu[pidx], heroUnseenTiles)
+        let waitsArray = generateWaits()
+        let combos = calcCombos(waitsArray, genbutsu[pidx], heroUnseenTiles)
         console.log('wait pattern combos:')
+        let sumP = 0
         for (let [key,combo] of Object.entries(combos)) {
             if (key=='all') {
                 continue
             }
+            sumP += combos[key]['all']
             console.log(combo2str(key,combos))
         }
+        console.log(`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)
         console.log('------------------------------------------')
     }
 }
