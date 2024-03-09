@@ -872,25 +872,27 @@ function calcCombos(waitsArray, genbutsu, heroUnseenTiles) {
     return combos
 }
 
-function combo2str(key, combos) {
-    let combo = combos[key]
+function combo2strAndP(key, combos) {
+    let keyCombo = combos[key]
     let k = `${String(tenhou2strH(key)).padStart(2)}`
     if (!(key in combos)) {
-        return `${k}:       ------------ safe`
+        return [`${k}:       ------------ safe`, 0]
     }
-    let p = `${String((combo['all']/combos['all']*100).toFixed(1)).padStart(4)}`
+    let prob = keyCombo['all']/combos['all']
+    let p = `${String((prob*100).toFixed(1)).padStart(4)}`
     let str = ''
     str += `${k}: ${p}%`
-    str += ` = ${String(combo['all']).padStart(2)}/${String(combos['all']).padStart(3)}`
-    for (let type of combo.types) {
+    str += ` = ${String(keyCombo['all']).padStart(2)}/${String(combos['all']).padStart(3)}`
+    for (let type of keyCombo.types) {
         str += ' '
         str += (type.tiles.map(x => tenhou2strH(x)).join('')).padStart(4)
         str += ':'+String(type.combos).padStart(2)
     }
-    return str
+    return [str, prob]
 }
 
 function showSujis(genbutsu) {
+    let strArray = []
     for (let ta of [[1,2,3], [4,5,6], [7,8,9]]) {
         let str = ''
         for (let suit=1; suit<=3; suit++) {
@@ -899,7 +901,7 @@ function showSujis(genbutsu) {
             }
             str += '  '
         }
-        console.log(str)
+        strArray.push(str)
     }
     let sujiCnt = 18
     for (let t of [4,5,6]) {
@@ -908,7 +910,7 @@ function showSujis(genbutsu) {
             (genbutsu.includes(suit*10+t) || genbutsu.includes(suit*10+t+3)) && sujiCnt--
         }
     }
-    return sujiCnt
+    return [sujiCnt, strArray]
 }
 
 // For now just return true if they called riichi
@@ -988,6 +990,7 @@ function calcDanger() {
     GS.ui.genericModal.style.marginRight = '0px'
     GS.ui.genericModalBody.replaceChildren()
     GS.ui.genericModalBody.style.fontFamily = "Courier New"
+    let dangers = [[],[],[],[]]
     // start on ply 1
     for (let ply=1; ply <= GS.ply_counter; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
@@ -1011,13 +1014,16 @@ function calcDanger() {
                 let waitsArray = generateWaits()
                 let combos = calcCombos(waitsArray, genbutsu[tenpaiPidx], thisUnseenTiles)
                 if (who == 'currActor' && dangerousEvent) {
-                    let comboStr = combo2str(event.pai, combos)
-                    console.log(`DANGER: ${String(relativeToHeroStr(thisPidx)).padStart(6)} ${event.type} ${comboStr}`)
+                    let [comboStr, comboP] = combo2strAndP(event.pai, combos)
+                    dangers[thisPidx].push([`DANGER: ${String(relativeToHeroStr(thisPidx)).padStart(6)} ${i18next.t(event.type)} ${comboStr}`, comboP])
                 }
                 if (ply == GS.ply_counter && who == 'hero') {
                     GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
                     GS.ui.genericModalBody.append(createElemWithText('pre', (`${relativeToHeroStr(tenpaiPidx)} is tenpai! hero:p${GS.heroPidx} villian:p${tenpaiPidx}`)))
-                    let sujiCnt = showSujis(genbutsu[tenpaiPidx])
+                    let [sujiCnt, sujiStrArray] = showSujis(genbutsu[tenpaiPidx])
+                    for (let str of sujiStrArray) {
+                        GS.ui.genericModalBody.append(createElemWithText('pre', str))
+                    }
                     GS.ui.genericModalBody.append(createElemWithText('pre', (`sujis tested ${18-sujiCnt}/18`)))
                     GS.ui.genericModalBody.append(createElemWithText('pre', (`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)))
                     GS.ui.genericModalBody.append(createElemWithText('pre', ('wait pattern combos:')))
@@ -1027,12 +1033,19 @@ function calcDanger() {
                             continue
                         }
                         sumP += combos[key]['all']
-                        GS.ui.genericModalBody.append(createElemWithText('pre', (combo2str(key,combos))))
+                        GS.ui.genericModalBody.append(createElemWithText('pre', (combo2strAndP(key,combos))[0]))
                     }
                     GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
                     GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
                 }
             }
+        }
+    }
+    for (let pidx=0; pidx<4; pidx++) {
+        let accumP = 0
+        for (let d of dangers[pidx]) {
+            accumP = accumP + (1-accumP)*d[1]
+            GS.ui.genericModalBody.append(createElemWithText('pre', `${String((accumP*100).toFixed(1)).padStart(4)}% ${d[0]}`))
         }
     }
     showModalAndWait(GS.ui.genericModal)
