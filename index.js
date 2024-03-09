@@ -4,25 +4,6 @@ import { calculateMinimumShanten, calculateStandardShanten } from "./shanten.js"
 import { calculateUkeire } from "./efficiency.js"
 // // const { calculateMinimumShanten, calculateStandardShanten } = require("./shanten");
 
-let remainingTiles = Array(38).fill(4); // lazy just say all there who cares
-let handTiles = Array(38).fill(0);
-handTiles[31] = 1
-handTiles[32] = 1
-handTiles[33] = 1
-handTiles[34] = 1
-handTiles[35] = 1
-handTiles[36] = 1
-handTiles[37] = 1
-handTiles[ 2] = 1
-handTiles[ 5] = 1
-handTiles[ 8] = 1
-handTiles[12] = 1
-handTiles[15] = 1
-handTiles[18] = 1
-console.log('a',calculateMinimumShanten(handTiles))
-let shantenFunction = calculateMinimumShanten
-console.log(calculateUkeire(handTiles, remainingTiles, shantenFunction))
-
 class GlobalState {
     constructor() {
         this.ui = new UI
@@ -687,10 +668,14 @@ function tileSort(a, b) {
     return a1-b1
 }
 
+function normRedFive(t) {
+    return Math.floor(tileInt2Float(t))
+}
+
 // 15 == 51, 25 == 52 (aka 5s are equal to normal 5s)
 function fuzzyCompareTile(t1, t2) {
-    let ft1 = Math.floor(tileInt2Float(t1))
-    let ft2 = Math.floor(tileInt2Float(t2))
+    let ft1 = normRedFive(t1)
+    let ft2 = normRedFive(t2)
     return ft1 == ft2
 }
 
@@ -953,7 +938,7 @@ function initUnseenTiles(pidx, gs) {
     seenTiles.push(...gs.hands[pidx])
     seenTiles.push(gs.dora[0])
     for (let t of seenTiles) {
-        numT[Math.floor(tileInt2Float(t))]--
+        numT[normRedFive(t)]--
     }
     return numT
 }
@@ -963,7 +948,7 @@ function weseeitnow(unseenTiles, tile, pidxAlreadySaw) {
         if (pidx==pidxAlreadySaw) {
             continue
         }
-        unseenTiles[pidx][Math.floor(tileInt2Float(tile))]--
+        unseenTiles[pidx][normRedFive(tile)]--
     }
 }
 function incrementalCalcDangerHelper(currPly) {
@@ -981,7 +966,7 @@ function incrementalCalcDangerHelper(currPly) {
             weseeitnow(unseenTiles, event.dora_marker, -1)
         }
         if (event.type == 'tsumo') { // draw
-            unseenTiles[event.actor][Math.floor(tileInt2Float(event.pai))]--
+            unseenTiles[event.actor][normRedFive(event.pai)]--
         } else if (['chi', 'pon', 'daiminikan', 'ankan'].includes(event.type)) {
             // the other players will see the consumed tiles
             for (let tile of event.consumed) {
@@ -1015,53 +1000,69 @@ function calcDanger() {
     GS.ui.genericModalBody.style.fontFamily = "Courier New"
     GS.ui.genericModal.querySelector(".title").textContent = i18next.t("Dealin Danger")
     let dangers = [[],[],[],[]]
+    let tsumoFails = [[],[],[],[]]
     // start on ply 1
     for (let ply=1; ply <= GS.ply_counter; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
         let dangerousEvent = event.type == 'dahai' || event.type=='kakan'
-        if (!dangerousEvent && !event.actor == GS.heroPidx) {
-            continue
-        }
         // Get state from before this ply happens
         let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(ply-1)
         for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
             if (!reach_accepted[tenpaiPidx]) {
                 continue // skip non-tenpai players
             }
-            for (let who of ['currActor', 'hero']) {
-                let thisPidx = who == 'currActor' ? event.actor : GS.heroPidx
-                if (tenpaiPidx == thisPidx) {
-                    continue // TODO: For this case calculate odds to tsumo instead. Need to calculate the actual wait for this.
-                }
+            {
+                let thisPidx = event.actor
                 let thisUnseenTiles = unseenTiles[thisPidx]
-                // console.log('who, even, unseen', who, event, unseenTiles)
+                if (tenpaiPidx == thisPidx && event.type == 'tsumo') {
+                    // TODO: Beware this assumes GS.gs.hands for tenpai player is correct
+                    // Which it is given reach_accepted==true and they cannot change wait shape
+                    console.log('cd tsumos', GS.gs.hands[tenpaiPidx], thisUnseenTiles)
+                    let ukeireHand = Array(38).fill(0)
+                    for (let t of GS.gs.hands[tenpaiPidx]) {
+                        ukeireHand[normRedFive(t)-10]++
+                    }
+                    let ukerieUnseen = []
+                    for (let i=0; i<38; i++) {
+                        ukerieUnseen[i] = i%10==0 ? 0 : thisUnseenTiles[i+10]
+                    }
+                    let numUnseenTiles = sum(ukerieUnseen)
+                    let ukeire = calculateUkeire(ukeireHand, ukerieUnseen, calculateMinimumShanten)
+                    let win = ukeire.tiles.includes(event.pai-10)
+                    console.log('cd tsumos ab', win, event, ukeire, numUnseenTiles, ukerieUnseen)
+                    tsumoFails[tenpaiPidx].push([ukeire['value'], numUnseenTiles])
+                } else if (dangerousEvent) {
+                    let waitsArray = generateWaits()
+                    let combos = calcCombos(waitsArray, genbutsu[tenpaiPidx], thisUnseenTiles)
+                    let [comboStr, comboP] = combo2strAndP(event.pai, combos)
+                    let tenpaiStr = relativeToHeroStr(tenpaiPidx).padStart(6)
+                    dangers[thisPidx].push([`${String(relativeToHeroStr(thisPidx)).padStart(6)} -> ${tenpaiStr} ${i18next.t(event.type)} ${comboStr}`, comboP])
+                }
+            }
+            if (ply == GS.ply_counter) {
+                let thisPidx = GS.heroPidx
+                let thisUnseenTiles = unseenTiles[thisPidx]
                 let waitsArray = generateWaits()
                 let combos = calcCombos(waitsArray, genbutsu[tenpaiPidx], thisUnseenTiles)
-                if (who == 'currActor' && dangerousEvent) {
-                    let [comboStr, comboP] = combo2strAndP(event.pai, combos)
-                    dangers[thisPidx].push([`DANGER: ${String(relativeToHeroStr(thisPidx)).padStart(6)} ${i18next.t(event.type)} ${comboStr}`, comboP])
+                GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
+                GS.ui.genericModalBody.append(createElemWithText('pre', (`${relativeToHeroStr(tenpaiPidx)} is tenpai! hero:p${GS.heroPidx} villian:p${tenpaiPidx}`)))
+                let [sujiCnt, sujiStrArray] = showSujis(genbutsu[tenpaiPidx])
+                for (let str of sujiStrArray) {
+                    GS.ui.genericModalBody.append(createElemWithText('pre', str))
                 }
-                if (ply == GS.ply_counter && who == 'hero') {
-                    GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
-                    GS.ui.genericModalBody.append(createElemWithText('pre', (`${relativeToHeroStr(tenpaiPidx)} is tenpai! hero:p${GS.heroPidx} villian:p${tenpaiPidx}`)))
-                    let [sujiCnt, sujiStrArray] = showSujis(genbutsu[tenpaiPidx])
-                    for (let str of sujiStrArray) {
-                        GS.ui.genericModalBody.append(createElemWithText('pre', str))
+                GS.ui.genericModalBody.append(createElemWithText('pre', (`sujis tested ${18-sujiCnt}/18`)))
+                GS.ui.genericModalBody.append(createElemWithText('pre', (`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)))
+                GS.ui.genericModalBody.append(createElemWithText('pre', ('wait pattern combos:')))
+                let sumP = 0
+                for (let [key,combo] of Object.entries(combos)) {
+                    if (key=='all') {
+                        continue
                     }
-                    GS.ui.genericModalBody.append(createElemWithText('pre', (`sujis tested ${18-sujiCnt}/18`)))
-                    GS.ui.genericModalBody.append(createElemWithText('pre', (`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)))
-                    GS.ui.genericModalBody.append(createElemWithText('pre', ('wait pattern combos:')))
-                    let sumP = 0
-                    for (let [key,combo] of Object.entries(combos)) {
-                        if (key=='all') {
-                            continue
-                        }
-                        sumP += combos[key]['all']
-                        GS.ui.genericModalBody.append(createElemWithText('pre', (combo2strAndP(key,combos))[0]))
-                    }
-                    GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
-                    GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
+                    sumP += combos[key]['all']
+                    GS.ui.genericModalBody.append(createElemWithText('pre', (combo2strAndP(key,combos))[0]))
                 }
+                GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
+                GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
             }
         }
     }
@@ -1070,6 +1071,17 @@ function calcDanger() {
         for (let d of dangers[pidx]) {
             accumP = accumP + (1-accumP)*d[1]
             GS.ui.genericModalBody.append(createElemWithText('pre', `${String((accumP*100).toFixed(1)).padStart(4)}% ${d[0]}`))
+        }
+    }
+    for (let pidx=0; pidx<4; pidx++) {
+        let accumP = 0
+        let who = relativeToHeroStr(pidx)
+        for (let tf of tsumoFails[pidx]) {
+            accumP = accumP + (1-accumP)*tf[0]/tf[1]
+            let accumPstr = String((accumP*100).toFixed(1)).padStart(4)
+            let pStr = String((tf[0]/tf[1]*100).toFixed(1)).padStart(4)
+            GS.ui.genericModalBody.append(createElemWithText('pre', `${who} miss Tsumo ${accumPstr}% ${pStr}% ${tf[0]}/${tf[1]}`))
+            console.log('tf', tf)
         }
     }
     showModalAndWait(GS.ui.genericModal)
@@ -1475,6 +1487,28 @@ function normalizeAndSoften(pdfs) {
 function getCurrGe() {
     return GS.ge[GS.hand_counter][GS.ply_counter]
 }
+
+function testUkeire() {
+    let remainingTiles = Array(38).fill(4); // lazy just say all there who cares
+    let handTiles = Array(38).fill(0);
+    handTiles[31] = 1
+    handTiles[32] = 1
+    handTiles[33] = 1
+    handTiles[34] = 1
+    handTiles[35] = 1
+    handTiles[36] = 1
+    handTiles[37] = 1
+    handTiles[ 2] = 1
+    handTiles[ 5] = 1
+    handTiles[ 8] = 1
+    handTiles[12] = 1
+    handTiles[15] = 1
+    handTiles[18] = 1
+    console.log('a',calculateMinimumShanten(handTiles))
+    let shantenFunction = calculateMinimumShanten
+    console.log(calculateUkeire(handTiles, remainingTiles, shantenFunction))
+}
+// testUkeire()
 
 function discardOverflowTest() {
     for (let pidx=0; pidx<4; pidx++) {
