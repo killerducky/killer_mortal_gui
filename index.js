@@ -108,6 +108,8 @@ class UI {
         this.infoThisRoundModal = document.querySelector('.info-this-round-modal')
         this.infoThisRoundTable = document.querySelector('.info-this-round-table')
         this.infoThisRoundClose = document.querySelector('.info-this-round-close')
+        this.genericModal = document.getElementById('generic-modal')
+        this.genericModalBody = document.getElementById('generic-modal-body')
         this.setPovPidx(0)
     }
     setPovPidx(newPidx) {
@@ -157,11 +159,6 @@ class UI {
         s = s.map(x => { return !x ? '' : x.match(/[0-9\-\(\)]/) ? x : i18next.t(x) })
         return s.join(' ')
     }
-    createParaElem(text) {
-        let p = document.createElement("p")
-        p.append(text)
-        return p
-    }
     updateGridInfo() {
         this.clearDiscardBars()
         this.clearCallBars()
@@ -194,10 +191,10 @@ class UI {
                 } else {
                     resultTypeStr = i18next.t(GS.gs.result)
                 }
-                this.infoThisRoundTable.append(this.createParaElem(resultTypeStr))
+                this.infoThisRoundTable.append(createParaElem(resultTypeStr))
                 if (GS.gs.result == '和了') {
                     for (let yaku of GS.gs.yakuStrings[idx]) {
-                        this.infoThisRoundTable.append(this.createParaElem(this.parseYakuString(yaku)))
+                        this.infoThisRoundTable.append(createParaElem(this.parseYakuString(yaku)))
                     }
                 }
             }
@@ -550,7 +547,14 @@ class UI {
         })
     }
 }
-
+function createElemWithText(type, text) {
+    let e = document.createElement(type)
+    e.append(text)
+    return e
+}
+function createParaElem(text) {
+    return createElemWithText("p", text)
+}
 function createRect(x, width, totHeight, fillRatio, fill) {
     let y = (1-fillRatio)*totHeight
     let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
@@ -569,13 +573,11 @@ function createSvgText(x, y, text) {
     svg.textContent = text
     return svg
 }
-
 function relativeToHeroStr(pidx) {
     let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
     let key = ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
     return i18next.t(`position-rel.${key}`)
 }
-
 function sum(a) {
     return a.reduce((a,b)=>a+b,0)
 }
@@ -589,7 +591,7 @@ class Tile {
         this.called = false
     }
 }
-             
+
 //take '2m' and return 2 + 10 etc.
 function tm2t(str) { 
     if (str == undefined) {
@@ -789,7 +791,6 @@ function updateState() {
     for (const hand of GS.gs.hands) {
         hand.sort(tileSort)
     }
-    calcDanger()
     GS.ui.reset()
     GS.ui.updateHandInfo()
     GS.ui.updateDiscardPond()
@@ -984,21 +985,27 @@ function incrementalCalcDangerHelper(currPly) {
     return [unseenTiles, genbutsu, reach_accepted]
 }
 function calcDanger() {
+    GS.ui.genericModal.style.marginRight = '0px'
+    GS.ui.genericModalBody.replaceChildren()
+    GS.ui.genericModalBody.style.fontFamily = "Courier New"
     // start on ply 1
     for (let ply=1; ply <= GS.ply_counter; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
+        let dangerousEvent = event.type == 'dahai' || event.type=='kakan'
+        if (!dangerousEvent && !event.actor == GS.heroPidx) {
+            continue
+        }
         // Get state from before this ply happens
         let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(ply-1)
         for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
             if (!reach_accepted[tenpaiPidx]) {
-                continue
+                continue // skip non-tenpai players
             }
             for (let who of ['currActor', 'hero']) {
-                let dangerousEvent = event.type == 'dahai' || event.type=='kakan'
-                if (who == 'currActor' && !dangerousEvent) {
-                    continue
-                }
                 let thisPidx = who == 'currActor' ? event.actor : GS.heroPidx
+                if (tenpaiPidx == thisPidx) {
+                    continue // TODO: For this case calculate odds to tsumo instead. Need to calculate the actual wait for this.
+                }
                 let thisUnseenTiles = unseenTiles[thisPidx]
                 // console.log('who, even, unseen', who, event, unseenTiles)
                 let waitsArray = generateWaits()
@@ -1008,26 +1015,27 @@ function calcDanger() {
                     console.log(`DANGER: ${String(relativeToHeroStr(thisPidx)).padStart(6)} ${event.type} ${comboStr}`)
                 }
                 if (ply == GS.ply_counter && who == 'hero') {
-                    console.log('------------------------------------------')
-                    console.log(`${relativeToHeroStr(tenpaiPidx)} is tenpai! hero:p${GS.heroPidx} villian:p${tenpaiPidx}`)
+                    GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
+                    GS.ui.genericModalBody.append(createElemWithText('pre', (`${relativeToHeroStr(tenpaiPidx)} is tenpai! hero:p${GS.heroPidx} villian:p${tenpaiPidx}`)))
                     let sujiCnt = showSujis(genbutsu[tenpaiPidx])
-                    console.log(`sujis left ${sujiCnt}/18 ${(sujiCnt/18*100).toFixed(0)}%`)
-                    console.log(`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)
-                    console.log('wait pattern combos:')
+                    GS.ui.genericModalBody.append(createElemWithText('pre', (`sujis tested ${18-sujiCnt}/18`)))
+                    GS.ui.genericModalBody.append(createElemWithText('pre', (`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)))
+                    GS.ui.genericModalBody.append(createElemWithText('pre', ('wait pattern combos:')))
                     let sumP = 0
                     for (let [key,combo] of Object.entries(combos)) {
                         if (key=='all') {
                             continue
                         }
                         sumP += combos[key]['all']
-                        console.log(combo2str(key,combos))
+                        GS.ui.genericModalBody.append(createElemWithText('pre', (combo2str(key,combos))))
                     }
-                    console.log(`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)
-                    console.log('------------------------------------------')
+                    GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
+                    GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
                 }
             }
         }
     }
+    showModalAndWait(GS.ui.genericModal)
 }
 
 function addResult() {
@@ -1189,6 +1197,8 @@ function connectUI() {
     const closeModal = document.querySelector('.info-round-close')
     const closeAboutModal = document.querySelector('.about-close')
     const langSelect = document.getElementById("langSelect")
+    const genericModalClose = document.getElementById('generic-modal-close')
+    const genericModal = document.getElementById('generic-modal')
     langSelect.value = i18next.language
     langSelect.addEventListener("change", () => {
         if (i18next.language == langSelect.value) {
@@ -1261,6 +1271,9 @@ function connectUI() {
     closeModal.addEventListener("click", () => {
         infoRoundModal.close()
     })
+    genericModalClose.addEventListener("click", () => {
+        genericModal.close()
+    })
     closeAboutModal.addEventListener("click", () => {
         aboutModal.close()
     })
@@ -1284,13 +1297,19 @@ function connectUI() {
         } else if (event.key == 'm') {
             GS.showMortal = !GS.showMortal
             updateState()
+        } else if (event.key == 'd') {
+            if (!genericModal.open) {
+                calcDanger()
+            } else {
+                genericModal.close()
+            }
+        }
         // } else if (event.key == 'g') {
         //     const roundGraphModel = document.querySelector('#round-graph-modal')
         //     roundGraphModel.show()
         //     roundGraphModel.addEventListener('click', (event) => {
         //         roundGraphModel.close()
         //     })
-        }
     });
 }
 
