@@ -1,8 +1,27 @@
 "use strict";
 
-import { calculateMinimumShanten, calculateStandardShanten } from "./shanten.mjs";
+import { calculateMinimumShanten, calculateStandardShanten } from "./shanten.js";
+import { calculateUkeire } from "./efficiency.js"
+// // const { calculateMinimumShanten, calculateStandardShanten } = require("./shanten");
 
-// calculateMinimumShanten(1,2)
+let remainingTiles = Array(38).fill(4); // lazy just say all there who cares
+let handTiles = Array(38).fill(0);
+handTiles[31] = 1
+handTiles[32] = 1
+handTiles[33] = 1
+handTiles[34] = 1
+handTiles[35] = 1
+handTiles[36] = 1
+handTiles[37] = 1
+handTiles[ 2] = 1
+handTiles[ 5] = 1
+handTiles[ 8] = 1
+handTiles[12] = 1
+handTiles[15] = 1
+handTiles[18] = 1
+console.log('a',calculateMinimumShanten(handTiles))
+let shantenFunction = calculateMinimumShanten
+console.log(calculateUkeire(handTiles, remainingTiles, shantenFunction))
 
 class GlobalState {
     constructor() {
