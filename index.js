@@ -873,9 +873,14 @@ function calcCombos(waitsArray, genbutsu, heroUnseenTiles) {
 
 function combo2str(key, combos) {
     let combo = combos[key]
-    let p = (combo['all']/combos['all']*100).toFixed(1)
-    let str = `${String(tenhou2strH(key)).padStart(2)}: ${String(combo['all']).padStart(2)}/${String(combos['all']).padStart(3)}`
-    str += ` = ${String(p).padStart(4)}%`
+    let k = `${String(tenhou2strH(key)).padStart(2)}`
+    if (!(key in combos)) {
+        return `${k}:       ------------ safe`
+    }
+    let p = `${String((combo['all']/combos['all']*100).toFixed(1)).padStart(4)}`
+    let str = ''
+    str += `${k}: ${p}%`
+    str += ` = ${String(combo['all']).padStart(2)}/${String(combos['all']).padStart(3)}`
     for (let type of combo.types) {
         str += ' '
         str += (type.tiles.map(x => tenhou2strH(x)).join('')).padStart(4)
@@ -976,40 +981,56 @@ function incrementalCalcDangerHelper(currPly) {
         } else if (event.type == 'reach_accepted') {
             reach_accepted[event.actor] = true
         }
-        console.log('e', event)
-        for (let pidx=0; pidx<4; pidx++) {
-            console.log(pidx, 'u', sum(Object.values(unseenTiles[pidx])), unseenTiles[pidx])
-            console.log(pidx, 'g', genbutsu[pidx].length, genbutsu[pidx])
-        }
+        // console.log('e', event)
+        // for (let pidx=0; pidx<4; pidx++) {
+            // console.log(pidx, 'u', sum(Object.values(unseenTiles[pidx])), unseenTiles[pidx])
+            // console.log(pidx, 'g', genbutsu[pidx].length, genbutsu[pidx])
+        // }
     }
     return [unseenTiles, genbutsu, reach_accepted]
 }
 function calcDanger() {
-    let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(GS.ply_counter)
-    let heroUnseenTiles = unseenTiles[GS.heroPidx]
-    for (let pidx=0; pidx<4; pidx++) {
-        console.assert(reach_accepted[pidx] == tenpaiEstimate(pidx))
-        if (!tenpaiEstimate(pidx)) {
-            continue
-        }
-        console.log('------------------------------------------')
-        console.log(`${relativeToHeroStr(pidx)} is tenpai! hero:p${GS.heroPidx} villian:p${pidx}`)
-        let sujiCnt = showSujis(genbutsu[pidx])
-        console.log(`sujis left ${sujiCnt}/18 ${(sujiCnt/18*100).toFixed(0)}%`)
-        console.log(`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)
-        let waitsArray = generateWaits()
-        let combos = calcCombos(waitsArray, genbutsu[pidx], heroUnseenTiles)
-        console.log('wait pattern combos:')
-        let sumP = 0
-        for (let [key,combo] of Object.entries(combos)) {
-            if (key=='all') {
+    for (let ply=0; ply <= GS.ply_counter; ply++) {
+        let event = GS.ge[GS.hand_counter][ply]
+        let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(GS.ply_counter)
+        for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
+            if (!reach_accepted[tenpaiPidx]) {
                 continue
             }
-            sumP += combos[key]['all']
-            console.log(combo2str(key,combos))
+            for (let who of ['currActor', 'hero']) {
+                let dangerousEvent = event.type == 'dahai' || event.type=='kakan'
+                if (who == 'currActor' && !dangerousEvent) {
+                    continue
+                }
+                let thisPidx = who == 'currActor' ? event.actor : GS.heroPidx
+                let thisUnseenTiles = unseenTiles[thisPidx]
+                // console.log('who, even, unseen', who, event, unseenTiles)
+                let waitsArray = generateWaits()
+                let combos = calcCombos(waitsArray, genbutsu[tenpaiPidx], thisUnseenTiles)
+                if (who == 'currActor' && dangerousEvent) {
+                    let comboStr = combo2str(event.pai, combos)
+                    console.log(`DANGER: ${String(relativeToHeroStr(thisPidx)).padStart(6)} ${event.type} ${comboStr}`)
+                }
+                if (ply == GS.ply_counter && who == 'hero') {
+                    console.log('------------------------------------------')
+                    console.log(`${relativeToHeroStr(tenpaiPidx)} is tenpai! hero:p${GS.heroPidx} villian:p${tenpaiPidx}`)
+                    let sujiCnt = showSujis(genbutsu[tenpaiPidx])
+                    console.log(`sujis left ${sujiCnt}/18 ${(sujiCnt/18*100).toFixed(0)}%`)
+                    console.log(`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)
+                    console.log('wait pattern combos:')
+                    let sumP = 0
+                    for (let [key,combo] of Object.entries(combos)) {
+                        if (key=='all') {
+                            continue
+                        }
+                        sumP += combos[key]['all']
+                        console.log(combo2str(key,combos))
+                    }
+                    console.log(`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)
+                    console.log('------------------------------------------')
+                }
+            }
         }
-        console.log(`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)
-        console.log('------------------------------------------')
     }
 }
 
