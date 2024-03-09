@@ -1,5 +1,9 @@
 "use strict";
 
+import { calculateMinimumShanten, calculateStandardShanten } from "./shanten.mjs";
+
+// calculateMinimumShanten(1,2)
+
 class GlobalState {
     constructor() {
         this.ui = new UI
@@ -876,7 +880,7 @@ function combo2strAndP(key, combos) {
     let keyCombo = combos[key]
     let k = `${String(tenhou2strH(key)).padStart(2)}`
     if (!(key in combos)) {
-        return [`${k}:       ------------ safe`, 0]
+        return [`${k}:`, 0]
     }
     let prob = keyCombo['all']/combos['all']
     let p = `${String((prob*100).toFixed(1)).padStart(4)}`
@@ -990,6 +994,7 @@ function calcDanger() {
     GS.ui.genericModal.style.marginRight = '0px'
     GS.ui.genericModalBody.replaceChildren()
     GS.ui.genericModalBody.style.fontFamily = "Courier New"
+    GS.ui.genericModal.querySelector(".title").textContent = i18next.t("Dealin Danger")
     let dangers = [[],[],[],[]]
     // start on ply 1
     for (let ply=1; ply <= GS.ply_counter; ply++) {

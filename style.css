@@ -28,7 +28,6 @@
 body, .modal {
     font-family: sans-serif;
     max-width: var(--max-width);
-    margin: auto;
     color: var(--color-text);
     line-height: 1.5;
     background: var(--color-main);
