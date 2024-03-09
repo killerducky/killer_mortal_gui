@@ -952,7 +952,6 @@ function incrementalCalcDangerHelper(currPly) {
     for (let ply=0; ply <= currPly; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
         if (event.dora_marker) {
-            console.log('dora:', event.dora_marker)
             weseeitnow(unseenTiles, event.dora_marker, -1)
         }
         if (event.type == 'tsumo') { // draw
@@ -981,18 +980,15 @@ function incrementalCalcDangerHelper(currPly) {
         } else if (event.type == 'reach_accepted') {
             reach_accepted[event.actor] = true
         }
-        // console.log('e', event)
-        // for (let pidx=0; pidx<4; pidx++) {
-            // console.log(pidx, 'u', sum(Object.values(unseenTiles[pidx])), unseenTiles[pidx])
-            // console.log(pidx, 'g', genbutsu[pidx].length, genbutsu[pidx])
-        // }
     }
     return [unseenTiles, genbutsu, reach_accepted]
 }
 function calcDanger() {
-    for (let ply=0; ply <= GS.ply_counter; ply++) {
+    // start on ply 1
+    for (let ply=1; ply <= GS.ply_counter; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
-        let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(GS.ply_counter)
+        // Get state from before this ply happens
+        let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(ply-1)
         for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
             if (!reach_accepted[tenpaiPidx]) {
                 continue
@@ -1382,6 +1378,7 @@ function parseMortalJsonStr(data) {
             continue
         }
         if (data.mjai_log[idx-1].type == 'dora') {
+            // TODO: Convert to tenhou
             event.dora_marker = data.mjai_log[idx-1].dora_marker
         }
         currGe.push(event)
