@@ -163,6 +163,23 @@ class UI {
         s = s.map(x => { return !x ? '' : x.match(/[0-9\-\(\)]/) ? x : i18next.t(x) })
         return s.join(' ')
     }
+    getResultTypeStr() {
+        let resultTypeStr = []
+        for (let idx=0; idx==0||idx<GS.gs.winner.length; idx++) {
+            if (GS.gs.result == '和了') {
+                const winnerStr = relativeToHeroStr(GS.gs.winner[idx])
+                const payerStr = relativeToHeroStr(GS.gs.payer[idx])
+                const typeStr = GS.gs.winner[0] === GS.gs.payer[0] ? "Tsumo" : "Ron"
+                resultTypeStr[idx] = i18next.t('win-by', {type:i18next.t(typeStr), winner:winnerStr})
+                if (typeStr == "Ron") {
+                    resultTypeStr[idx] += ` Dealin by ${payerStr}`
+                }
+            } else {
+                resultTypeStr[idx] = i18next.t(GS.gs.result)
+            }
+        }
+        return resultTypeStr
+    }
     updateGridInfo() {
         this.clearDiscardBars()
         this.clearCallBars()
@@ -183,19 +200,12 @@ class UI {
         if (GS.gs.handOver) {
             this.infoThisRoundTable.replaceChildren()
             let table = document.createElement("table")
-            let resultTypeStr
+            let resultTypeStr = this.getResultTypeStr()
             for (let idx=0; idx==0||idx<GS.gs.winner.length; idx++) {
                 if (idx>0) {
                     this.infoThisRoundTable.append(document.createElement("br"))
                 }
-                if (GS.gs.result == '和了') {
-                    const winnerStr = relativeToHeroStr(GS.gs.winner[idx])
-                    const typeStr = GS.gs.winner[0] === GS.gs.payer[0] ? "Tsumo" : "Ron"
-                    resultTypeStr = i18next.t('win-by', {type:i18next.t(typeStr), winner:winnerStr})
-                } else {
-                    resultTypeStr = i18next.t(GS.gs.result)
-                }
-                this.infoThisRoundTable.append(createParaElem(resultTypeStr))
+                this.infoThisRoundTable.append(createParaElem(resultTypeStr[idx]))
                 if (GS.gs.result == '和了') {
                     for (let yaku of GS.gs.yakuStrings[idx]) {
                         this.infoThisRoundTable.append(createParaElem(this.parseYakuString(yaku)))
@@ -1081,6 +1091,11 @@ function calcDanger() {
             let pStr = String((tf[0]/tf[1]*100).toFixed(1)).padStart(4)
             GS.ui.genericModalBody.append(createElemWithText('pre', `${who} miss Tsumo ${accumPstr}% ${pStr}% ${tf[0]}/${tf[1]}`))
         }
+    }
+    let resultTypeStr = GS.ui.getResultTypeStr()
+    GS.ui.genericModalBody.append(createElemWithText('pre', 'Final Result:'))
+    for (let s of resultTypeStr) {
+        GS.ui.genericModalBody.append(createElemWithText('pre', s))
     }
     showModalAndWait(GS.ui.genericModal)
 }
