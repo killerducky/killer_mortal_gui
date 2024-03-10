@@ -1004,20 +1004,21 @@ function calcDanger() {
     // start on ply 1
     for (let ply=1; ply <= GS.ply_counter; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
-        let dangerousEvent = event.type == 'dahai' || event.type=='kakan'
         // Get state from before this ply happens
+        // TODO: No need to reloop all the events every time!
         let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(ply-1)
         for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
             if (!reach_accepted[tenpaiPidx]) {
                 continue // skip non-tenpai players
             }
-            {
+            let dangerousEvent = (event.type == 'dahai' || event.type=='kakan') && event.actor != tenpaiPidx
+            let tsumoAttempt = event.actor == tenpaiPidx && event.type == 'tsumo'
+            if (tsumoAttempt || dangerousEvent) {
                 let thisPidx = event.actor
                 let thisUnseenTiles = unseenTiles[thisPidx]
-                if (tenpaiPidx == thisPidx && event.type == 'tsumo') {
+                if (tsumoAttempt) {
                     // TODO: Beware this assumes GS.gs.hands for tenpai player is correct
                     // Which it is given reach_accepted==true and they cannot change wait shape
-                    console.log('cd tsumos', GS.gs.hands[tenpaiPidx], thisUnseenTiles)
                     let ukeireHand = Array(38).fill(0)
                     for (let t of GS.gs.hands[tenpaiPidx]) {
                         ukeireHand[normRedFive(t)-10]++
@@ -1028,8 +1029,6 @@ function calcDanger() {
                     }
                     let numUnseenTiles = sum(ukerieUnseen)
                     let ukeire = calculateUkeire(ukeireHand, ukerieUnseen, calculateMinimumShanten)
-                    let win = ukeire.tiles.includes(event.pai-10)
-                    console.log('cd tsumos ab', win, event, ukeire, numUnseenTiles, ukerieUnseen)
                     tsumoFails[tenpaiPidx].push([ukeire['value'], numUnseenTiles])
                 } else if (dangerousEvent) {
                     let waitsArray = generateWaits()
@@ -1039,7 +1038,7 @@ function calcDanger() {
                     dangers[thisPidx].push([`${String(relativeToHeroStr(thisPidx)).padStart(6)} -> ${tenpaiStr} ${i18next.t(event.type)} ${comboStr}`, comboP])
                 }
             }
-            if (ply == GS.ply_counter) {
+            if (ply == GS.ply_counter && tenpaiPidx != GS.heroPidx) {
                 let thisPidx = GS.heroPidx
                 let thisUnseenTiles = unseenTiles[thisPidx]
                 let waitsArray = generateWaits()
@@ -1081,7 +1080,6 @@ function calcDanger() {
             let accumPstr = String((accumP*100).toFixed(1)).padStart(4)
             let pStr = String((tf[0]/tf[1]*100).toFixed(1)).padStart(4)
             GS.ui.genericModalBody.append(createElemWithText('pre', `${who} miss Tsumo ${accumPstr}% ${pStr}% ${tf[0]}/${tf[1]}`))
-            console.log('tf', tf)
         }
     }
     showModalAndWait(GS.ui.genericModal)
