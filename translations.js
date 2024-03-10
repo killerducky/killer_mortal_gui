@@ -82,6 +82,8 @@ const i18next_data = {
                 "Round"   : "Round",
                 "Ron"     : "Ron",
                 "win-by"  : "{{type}} by {{winner}}",
+                "ron-full"  : "{{winner}} Rons {{loser}}",
+                "tsumo-full"  : "{{winner}} Tsumos",
                 "Tsumo"   : "Tsumo",
                 "流局"    : "Draw",
                 "流し満貫" : "Nagashi Mangan",

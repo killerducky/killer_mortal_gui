@@ -168,11 +168,12 @@ class UI {
         for (let idx=0; idx==0||idx<GS.gs.winner.length; idx++) {
             if (GS.gs.result == '和了') {
                 const winnerStr = relativeToHeroStr(GS.gs.winner[idx])
-                const payerStr = relativeToHeroStr(GS.gs.payer[idx])
-                const typeStr = GS.gs.winner[0] === GS.gs.payer[0] ? "Tsumo" : "Ron"
-                resultTypeStr[idx] = i18next.t('win-by', {type:i18next.t(typeStr), winner:winnerStr})
-                if (typeStr == "Ron") {
-                    resultTypeStr[idx] += ` Dealin by ${payerStr}`
+                if (GS.gs.winner[0] === GS.gs.payer[0]) {
+                    resultTypeStr[idx] = i18next.t('tsumo-full', {winner:winnerStr})
+                } else {
+                    const loserStr = relativeToHeroStr(GS.gs.payer[idx])
+                    resultTypeStr[idx] = i18next.t('ron-full', {winner:winnerStr, loser:loserStr})
+
                 }
             } else {
                 resultTypeStr[idx] = i18next.t(GS.gs.result)
@@ -1032,6 +1033,11 @@ function calcDanger() {
                     let ukeireHand = Array(38).fill(0)
                     for (let t of GS.gs.hands[tenpaiPidx]) {
                         ukeireHand[normRedFive(t)-10]++
+                    }
+                    // For now we are only dealing with Riichi, so the only calls possible are ankans
+                    let ankans = new Set(GS.gs.calls[tenpaiPidx].filter(x => !isNaN(x)))
+                    for (const t of ankans) {
+                        ukeireHand[normRedFive(t)-10] += 3
                     }
                     let ukerieUnseen = []
                     for (let i=0; i<38; i++) {
