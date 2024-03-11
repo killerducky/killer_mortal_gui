@@ -88,8 +88,17 @@
         <button class="close info-this-round-close" style="float:right">&times</button>
         <div class="info-this-round-table"></div>
     </dialog>
+    <dialog id="generic-modal" class="modal">
+        <div>
+            <span>
+                <h2 class="title">Modal Title</h2>
+                <button id="generic-modal-close" class="close">&times</button>
+            </span>
+            <div id="generic-modal-body"></div>
+        </div>
+    </dialog>
     <script src="https://unpkg.com/i18next@23.10.0/dist/umd/i18next.min.js"></script>
     <script src="translations.js?d=2"></script>
-    <script src="index.js?d=2"></script>
+    <script type="module" src="boot.js?d=2"></script>
 </body>
 </html>

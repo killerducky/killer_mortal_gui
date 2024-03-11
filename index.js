@@ -1,5 +1,9 @@
 "use strict";
 
+import { calculateMinimumShanten, calculateStandardShanten } from "./shanten.js";
+import { calculateUkeire } from "./efficiency.js"
+// // const { calculateMinimumShanten, calculateStandardShanten } = require("./shanten");
+
 class GlobalState {
     constructor() {
         this.ui = new UI
@@ -14,6 +18,11 @@ class GlobalState {
         this.showHands = false
         this.showMortal = true
         this.uiConnected = false
+
+        // calcCombos Weights
+        this.C_ccw_ryanmen = 3
+        this.C_ccw_honorTankiShanpon = 2
+        this.C_ccw_nonHonorTankiShanpon = 0.5
 
         this.C_soft_T = 2
 
@@ -108,6 +117,8 @@ class UI {
         this.infoThisRoundModal = document.querySelector('.info-this-round-modal')
         this.infoThisRoundTable = document.querySelector('.info-this-round-table')
         this.infoThisRoundClose = document.querySelector('.info-this-round-close')
+        this.genericModal = document.getElementById('generic-modal')
+        this.genericModalBody = document.getElementById('generic-modal-body')
         this.setPovPidx(0)
     }
     setPovPidx(newPidx) {
@@ -152,20 +163,28 @@ class UI {
         s += num
         return s
     }
-    relativeToHeroStr(pidx) {
-        let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
-        let key = ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
-        return i18next.t(`position-rel.${key}`)
-    }
     parseYakuString(yaku) {
         let s = yaku.split(/([\(\)])|([0-9]+)/)
         s = s.map(x => { return !x ? '' : x.match(/[0-9\-\(\)]/) ? x : i18next.t(x) })
         return s.join(' ')
     }
-    createParaElem(text) {
-        let p = document.createElement("p")
-        p.append(text)
-        return p
+    getResultTypeStr() {
+        let resultTypeStr = []
+        for (let idx=0; idx==0||idx<GS.gs.winner.length; idx++) {
+            if (GS.gs.result == '和了') {
+                const winnerStr = relativeToHeroStr(GS.gs.winner[idx])
+                if (GS.gs.winner[0] === GS.gs.payer[0]) {
+                    resultTypeStr[idx] = i18next.t('tsumo-full', {winner:winnerStr})
+                } else {
+                    const loserStr = relativeToHeroStr(GS.gs.payer[idx])
+                    resultTypeStr[idx] = i18next.t('ron-full', {winner:winnerStr, loser:loserStr})
+
+                }
+            } else {
+                resultTypeStr[idx] = i18next.t(GS.gs.result)
+            }
+        }
+        return resultTypeStr
     }
     updateGridInfo() {
         this.clearDiscardBars()
@@ -187,29 +206,22 @@ class UI {
         if (GS.gs.handOver) {
             this.infoThisRoundTable.replaceChildren()
             let table = document.createElement("table")
-            let resultTypeStr
+            let resultTypeStr = this.getResultTypeStr()
             for (let idx=0; idx==0||idx<GS.gs.winner.length; idx++) {
                 if (idx>0) {
                     this.infoThisRoundTable.append(document.createElement("br"))
                 }
-                if (GS.gs.result == '和了') {
-                    const winnerStr = this.relativeToHeroStr(GS.gs.winner[idx])
-                    const typeStr = GS.gs.winner[0] === GS.gs.payer[0] ? "Tsumo" : "Ron"
-                    resultTypeStr = i18next.t('win-by', {type:i18next.t(typeStr), winner:winnerStr})
-                } else {
-                    resultTypeStr = i18next.t(GS.gs.result)
-                }
-                this.infoThisRoundTable.append(this.createParaElem(resultTypeStr))
+                this.infoThisRoundTable.append(createParaElem(resultTypeStr[idx]))
                 if (GS.gs.result == '和了') {
                     for (let yaku of GS.gs.yakuStrings[idx]) {
-                        this.infoThisRoundTable.append(this.createParaElem(this.parseYakuString(yaku)))
+                        this.infoThisRoundTable.append(createParaElem(this.parseYakuString(yaku)))
                     }
                 }
             }
             for (let pidx=0; pidx<4+1; pidx++) {
                 let tr = table.insertRow()
                 let cell = tr.insertCell()
-                cell.textContent = `${this.relativeToHeroStr(pidx)}`
+                cell.textContent = `${relativeToHeroStr(pidx)}`
                 cell = tr.insertCell()
                 cell.textContent = `${event.scoreChangesPlusSticks[pidx]}`
             }
@@ -504,7 +516,7 @@ class UI {
         for (let i=0; i<2; i++) {
             for (let pidx=0; pidx<4+1; pidx++) {
                 cell = tr.insertCell()
-                cell.textContent = `${this.relativeToHeroStr(pidx)}`
+                cell.textContent = `${relativeToHeroStr(pidx)}`
             }
             if (i==0) {cell = tr.insertCell()}
         }
@@ -555,7 +567,14 @@ class UI {
         })
     }
 }
-
+function createElemWithText(type, text) {
+    let e = document.createElement(type)
+    e.append(text)
+    return e
+}
+function createParaElem(text) {
+    return createElemWithText("p", text)
+}
 function createRect(x, width, totHeight, fillRatio, fill) {
     let y = (1-fillRatio)*totHeight
     let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
@@ -574,9 +593,13 @@ function createSvgText(x, y, text) {
     svg.textContent = text
     return svg
 }
-
+function relativeToHeroStr(pidx) {
+    let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
+    let key = ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
+    return i18next.t(`position-rel.${key}`)
+}
 function sum(a) {
-    return a.reduce((a,b)=>a+b) // javascript really doesn't have this by default?
+    return a.reduce((a,b)=>a+b,0)
 }
 
 class Tile {
@@ -588,7 +611,7 @@ class Tile {
         this.called = false
     }
 }
-             
+
 //take '2m' and return 2 + 10 etc.
 function tm2t(str) { 
     if (str == undefined) {
@@ -640,6 +663,14 @@ function tenhou2str(tileInt) {
     return output
 }
 
+function tenhou2strH(tileInt) {
+    let output = tenhou2str(tileInt)
+    if (tileInt >= 41 && tileInt <= 47) {
+        output = i18next.t(output)
+    }
+    return output
+}
+
 // take 51 (0m) and return 15.1 for sorting
 function tileInt2Float(tileInt) {
     let f = tileInt == 51 ? 15.1 : tileInt == 52 ? 25.1 : tileInt == 53 ? 35.1 : tileInt
@@ -653,10 +684,14 @@ function tileSort(a, b) {
     return a1-b1
 }
 
+function normRedFive(t) {
+    return Math.floor(tileInt2Float(t))
+}
+
 // 15 == 51, 25 == 52 (aka 5s are equal to normal 5s)
 function fuzzyCompareTile(t1, t2) {
-    let ft1 = Math.floor(tileInt2Float(t1))
-    let ft2 = Math.floor(tileInt2Float(t2))
+    let ft1 = normRedFive(t1)
+    let ft2 = normRedFive(t2)
     return ft1 == ft2
 }
 
@@ -698,7 +733,7 @@ function updateState() {
                 }
             }
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
-        } else if (event.type == 'daiminkan') {
+        } else if (event.type == 'daiminkan') { // open kan
             let dp = GS.gs.discardPond[event.target]
             dp[dp.length-1].called = true
             GS.gs.hands[event.actor].push(event.pai)
@@ -718,7 +753,7 @@ function updateState() {
                 }
             }
             GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
-        } else if (event.type == 'kakan') {
+        } else if (event.type == 'kakan') { // added kan
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
             GS.gs.drawnTile[event.actor] = null
             removeFromArray(GS.gs.hands[event.actor], event.pai)
@@ -734,7 +769,7 @@ function updateState() {
                 throw new Error('Cannot find meld to kakan to')
             }
             GS.gs.calls[event.actor].splice(rotatedIdx+1, 0, event.pai, 'rotate', 'float')
-        } else if (event.type == 'ankan') {
+        } else if (event.type == 'ankan') { // closed kan
             GS.gs.hands[event.actor].push(GS.gs.drawnTile[event.actor])
             GS.gs.drawnTile[event.actor] = null
             let newCall = []
@@ -770,7 +805,8 @@ function updateState() {
         } else if (event.type == 'hora' || event.type == 'ryukyoku') {
             GS.gs.handOver = true
         } else if (event.type == 'dora') {
-            // TODO: I have my own logic for this, could remove now.
+            console.log('ERROR?')
+            throw new Error()
         } else {
             console.log(event)
             throw new Error('unknown type')
@@ -783,6 +819,348 @@ function updateState() {
     GS.ui.updateHandInfo()
     GS.ui.updateDiscardPond()
     GS.ui.updateGridInfo()
+}
+
+function generateWaits() {
+    let waitsArray = []
+    for (let ryanmen of [[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]]) {
+        for (let suit=1; suit<=3; suit++) {
+            let wait = {}
+            wait.tiles = [suit*10+ryanmen[0], suit*10+ryanmen[1]]
+            wait.waitsOn = [suit*10+ryanmen[0]-1, suit*10+ryanmen[1]+1]
+            wait.type = 'ryanmen'
+            waitsArray.push(wait)
+        }
+    }
+    for (let kanchan of [[1,3],[2,4],[3,5],[4,6],[5,7],[6,8],[7,9]]) {
+        for (let suit=1; suit<=3; suit++) {
+            let wait = {}
+            wait.tiles = [suit*10+kanchan[0], suit*10+kanchan[1]]
+            wait.waitsOn = [suit*10+kanchan[0]+1]
+            wait.type = 'kanchan'
+            waitsArray.push(wait)
+        }
+    }
+    // Beware this is getting a little more ad-hoc...
+    for (let penchan of [[1,2,3],[8,9,7]]) {
+        for (let suit=1; suit<=3; suit++) {
+            let wait = {}
+            wait.tiles = [suit*10+penchan[0], suit*10+penchan[1]]
+            wait.waitsOn = [suit*10+penchan[2]]
+            wait.type = 'penchan'
+            waitsArray.push(wait)
+        }
+    }
+    for (let tankiShanpon of ([1,2,3,4,5,6,7,8,9])) {
+        for (let type of ['tanki', 'shanpon']) {
+            for (let suit=1; suit<=4; suit++) {
+                if (suit==4 && tankiShanpon>7) {
+                    continue // honors are 41-47 only
+                }
+                let wait = {}
+                wait.type = type
+                wait.tiles = Array(type=='tanki' ? 1:2).fill([suit*10+tankiShanpon])
+                wait.waitsOn = [suit*10+tankiShanpon]
+                waitsArray.push(wait)
+            }
+        }
+    }
+    return waitsArray
+}
+
+function calcCombos(waitsArray, genbutsu, heroUnseenTiles) {
+    let combos = {'all':0}
+    let comboTypes = {}
+    for (let wait of waitsArray) {
+        console.assert(wait.tiles.length <= 2)
+        wait.combos = 1
+        for (let [i,t] of wait.tiles.entries()) {
+            if (i>0 && wait.type=='shanpon') {
+                wait.combos *= heroUnseenTiles[t]-1 // Shanpons pull the same tile, so after the first one there is 1 less remaining
+            } else {
+                wait.combos *= heroUnseenTiles[t]
+            }
+        }
+        // Shanpons: Order doesn't matter
+        if (wait.tiles[1] && wait.tiles[0] == wait.tiles[1]) {
+            wait.combos /= wait.tiles.length // Technically Math.exp(length) but it's always 2 for this case
+        }
+        let thisGenbutsu = wait.waitsOn.reduce((accum,t) => accum || genbutsu.includes(t), false)
+        if (thisGenbutsu) {
+            continue
+        }
+        wait.origCombos = wait.combos
+        // heuristic adjustment for waits that players tend to aim for
+        let honorTankiShanpon = ['shanpon','tanki'].includes(wait.type) && wait.tiles[0] > 40
+        let nonHonorTankiShanpon = ['shanpon','tanki'].includes(wait.type) && wait.tiles[0] < 40
+        if (['ryanmen'].includes(wait.type)) {
+            wait.combos *= GS.C_ccw_ryanmen
+        } else if (honorTankiShanpon) {
+            wait.combos *= GS.C_ccw_honorTankiShanpon
+        } else if (nonHonorTankiShanpon) {
+            wait.combos *= GS.C_ccw_nonHonorTankiShanpon
+        }
+        combos['all'] += wait.combos
+        if (!comboTypes[wait.type]) { comboTypes[wait.type] = 0 }
+        comboTypes[wait.type] += wait.combos
+        if (wait.type=='shanpon') {
+            wait.combos *= 2 // Shanpons always have a partner pair, so multiply by 2 *after* adding the the 'all' combos denominator
+        }
+        for (let t of wait.waitsOn) {
+            if (!combos[t]) { combos[t]={'all':0, 'types':[]} }
+            combos[t]['all'] += wait.combos
+            combos[t]['types'].push(wait)
+        }
+    }
+    let test = false
+    if (test) {
+        let tot = 0
+        for (let t in comboTypes) {
+            // let undoShanponMod = t == 'shanpon' ? 2 : 1
+            let undoShanponMod = 1
+            let p = comboTypes[t]/combos['all']/undoShanponMod
+            tot += p
+            console.log(t, comboTypes[t],(p*100).toFixed(1)) 
+        }
+    }
+    return combos
+}
+
+function combo2strAndP(key, combos) {
+    let keyCombo = combos[key]
+    let k = `${String(tenhou2strH(key)).padStart(2)}`
+    if (!(key in combos)) {
+        return [`${k}:`, 0]
+    }
+    let prob = keyCombo['all']/combos['all']
+    let p = `${String((prob*100).toFixed(1)).padStart(4)}`
+    let str = ''
+    str += `${k}: ${p}%`
+    str += ` = ${String(keyCombo['all']).padStart(2)}/${String(combos['all']).padStart(3)}`
+    for (let type of keyCombo.types) {
+        str += ' '
+        str += (type.tiles.map(x => tenhou2strH(x)).join('')).padStart(4)
+        str += ':'+String(type.combos).padStart(2)
+    }
+    return [str, prob]
+}
+
+function showSujis(genbutsu) {
+    let strArray = []
+    for (let ta of [[1,2,3], [4,5,6], [7,8,9]]) {
+        let str = ''
+        for (let suit=1; suit<=3; suit++) {
+            for (let t of ta) {
+                str += genbutsu.includes(suit*10+t) ? '-- ' : tenhou2str(suit*10+t) + ' '
+            }
+            str += '  '
+        }
+        strArray.push(str)
+    }
+    let sujiCnt = 18
+    for (let t of [4,5,6]) {
+        for (let suit=1; suit<=3; suit++) {
+            (genbutsu.includes(suit*10+t) || genbutsu.includes(suit*10+t-3)) && sujiCnt--
+            (genbutsu.includes(suit*10+t) || genbutsu.includes(suit*10+t+3)) && sujiCnt--
+        }
+    }
+    return [sujiCnt, strArray]
+}
+
+// For now just return true if they called riichi
+// Maybe could also do it for people who called twice?
+// Or called dora pon?
+function tenpaiEstimate(pidx) {
+    return GS.gs.thisRoundSticks[pidx]
+}
+
+function initUnseenTiles(pidx, gs) {
+    let allTiles = [11,12,13,14,15,16,17,18,19,21,22,23,24,25,26,27,28,29,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46,47]
+    let numT = {}
+    for (let t of allTiles) {
+        numT[t] = 4
+    }
+    let seenTiles = []
+    seenTiles.push(...gs.hands[pidx])
+    seenTiles.push(gs.dora[0])
+    for (let t of seenTiles) {
+        numT[normRedFive(t)]--
+    }
+    return numT
+}
+
+function weseeitnow(unseenTiles, tile, pidxAlreadySaw) {
+    for (let pidx=0; pidx<4; pidx++) {
+        if (pidx==pidxAlreadySaw) {
+            continue
+        }
+        unseenTiles[pidx][normRedFive(tile)]--
+    }
+}
+function incrementalCalcDangerHelper(currPly) {
+    let unseenTiles = []
+    let genbutsu = []
+    let reach_accepted = [false, false, false, false]
+    let gs = new GameState(GS.fullData.split_logs[GS.hand_counter].log[0])
+    for (let pidx=0; pidx<4; pidx++) {
+        unseenTiles[pidx] = initUnseenTiles(pidx, gs)
+        genbutsu[pidx] = []
+    }
+    for (let ply=0; ply <= currPly; ply++) {
+        let event = GS.ge[GS.hand_counter][ply]
+        if (event.dora_marker) {
+            weseeitnow(unseenTiles, event.dora_marker, -1)
+        }
+        if (event.type == 'tsumo') { // draw
+            unseenTiles[event.actor][normRedFive(event.pai)]--
+        } else if (['chi', 'pon', 'daiminikan', 'ankan'].includes(event.type)) {
+            // the other players will see the consumed tiles
+            for (let tile of event.consumed) {
+                weseeitnow(unseenTiles, tile, event.actor)
+            }
+        } else if (event.type == 'kakan') {
+            weseeitnow(unseenTiles, event.pai, event.actor)
+            for (let pidx=0; pidx<4; pidx++) {
+                // genbutsu if reach_accepted player doesn't Rob the Kan
+                if (reach_accepted[pidx]) {
+                    genbutsu[pidx].push(event.pai)
+                }
+            }
+        } else if (event.type == 'dahai') { // discard
+            weseeitnow(unseenTiles, event.pai, event.actor)
+            for (let pidx=0; pidx<4; pidx++) {
+                /// genbutsu = we discarded it ourselves, or we reach_accepted and anyone discarded it
+                if (event.actor == pidx || reach_accepted[pidx]) {
+                    genbutsu[pidx].push(event.pai)
+                }
+            }
+        } else if (event.type == 'reach_accepted') {
+            reach_accepted[event.actor] = true
+        }
+    }
+    return [unseenTiles, genbutsu, reach_accepted]
+}
+function calcDanger() {
+    GS.ui.genericModal.style.marginRight = '0px'
+    GS.ui.genericModalBody.replaceChildren()
+    GS.ui.genericModalBody.style.fontFamily = "Courier New"
+    GS.ui.genericModal.querySelector(".title").textContent = i18next.t("Dealin Danger")
+    let dangers = [[],[],[],[]]
+    let tsumoFails = [[],[],[],[]]
+    // start on ply 1
+    for (let ply=1; ply <= GS.ply_counter; ply++) {
+        let event = GS.ge[GS.hand_counter][ply]
+        // Get state from before this ply happens
+        // TODO: No need to reloop all the events every time!
+        let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(ply-1)
+        for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
+            if (!reach_accepted[tenpaiPidx]) {
+                continue // skip non-tenpai players
+            }
+            let dangerousEvent = (event.type == 'dahai' || event.type=='kakan') && event.actor != tenpaiPidx
+            let tsumoAttempt = event.actor == tenpaiPidx && event.type == 'tsumo'
+            if (tsumoAttempt || dangerousEvent) {
+                let thisPidx = event.actor
+                let thisUnseenTiles = unseenTiles[thisPidx]
+                if (tsumoAttempt) {
+                    // TODO: Beware this assumes GS.gs.hands for tenpai player is correct
+                    // Which it is given reach_accepted==true and they cannot change wait shape
+                    let ukeireHand = Array(38).fill(0)
+                    for (let t of GS.gs.hands[tenpaiPidx]) {
+                        ukeireHand[normRedFive(t)-10]++
+                    }
+                    // For now we are only dealing with Riichi, so the only calls possible are ankans
+                    let ankans = new Set(GS.gs.calls[tenpaiPidx].filter(x => !isNaN(x)))
+                    for (const t of ankans) {
+                        ukeireHand[normRedFive(t)-10] += 3
+                    }
+                    let ukerieUnseen = []
+                    for (let i=0; i<38; i++) {
+                        ukerieUnseen[i] = i%10==0 ? 0 : thisUnseenTiles[i+10]
+                    }
+                    let numUnseenTiles = sum(ukerieUnseen)
+                    let ukeire = calculateUkeire(ukeireHand, ukerieUnseen, calculateMinimumShanten)
+                    tsumoFails[tenpaiPidx].push([ukeire['value'], numUnseenTiles])
+                } else if (dangerousEvent) {
+                    let waitsArray = generateWaits()
+                    let combos = calcCombos(waitsArray, genbutsu[tenpaiPidx], thisUnseenTiles)
+                    let [comboStr, comboP] = combo2strAndP(event.pai, combos)
+                    let tenpaiStr = relativeToHeroStr(tenpaiPidx).padStart(6)
+                    dangers[thisPidx].push([`${String(relativeToHeroStr(thisPidx)).padStart(6)} -> ${tenpaiStr} ${i18next.t(event.type)} ${comboStr}`, comboP])
+                }
+            }
+            if (ply == GS.ply_counter && tenpaiPidx != GS.heroPidx) {
+                let thisPidx = GS.heroPidx
+                let thisUnseenTiles = unseenTiles[thisPidx]
+                let waitsArray = generateWaits()
+                let combos = calcCombos(waitsArray, genbutsu[tenpaiPidx], thisUnseenTiles)
+                GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
+                GS.ui.genericModalBody.append(createElemWithText('pre', (`${relativeToHeroStr(tenpaiPidx)} is tenpai! hero:p${GS.heroPidx} villian:p${tenpaiPidx}`)))
+                let [sujiCnt, sujiStrArray] = showSujis(genbutsu[tenpaiPidx])
+                for (let str of sujiStrArray) {
+                    GS.ui.genericModalBody.append(createElemWithText('pre', str))
+                }
+                GS.ui.genericModalBody.append(createElemWithText('pre', (`sujis tested ${18-sujiCnt}/18`)))
+                GS.ui.genericModalBody.append(createElemWithText('pre', (`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)))
+                GS.ui.genericModalBody.append(createElemWithText('pre', ('wait pattern combos:')))
+                let sumP = 0
+                for (let [key,combo] of Object.entries(combos)) {
+                    if (key=='all') {
+                        continue
+                    }
+                    sumP += combos[key]['all']
+                    GS.ui.genericModalBody.append(createElemWithText('pre', (combo2strAndP(key,combos))[0]))
+                }
+                GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
+                GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
+            }
+        }
+    }
+    let test = false
+    if (test) {
+        GS.ui.genericModalBody.append(createElemWithText('pre', ('wait pattern combos:')))
+        let sumP = 0
+        let allTiles = [11,12,13,14,15,16,17,18,19,21,22,23,24,25,26,27,28,29,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46,47]
+        let numT = {}
+        for (let t of allTiles) {
+            numT[t] = 4
+        }
+        numT[47] = 1
+        let combos = calcCombos(generateWaits(), [], numT)
+        for (let [key,combo] of Object.entries(combos)) {
+            if (key=='all') {
+                continue
+            }
+            sumP += combos[key]['all']
+            GS.ui.genericModalBody.append(createElemWithText('pre', (combo2strAndP(key,combos))[0]))
+        }
+        GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
+    }
+
+
+    for (let pidx=0; pidx<4; pidx++) {
+        let accumP = 0
+        for (let d of dangers[pidx]) {
+            accumP = accumP + (1-accumP)*d[1]
+            GS.ui.genericModalBody.append(createElemWithText('pre', `${String((accumP*100).toFixed(1)).padStart(4)}% ${d[0]}`))
+        }
+    }
+    for (let pidx=0; pidx<4; pidx++) {
+        let accumP = 0
+        let who = relativeToHeroStr(pidx)
+        for (let tf of tsumoFails[pidx]) {
+            accumP = accumP + (1-accumP)*tf[0]/tf[1]
+            let accumPstr = String((accumP*100).toFixed(1)).padStart(4)
+            let pStr = String((tf[0]/tf[1]*100).toFixed(1)).padStart(4)
+            GS.ui.genericModalBody.append(createElemWithText('pre', `${who} miss Tsumo ${accumPstr}% ${pStr}% ${tf[0]}/${tf[1]}`))
+        }
+    }
+    let resultTypeStr = GS.ui.getResultTypeStr()
+    GS.ui.genericModalBody.append(createElemWithText('pre', 'Final Result:'))
+    for (let s of resultTypeStr) {
+        GS.ui.genericModalBody.append(createElemWithText('pre', s))
+    }
+    showModalAndWait(GS.ui.genericModal)
 }
 
 function addResult() {
@@ -944,6 +1322,8 @@ function connectUI() {
     const closeModal = document.querySelector('.info-round-close')
     const closeAboutModal = document.querySelector('.about-close')
     const langSelect = document.getElementById("langSelect")
+    const genericModalClose = document.getElementById('generic-modal-close')
+    const genericModal = document.getElementById('generic-modal')
     const allModals = document.querySelectorAll('.modal')
     langSelect.value = i18next.language
     langSelect.addEventListener("change", () => {
@@ -1017,6 +1397,9 @@ function connectUI() {
     closeModal.addEventListener("click", () => {
         infoRoundModal.close()
     })
+    genericModalClose.addEventListener("click", () => {
+        genericModal.close()
+    })
     closeAboutModal.addEventListener("click", () => {
         aboutModal.close()
     })
@@ -1087,16 +1470,15 @@ function connectUI() {
         } else if (event.key == 'ArrowLeft') {
             decPlyCounter()
             updateState()
-        } else {
-            // console.log(event)
+        } else if (event.key == 'd') {
+            if (GS.alphaTestMode) {
+                if (!genericModal.open) {
+                    calcDanger()
+                } else {
+                    genericModal.close()
+                }
+            }
         }
-        // } else if (event.key == 'g') {
-        //     const roundGraphModel = document.querySelector('#round-graph-modal')
-        //     roundGraphModel.show()
-        //     roundGraphModel.addEventListener('click', (event) => {
-        //         roundGraphModel.close()
-        //     })
-        // }
     });
     document.addEventListener('wheel', function(event) {
         // If any modal is open, close the modal instead of doing anything else
@@ -1203,6 +1585,7 @@ function parseMortalJsonStr(data) {
             continue
         }
         if (data.mjai_log[idx-1].type == 'dora') {
+            // TODO: Convert to tenhou
             event.dora_marker = data.mjai_log[idx-1].dora_marker
         }
         currGe.push(event)
@@ -1243,6 +1626,28 @@ function normalizeAndSoften(pdfs) {
 function getCurrGe() {
     return GS.ge[GS.hand_counter][GS.ply_counter]
 }
+
+function testUkeire() {
+    let remainingTiles = Array(38).fill(4); // lazy just say all there who cares
+    let handTiles = Array(38).fill(0);
+    handTiles[31] = 1
+    handTiles[32] = 1
+    handTiles[33] = 1
+    handTiles[34] = 1
+    handTiles[35] = 1
+    handTiles[36] = 1
+    handTiles[37] = 1
+    handTiles[ 2] = 1
+    handTiles[ 5] = 1
+    handTiles[ 8] = 1
+    handTiles[12] = 1
+    handTiles[15] = 1
+    handTiles[18] = 1
+    console.log('a',calculateMinimumShanten(handTiles))
+    let shantenFunction = calculateMinimumShanten
+    console.log(calculateUkeire(handTiles, remainingTiles, shantenFunction))
+}
+// testUkeire()
 
 function discardOverflowTest() {
     for (let pidx=0; pidx<4; pidx++) {
@@ -1336,6 +1741,7 @@ function parseUrl() {
 }
 
 const GS = new GlobalState
+export default { main, GS, debugState }
 function main() {
     const lang = localStorage.getItem("lang") || "en"
     i18next_data.lng = lang

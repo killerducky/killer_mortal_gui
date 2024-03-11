@@ -43,6 +43,11 @@ body, .modal {
 .close {
     background: var(--color-accent2);
 }
+#generic-modal .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
 a {
     color: var(--color-text);
 }
@@ -318,6 +323,9 @@ table, th, td {
 .info-this-round-table > * {
     margin: 2px;
     text-wrap: nowrap;
+}
+#generic-modal-body > * {
+    margin: 2px;
 }
 .info-round-close {
     margin: 0.5rem;
