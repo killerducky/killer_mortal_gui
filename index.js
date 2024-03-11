@@ -944,6 +944,7 @@ function connectUI() {
     const closeModal = document.querySelector('.info-round-close')
     const closeAboutModal = document.querySelector('.about-close')
     const langSelect = document.getElementById("langSelect")
+    const allModals = document.querySelectorAll('.modal')
     langSelect.value = i18next.language
     langSelect.addEventListener("change", () => {
         if (i18next.language == langSelect.value) {
@@ -1033,30 +1034,86 @@ function connectUI() {
         updateState()
     })
     document.addEventListener('keydown', function(event) {
+        // If any modal is open, close the modal instead of doing anything else
+        for (let thisModal of allModals) {
+            if (thisModal.open) {
+                thisModal.close()
+                return
+            }
+        }
         if (event.key == 'h') {
             GS.showHands = !GS.showHands
             updateState()
         } else if (event.key == 'm') {
             GS.showMortal = !GS.showMortal
             updateState()
+        } else if (event.key == 'PageUp') {
+            do {
+                decPlyCounter();
+            } while (!stopCondition(true))
+            updateState()
+        } else if (event.key == 'PageDown') {
+            do {
+                incPlyCounter();
+            } while (!stopCondition(true))
+            updateState()
+        } else if (event.key == 'Home') {
+            if (GS.ply_counter != 0) {
+                GS.ply_counter = 0
+            } else {
+                decRoundCounter()
+            }
+            updateState()
+        } else if (event.key == 'End') {
+            if (GS.ply_counter != GS.ge[GS.hand_counter].length-1) {
+                GS.ply_counter = GS.ge[GS.hand_counter].length-1
+            } else {
+                incRoundCounter()
+            }
+            updateState()
+        } else if (event.key == 'ArrowDown') {
+            do {
+                incPlyCounter();
+            } while (!stopCondition(false))
+            updateState()
+        } else if (event.key == 'ArrowUp') {
+            do {
+                decPlyCounter();
+            } while (!stopCondition(false))
+            updateState()
+        } else if (event.key == 'ArrowRight') {
+            incPlyCounter()
+            updateState()
+        } else if (event.key == 'ArrowLeft') {
+            decPlyCounter()
+            updateState()
+        } else {
+            // console.log(event)
+        }
         // } else if (event.key == 'g') {
         //     const roundGraphModel = document.querySelector('#round-graph-modal')
         //     roundGraphModel.show()
         //     roundGraphModel.addEventListener('click', (event) => {
         //         roundGraphModel.close()
         //     })
-        }
+        // }
     });
     document.addEventListener('wheel', function(event) {
+        // If any modal is open, close the modal instead of doing anything else
+        for (let thisModal of allModals) {
+            if (thisModal.open) {
+                thisModal.close()
+                return
+            }
+        }
         if (event.deltaY > 0) {
             incPlyCounter()
             updateState()
         } else if (event.deltaY < 0) {
-            console.log('hi')
             decPlyCounter()
             updateState()
         } else {
-            console.log('deltaY=0?')
+            console.log('Error? deltaY=0?')
             console.log(event)
         }
     })
