@@ -6,13 +6,13 @@ let bestShanten;
 let minimumShanten;
 let hasGivenMinimum;
 
+export {
 // module.exports = {
-// export default {
-//     calculateMinimumShanten,
-//     calculateStandardShanten
-// }
+    calculateMinimumShanten,
+    calculateStandardShanten
+}
 
-export function calculateMinimumShanten(handToCheck, minimumShanten = -2) {
+function calculateMinimumShanten(handToCheck, minimumShanten = -2) {
     let chiitoiShanten = calculateChiitoitsuShanten(handToCheck);
     
     if (chiitoiShanten < 0) {
@@ -30,7 +30,7 @@ export function calculateMinimumShanten(handToCheck, minimumShanten = -2) {
     return Math.min(standardShanten, chiitoiShanten, kokushiShanten);
 }
 
-export function calculateChiitoitsuShanten(handToCheck) {
+function calculateChiitoitsuShanten(handToCheck) {
     hand = handToCheck.slice();
     let pairCount = 0, uniqueTiles = 0;
 
@@ -72,7 +72,7 @@ function calculateKokushiShanten(handToCheck) {
     return 13 - uniqueTiles - hasPair;
 }
 
-export function calculateStandardShanten(handToCheck, minimumShanten_ = -2) {
+function calculateStandardShanten(handToCheck, minimumShanten_ = -2) {
     hand = handToCheck.slice();
 
     // Initialize variables
