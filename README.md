@@ -12,8 +12,8 @@ It will output some URLs for reference, the last one is an example URL to point 
 
 Credits:
 
-* Compression from https://github.com/pieroxy/lz-string
-* Tenhou log stuff from https://github.com/Equim-chan/tensoul/blob/main/convert.js
 * Tiles https://github.com/FluffyStuff/riichi-mahjong-tiles
+* Tenhou log stuff from https://github.com/Equim-chan/tensoul/blob/main/convert.js
+* Ukeire, Shanten, etc utilities from https://github.com/Euophrys/mahjong-discord-bot
 * Translations originally from [Tenhou English UI Chrome extension](https://chromewebstore.google.com/detail/tenhou-english-ui/cbomnmkpjmleifejmnjhfnfnpiileiin)
-
+* Compression from https://github.com/pieroxy/lz-string

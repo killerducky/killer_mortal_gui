@@ -1423,10 +1423,12 @@ function connectUI() {
             GS.showMortal = !GS.showMortal
             updateState()
         } else if (event.key == 'd') {
-            if (!genericModal.open) {
-                calcDanger()
-            } else {
-                genericModal.close()
+            if (GS.alphaTestMode) {
+                if (!genericModal.open) {
+                    calcDanger()
+                } else {
+                    genericModal.close()
+                }
             }
         }
         // } else if (event.key == 'g') {
@@ -1678,6 +1680,7 @@ function parseUrl() {
 }
 
 const GS = new GlobalState
+export default { main, GS, debugState }
 function main() {
     const lang = localStorage.getItem("lang") || "en"
     i18next_data.lng = lang
