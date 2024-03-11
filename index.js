@@ -19,6 +19,11 @@ class GlobalState {
         this.showMortal = true
         this.uiConnected = false
 
+        // calcCombos Weights
+        this.C_ccw_ryanmen = 3
+        this.C_ccw_honorTankiShanpon = 2
+        this.C_ccw_nonHonorTankiShanpon = 0.5
+
         this.C_soft_T = 2
 
         this.C_db_height = 60
@@ -823,6 +828,7 @@ function generateWaits() {
             let wait = {}
             wait.tiles = [suit*10+ryanmen[0], suit*10+ryanmen[1]]
             wait.waitsOn = [suit*10+ryanmen[0]-1, suit*10+ryanmen[1]+1]
+            wait.type = 'ryanmen'
             waitsArray.push(wait)
         }
     }
@@ -831,6 +837,7 @@ function generateWaits() {
             let wait = {}
             wait.tiles = [suit*10+kanchan[0], suit*10+kanchan[1]]
             wait.waitsOn = [suit*10+kanchan[0]+1]
+            wait.type = 'kanchan'
             waitsArray.push(wait)
         }
     }
@@ -840,22 +847,22 @@ function generateWaits() {
             let wait = {}
             wait.tiles = [suit*10+penchan[0], suit*10+penchan[1]]
             wait.waitsOn = [suit*10+penchan[2]]
+            wait.type = 'penchan'
             waitsArray.push(wait)
         }
     }
     for (let tankiShanpon of ([1,2,3,4,5,6,7,8,9])) {
-        for (let suit=1; suit<=4; suit++) {
-            if (suit==4 && tankiShanpon>7) {
-                continue // honors are 41-47 only
+        for (let type of ['tanki', 'shanpon']) {
+            for (let suit=1; suit<=4; suit++) {
+                if (suit==4 && tankiShanpon>7) {
+                    continue // honors are 41-47 only
+                }
+                let wait = {}
+                wait.type = type
+                wait.tiles = Array(type=='tanki' ? 1:2).fill([suit*10+tankiShanpon])
+                wait.waitsOn = [suit*10+tankiShanpon]
+                waitsArray.push(wait)
             }
-            let waitT = {}
-            waitT.tiles = [suit*10+tankiShanpon]
-            waitT.waitsOn = [suit*10+tankiShanpon]
-            waitsArray.push(waitT)
-            let waitS = {}
-            waitS.tiles = [suit*10+tankiShanpon, suit*10+tankiShanpon]
-            waitS.waitsOn = [suit*10+tankiShanpon]
-            waitsArray.push(waitS)
         }
     }
     return waitsArray
@@ -863,11 +870,12 @@ function generateWaits() {
 
 function calcCombos(waitsArray, genbutsu, heroUnseenTiles) {
     let combos = {'all':0}
+    let comboTypes = {}
     for (let wait of waitsArray) {
         console.assert(wait.tiles.length <= 2)
         wait.combos = 1
         for (let [i,t] of wait.tiles.entries()) {
-            if (i>0 && wait.tiles[0] == wait.tiles[1]) {
+            if (i>0 && wait.type=='shanpon') {
                 wait.combos *= heroUnseenTiles[t]-1 // Shanpons pull the same tile, so after the first one there is 1 less remaining
             } else {
                 wait.combos *= heroUnseenTiles[t]
@@ -881,11 +889,38 @@ function calcCombos(waitsArray, genbutsu, heroUnseenTiles) {
         if (thisGenbutsu) {
             continue
         }
+        wait.origCombos = wait.combos
+        // heuristic adjustment for waits that players tend to aim for
+        let honorTankiShanpon = ['shanpon','tanki'].includes(wait.type) && wait.tiles[0] > 40
+        let nonHonorTankiShanpon = ['shanpon','tanki'].includes(wait.type) && wait.tiles[0] < 40
+        if (['ryanmen'].includes(wait.type)) {
+            wait.combos *= GS.C_ccw_ryanmen
+        } else if (honorTankiShanpon) {
+            wait.combos *= GS.C_ccw_honorTankiShanpon
+        } else if (nonHonorTankiShanpon) {
+            wait.combos *= GS.C_ccw_nonHonorTankiShanpon
+        }
         combos['all'] += wait.combos
+        if (!comboTypes[wait.type]) { comboTypes[wait.type] = 0 }
+        comboTypes[wait.type] += wait.combos
+        if (wait.type=='shanpon') {
+            wait.combos *= 2 // Shanpons always have a partner pair, so multiply by 2 *after* adding the the 'all' combos denominator
+        }
         for (let t of wait.waitsOn) {
             if (!combos[t]) { combos[t]={'all':0, 'types':[]} }
             combos[t]['all'] += wait.combos
             combos[t]['types'].push(wait)
+        }
+    }
+    let test = false
+    if (test) {
+        let tot = 0
+        for (let t in comboTypes) {
+            // let undoShanponMod = t == 'shanpon' ? 2 : 1
+            let undoShanponMod = 1
+            let p = comboTypes[t]/combos['all']/undoShanponMod
+            tot += p
+            console.log(t, comboTypes[t],(p*100).toFixed(1)) 
         }
     }
     return combos
@@ -1081,6 +1116,28 @@ function calcDanger() {
             }
         }
     }
+    let test = false
+    if (test) {
+        GS.ui.genericModalBody.append(createElemWithText('pre', ('wait pattern combos:')))
+        let sumP = 0
+        let allTiles = [11,12,13,14,15,16,17,18,19,21,22,23,24,25,26,27,28,29,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46,47]
+        let numT = {}
+        for (let t of allTiles) {
+            numT[t] = 4
+        }
+        numT[47] = 1
+        let combos = calcCombos(generateWaits(), [], numT)
+        for (let [key,combo] of Object.entries(combos)) {
+            if (key=='all') {
+                continue
+            }
+            sumP += combos[key]['all']
+            GS.ui.genericModalBody.append(createElemWithText('pre', (combo2strAndP(key,combos))[0]))
+        }
+        GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
+    }
+
+
     for (let pidx=0; pidx<4; pidx++) {
         let accumP = 0
         for (let d of dangers[pidx]) {
