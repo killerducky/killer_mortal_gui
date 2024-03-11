@@ -1047,6 +1047,19 @@ function connectUI() {
         //     })
         }
     });
+    document.addEventListener('wheel', function(event) {
+        if (event.deltaY > 0) {
+            incPlyCounter()
+            updateState()
+        } else if (event.deltaY < 0) {
+            console.log('hi')
+            decPlyCounter()
+            updateState()
+        } else {
+            console.log('deltaY=0?')
+            console.log(event)
+        }
+    })
 }
 
 function mergeMortalEvals(data) {
