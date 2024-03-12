@@ -50,6 +50,7 @@ class GlobalState {
         this.C_windStr = ['E', 'S', 'W', 'N']
 
         this.alphaTestMode = false
+        // this.alphaTestMode = true
     }
 }
 
@@ -1000,7 +1001,11 @@ function weseeitnow(unseenTiles, tile, pidxAlreadySaw) {
         unseenTiles[pidx][normRedFive(tile)]--
     }
 }
-function incrementalCalcDangerHelper(currPly) {
+function incrementalCalcDangerHelper(currPly, event) {
+    // For dahai(discards) or kakans, don't include that tile as genbutsu yet
+    if (event.type == 'dahai' || event.type=='kakan') {
+        currPly -= 1
+    }
     let unseenTiles = []
     let genbutsu = []
     let reach_accepted = [false, false, false, false]
@@ -1050,12 +1055,10 @@ function calcDanger() {
     GS.ui.genericModal.querySelector(".title").textContent = i18next.t("Dealin Danger")
     let dangers = [[],[],[],[]]
     let tsumoFails = [[],[],[],[]]
-    // start on ply 1
-    for (let ply=1; ply <= GS.ply_counter; ply++) {
+    for (let ply=0; ply <= GS.ply_counter; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
-        // Get state from before this ply happens
         // TODO: No need to reloop all the events every time!
-        let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(ply-1)
+        let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(ply, event)
         for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
             if (!reach_accepted[tenpaiPidx]) {
                 continue // skip non-tenpai players
@@ -1714,8 +1717,8 @@ function debugState() {
 
 // one-off tests for a given problem
 function tmpTest() {
-    // GS.hand_counter = 7
-    // GS.ply_counter = 24
+    GS.hand_counter = 5
+    GS.ply_counter = 127
     // let currGe = getCurrGe()
     // currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.5})
     // currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.4})
@@ -1738,6 +1741,7 @@ function parseUrl() {
         var status = xhr.status;
         if (status == 200) {
             setMortalJsonStr(xhr.response)
+            // tmpTest()
             updateState()
             connectUI()
         } else {
@@ -1748,12 +1752,11 @@ function parseUrl() {
 }
 
 const GS = new GlobalState
-export default { main, GS, debugState }
+export default { main, GS, debugState } // So we can access these from dev console
 function main() {
     const lang = localStorage.getItem("lang") || "en"
     i18next_data.lng = lang
     i18next.init(i18next_data).then(parseUrl(true))
-    // tmpTest()
 }
 main()
 
