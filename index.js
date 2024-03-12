@@ -48,6 +48,8 @@ class GlobalState {
         this.C_colorTileBg = getComputedStyle(document.documentElement).getPropertyValue('--color-tile-bg')
 
         this.C_windStr = ['E', 'S', 'W', 'N']
+
+        this.alphaTestMode = false
     }
 }
 
@@ -1481,10 +1483,14 @@ function connectUI() {
         }
     });
     document.addEventListener('wheel', function(event) {
+        // TODO: I think the modals themselves should block propogation of events instead?
         // If any modal is open, close the modal instead of doing anything else
         for (let thisModal of allModals) {
             if (thisModal.open) {
-                thisModal.close()
+                // Except don't close the danger modal, since we may need to scroll it
+                if (thisModal != genericModal) {
+                    thisModal.close()
+                }
                 return
             }
         }

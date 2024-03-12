@@ -82,11 +82,11 @@ h1{
     height:755px;
     grid-template-columns: 13.5% 22.0% 29.1% 22.0% 13.5%;
     grid-template-rows: 12.6% 20.5% 27.1% 20.5% 19.2%;
-    grid-template-areas: "ah-p3 ah-p2 ah-p2   ah-p2 ah-p2"
+    grid-template-areas: "ah-p2 ah-p2 ah-p2   ah-p2 ah-p1"
                          "ah-p3     . ad-p2   .     ah-p1"
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"
                          "ah-p3 .     ad-p0   .     ah-p1"
-                         "ah-p0 ah-p0 ah-p0   ah-p0 ah-p1";
+                         "ah-p3 ah-p0 ah-p0   ah-p0 ah-p0";
 }
 .grid-hand {
     display: flex;
