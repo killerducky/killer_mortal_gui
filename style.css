@@ -121,16 +121,23 @@ h1{
 .hand-calls-p1 {display: flex; flex-direction: column-reverse; }
 .hand-calls-p0 {display: flex; flex-direction: row; }
 .grid-hand-p0{
-    padding-right: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 .grid-hand-p1{
-    padding-top: 10px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    padding-left: 20px;
 }
 .grid-hand-p2{
-    padding-left: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 20px;
 }
 .grid-hand-p3{
-    padding-bottom: 10px;
+    padding-bottom: 15px;
+    padding-top: 15px;
+    padding-right:20px;
 }
 .tileImg {
     width:30px;
@@ -152,10 +159,10 @@ h1{
 .pov-p3 > div { width:44px; height:34px; }
 .pov-p1 > div { width:44px; height:34px; }
 .pov-p3 > div { width:44px; height:34px; }
-.pov-p0 > div:has(.rotate) { width:44px; height:34px; }
-.pov-p1 > div:has(.rotate) { width:34px; height:44px; }
-.pov-p2 > div:has(.rotate) { width:44px; height:34px; }
-.pov-p3 > div:has(.rotate) { width:34px; height:44px; }
+.pov-p0 > div:has(.rotate) { width:44px; height:44px; }
+.pov-p1 > div:has(.rotate) { width:44px; height:44px; }
+.pov-p2 > div:has(.rotate) { width:44px; height:44px; }
+.pov-p3 > div:has(.rotate) { width:44px; height:44px; }
 .pov-p0 > .narrow { width:17px; }
 .pov-p1 > .narrow { height:17px; }
 .pov-p2 > .narrow { width:17px; }
@@ -164,14 +171,14 @@ h1{
 .pov-p1 > div > img { transform: rotate(-90deg) translate(5px, 5px); }
 .pov-p2 > div > img { transform: rotate(180deg); }
 .pov-p3 > div > img { transform: rotate(90deg) translate(-5px, -5px); }
-.pov-p0 > div > .rotate { transform: rotate(90deg) translate(0px, -5px); }
-.pov-p1 > div > .rotate { transform: translate(5px, 0px); }
-.pov-p2 > div > .rotate { transform: rotate(-90deg) translate(10px, 5px); }
-.pov-p3 > div > .rotate { transform: translate(-5px, 0px); }
-.pov-p0 > div > .float { transform: rotate(90deg) translate(0px, -5px) translate(-51px, 44px); }
-.pov-p1 > div > .float { transform: translate(5px, 0px) translate(-51px, 0px);}
-.pov-p2 > div > .float { transform: rotate(-90deg) translate(10px, 5px) translate(-17px, 0px)}
-.pov-p3 > div > .float { transform: translate(-5px, 0px) translate(17px, -44px); }
+.pov-p0 > div > .rotate { transform-origin: bottom left; transform: rotate(90deg) translate(-34px, 0px); }
+.pov-p1 > div > .rotate { transform: translate(10px, 0px); }
+.pov-p2 > div > .rotate { transform-origin: bottom left; transform: rotate(-90deg) translate(10px, 44px); }
+.pov-p3 > div > .rotate { transform: translate(0px, 0px); }
+.pov-p0 > div > .float { transform-origin: bottom left; transform: rotate(90deg) translate(-68px, 44px); }
+.pov-p1 > div > .float { transform: translate(-24px, 0px);}
+.pov-p2 > div > .float { transform-origin: bottom left; transform: rotate(-90deg) translate(-24px, 44px)}
+.pov-p3 > div > .float { transform: translate(34px, -44px); }
 .pov-p0 > div:has(.float) { width:0px; height: 0px;}
 .pov-p1 > div:has(.float) { width:0px; height: 0px;}
 .pov-p2 > div:has(.float) { width:0px; height: 0px;}
