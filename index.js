@@ -106,6 +106,7 @@ class GameState {
 class UI {
     constructor() {
         this.hands = [[],[],[],[]]
+        this.calls = [[],[],[],[]]
         this.discards = [[],[],[],[]]
         this.pInfo = [[],[],[],[]]
         this.pInfoResult = [[],[],[],[]]
@@ -127,7 +128,8 @@ class UI {
         this.povPidx = newPidx
         for (let pidx=0; pidx<4; pidx++) {
             let tmpPovPidx = (4 + pidx - this.povPidx) % 4
-            this.hands[pidx] = document.querySelector(`.grid-hand-p${tmpPovPidx}`)
+            this.hands[pidx] = document.querySelector(`.hand-closed-p${tmpPovPidx}`)
+            this.calls[pidx] = document.querySelector(`.hand-calls-p${tmpPovPidx}`)
             this.discards[pidx] = document.querySelector(`.grid-discard-p${tmpPovPidx}`)
             this.pInfo[pidx] = document.querySelector(`.gi-p${tmpPovPidx}`)
             this.pInfoResult[pidx] = document.querySelector(`.gi-p${tmpPovPidx}-result`)
@@ -365,7 +367,7 @@ class UI {
             let matchingDetail = mortalEval.details[matchingDetailIdx]
             let Pval = matchingDetail.normProb*100
             let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+0.5
-            let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
+            let xloc = GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (matchingDetailIdx == mortalEval.actual_index) {
                 svgElement.appendChild(createRect(
                     xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
@@ -378,47 +380,46 @@ class UI {
     }
     updateHandInfo() {
         for (let pidx=0; pidx<4; pidx++) {
-            this.addHandTiles(pidx, [], true)
+            this.addHandTiles(pidx, 'hand', [], true)
             for (let tileInt of GS.gs.hands[pidx]) {
                 // TODO: Draw and all tenpai could show the hands also?
                 if (GS.showHands || (GS.gs.handOver && GS.gs.scoreChanges[pidx]>0) || pidx==GS.heroPidx) {
-                    this.addHandTiles(pidx, [tenhou2str(tileInt)], false)
+                    this.addHandTiles(pidx, 'hand', [tenhou2str(tileInt)], false)
                 } else {
-                    this.addHandTiles(pidx, ['back'], false)
+                    this.addHandTiles(pidx, 'hand', ['back'], false)
                 }
             }
             this.addBlankSpace(pidx, true)
             if (GS.gs.drawnTile[pidx] != null) {
                 if (GS.showHands || (GS.gs.handOver && GS.gs.scoreChanges[pidx]>0) || pidx==GS.heroPidx) {
-                    this.addHandTiles(pidx, [tenhou2str(GS.gs.drawnTile[pidx])], false)
+                    this.addHandTiles(pidx, 'hand', [tenhou2str(GS.gs.drawnTile[pidx])], false)
                 } else {
-                    this.addHandTiles(pidx, ['back'], false)
+                    this.addHandTiles(pidx, 'hand', ['back'], false)
                 }
-            } else {
-                this.addBlankSpace(pidx, false)
             }
             if (GS.gs.calls[pidx].length > 0) {
-                this.addBlankSpace(pidx, true)
                 for (let tileInt of GS.gs.calls[pidx]) {
                     if (tileInt == 'rotate') {
                         this.rotateLastTile(pidx, 'hand')
                     } else if (tileInt == 'float') {
                         this.floatLastTile(pidx)
                     } else if (tileInt == 'back') {
-                        this.addHandTiles(pidx, [tileInt], false)
+                        this.addHandTiles(pidx, 'call', [tileInt], false)
                     } else {
-                        this.addHandTiles(pidx, [tenhou2str(tileInt)], false)
+                        this.addHandTiles(pidx, 'call', [tenhou2str(tileInt)], false)
                     }
                 }
             }
         }
     }
-    addHandTiles(pidx, tileStrArray, replace) {
+    addHandTiles(pidx, type, tileStrArray, replace) {
+        let div = type == 'call' ? this.calls[pidx] : this.hands[pidx]
         if (replace) {
             this.hands[pidx].replaceChildren()
+            this.calls[pidx].replaceChildren()
         }
         for (let i in tileStrArray) {
-            this.hands[pidx].appendChild(createTile(tileStrArray[i]))
+            div.appendChild(createTile(tileStrArray[i]))
         }   
     }
     addDiscardTiles(pidx, tileStrArray, replace) {
@@ -440,15 +441,15 @@ class UI {
         }   
     }
     rotateLastTile(pidx, type) {
-        let div = (type=='hand') ? this.hands[pidx] : this.discards[pidx]
+        let div = (type=='hand') ? this.calls[pidx] : this.discards[pidx]
         div.lastChild.lastChild.classList.add('rotate')
     }
     floatLastTile(pidx) {
-        let div = this.hands[pidx]
+        let div = this.calls[pidx]
         div.lastChild.lastChild.classList.add('float')
     }
     addBlankSpace(pidx, narrow) {
-        this.addHandTiles(pidx, ['Blank'], false)
+        this.addHandTiles(pidx, 'hand', ['Blank'], false)
         this.hands[pidx].lastChild.style.opacity = "0"
         if (narrow) {
             this.hands[pidx].lastChild.classList.add('narrow')
