@@ -43,6 +43,7 @@ body, .modal {
 .modal {
     position: relative;
     padding: 25px;
+    max-height: 90%;
 }
 .close {
     position: absolute;

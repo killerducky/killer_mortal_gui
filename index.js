@@ -940,10 +940,9 @@ function combo2strAndP(key, combos) {
     let p = `${String((prob*100).toFixed(1)).padStart(4)}`
     let str = ''
     str += `${k}: ${p}%`
-    str += ` = ${String(keyCombo['all']).padStart(2)}/${String(combos['all']).padStart(3)}`
     for (let type of keyCombo.types) {
         str += ' '
-        str += (type.tiles.map(x => tenhou2strH(x)).join('')).padStart(4)
+        str += (type.tiles.map(x => tenhou2strH(x)).join('')).padStart(0)
         str += ':'+String(type.combos).padStart(2)
     }
     return [str, prob]
@@ -1122,6 +1121,7 @@ function calcDanger() {
     }
     let test = false
     if (test) {
+        // Pretend we don't see any tiles.
         GS.ui.genericModalBody.append(createElemWithText('pre', ('wait pattern combos:')))
         let sumP = 0
         let allTiles = [11,12,13,14,15,16,17,18,19,21,22,23,24,25,26,27,28,29,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46,47]
@@ -1129,7 +1129,7 @@ function calcDanger() {
         for (let t of allTiles) {
             numT[t] = 4
         }
-        numT[47] = 1
+        numT[47] = 1 // Test only 1 unseed Red dragon
         let combos = calcCombos(generateWaits(), [], numT)
         for (let [key,combo] of Object.entries(combos)) {
             if (key=='all') {
@@ -1140,7 +1140,6 @@ function calcDanger() {
         }
         GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${sumP}/${combos['all']} = ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
     }
-
 
     for (let pidx=0; pidx<4; pidx++) {
         let accumP = 0
