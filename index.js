@@ -1032,7 +1032,7 @@ function incrementalCalcDangerHelper(currPly) {
             for (let pidx=0; pidx<4; pidx++) {
                 // genbutsu if reach_accepted player doesn't Rob the Kan
                 if (reach_accepted[pidx]) {
-                    genbutsu[pidx].push(event.pai)
+                    genbutsu[pidx].push(normRedFive(event.pai))
                 }
             }
         } else if (event.type == 'dahai') { // discard
@@ -1040,13 +1040,14 @@ function incrementalCalcDangerHelper(currPly) {
             for (let pidx=0; pidx<4; pidx++) {
                 /// genbutsu = we discarded it ourselves, or we reach_accepted and anyone discarded it
                 if (event.actor == pidx || reach_accepted[pidx]) {
-                    genbutsu[pidx].push(event.pai)
+                    genbutsu[pidx].push(normRedFive(event.pai))
                 }
             }
         } else if (event.type == 'reach_accepted') {
             reach_accepted[event.actor] = true
         }
     }
+    genbutsu = [...new Set(genbutsu)];
     return [unseenTiles, genbutsu, reach_accepted]
 }
 function doCalculateUkeire(pidx, thisUnseenTiles) {
@@ -1069,29 +1070,30 @@ function doCalculateUkeire(pidx, thisUnseenTiles) {
     let ukeire = calculateUkeire(ukeireHand, ukerieUnseen, calculateMinimumShanten)
     return ukeire
 }
-function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu) {
+function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, event, dangersDiv) {
+    dangersDiv.replaceChildren()
     let thisUnseenTiles = unseenTiles[thisPidx]
     let waitsArray = generateWaits()
     let combos = calcCombos(waitsArray, genbutsu[tenpaiPidx], thisUnseenTiles)
-    GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
-    GS.ui.genericModalBody.append(createElemWithText('pre', (`${relativeToHeroStr(tenpaiPidx)} is tenpai! Dangerous POV:${relativeToHeroStr(GS.heroPidx)}`)))
+    dangersDiv.append(createElemWithText('pre', ('------------------------------------------')))
+    dangersDiv.append(createElemWithText('pre', (`${relativeToHeroStr(thisPidx)} ${i18next.t(event.type)} ${tenhou2strH(event.pai)} while ${relativeToHeroStr(tenpaiPidx)} is tenpai!`)))
     let [sujiCnt, sujiStrArray] = showSujis(genbutsu[tenpaiPidx])
     for (let str of sujiStrArray) {
-        GS.ui.genericModalBody.append(createElemWithText('pre', str))
+        dangersDiv.append(createElemWithText('pre', str))
     }
-    GS.ui.genericModalBody.append(createElemWithText('pre', (`sujis tested ${18-sujiCnt}/18`)))
-    GS.ui.genericModalBody.append(createElemWithText('pre', (`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)))
-    GS.ui.genericModalBody.append(createElemWithText('pre', ('wait pattern combos:')))
+    dangersDiv.append(createElemWithText('pre', (`sujis tested ${18-sujiCnt}/18`)))
+    dangersDiv.append(createElemWithText('pre', (`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)))
+    dangersDiv.append(createElemWithText('pre', ('wait pattern combos:')))
     let sumP = 0
     for (let [key,combo] of Object.entries(combos)) {
         if (key=='all') {
             continue
         }
         sumP += combos[key]['all']
-        GS.ui.genericModalBody.append(createElemWithText('pre', (combo2strAndP(key,combos))[0]))
+        dangersDiv.append(createElemWithText('pre', (combo2strAndP(key,combos))[0]))
     }
-    GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
-    GS.ui.genericModalBody.append(createElemWithText('pre', ('------------------------------------------')))
+    dangersDiv.append(createElemWithText('pre', (`sumP ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
+    dangersDiv.append(createElemWithText('pre', ('------------------------------------------')))
 }
 function testDangers() {
         // Pretend we don't see any tiles.
@@ -1121,7 +1123,7 @@ function calcDanger() {
     // testDangers()
     let dangers = [[],[],[],[]]
     let tsumoFails = [[],[],[],[]]
-    for (let ply=0; ply <= GS.ply_counter; ply++) {
+    for (let ply=0; ply < GS.ge[GS.hand_counter].length; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
         // TODO: No need to reloop all the events every time!
         let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(ply)
@@ -1139,11 +1141,20 @@ function calcDanger() {
                     let ukeire = doCalculateUkeire(tenpaiPidx, thisUnseenTiles)
                     tsumoFails[tenpaiPidx].push([ukeire['value'], numUnseenTiles])
                 } else if (dangerousEvent) {
-                    let waitsArray = generateWaits()
-                    let combos = calcCombos(waitsArray, genbutsu[tenpaiPidx], thisUnseenTiles)
-                    let [comboStr, comboP] = combo2strAndP(event.pai, combos)
-                    let tenpaiStr = relativeToHeroStr(tenpaiPidx).padStart(6)
-                    dangers[thisPidx].push([`${String(relativeToHeroStr(thisPidx)).padStart(6)} -> ${tenpaiStr} ${i18next.t(event.type)} ${comboStr}`, comboP])
+                    let thisDanger = {}
+                    thisDanger['waitsArray'] = generateWaits()
+                    thisDanger['combos'] = calcCombos(thisDanger['waitsArray'], genbutsu[tenpaiPidx], thisUnseenTiles)
+                    let [a,b] = combo2strAndP(event.pai, thisDanger['combos'])
+                    thisDanger['comboStr'] = a
+                    thisDanger['comboP'] = b
+                    thisDanger['tenpaiPidx'] = tenpaiPidx
+                    thisDanger['thisPidx'] = thisPidx
+                    thisDanger['unseenTiles'] = unseenTiles
+                    thisDanger['genbutsu'] = genbutsu
+                    thisDanger['tenpaiStr'] = relativeToHeroStr(tenpaiPidx).padStart(6)
+                    thisDanger['event'] = event
+                    thisDanger['ply'] = ply
+                    dangers[thisPidx].push(thisDanger)
                 }
             }
         }
@@ -1153,12 +1164,18 @@ function calcDanger() {
     for (let s of resultTypeStr) {
         GS.ui.genericModalBody.append(createElemWithText('pre', s))
     }
-    GS.ui.genericModalBody.append(createElemWithText('pre', ' '))
+    const dangersDiv = document.createElement('div')
     for (let pidx=0; pidx<4; pidx++) {
         let accumP = 0
         for (let d of dangers[pidx]) {
-            accumP = accumP + (1-accumP)*d[1]
-            GS.ui.genericModalBody.append(createElemWithText('pre', `${String((accumP*100).toFixed(1)).padStart(4)}% ${d[0]}`))
+            accumP = accumP + (1-accumP)*d['comboP']
+            GS.ui.genericModalBody.append(createElemWithText('pre', 
+                `${String(relativeToHeroStr(d['thisPidx'])).padStart(6)} ${String((accumP*100).toFixed(1)).padStart(4)}% -> ${d['tenpaiStr']} ${d['comboStr']}`))
+            GS.ui.genericModalBody.lastChild.addEventListener('click', (event) => {
+                showDangers(d['thisPidx'], d['tenpaiPidx'], d['unseenTiles'], d['genbutsu'], d['event'], dangersDiv)
+                GS.ply_counter = d['ply']
+                updateState()
+            })
         }
     }
     GS.ui.genericModalBody.append(createElemWithText('pre', ' '))
@@ -1172,15 +1189,7 @@ function calcDanger() {
             GS.ui.genericModalBody.append(createElemWithText('pre', `${who} miss Tsumo ${accumPstr}% ${pStr}% ${tf[0]}/${tf[1]}`))
         }
     }
-    {
-        let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(GS.ply_counter)
-        for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
-            if (!reach_accepted[tenpaiPidx]) {
-                continue // skip non-tenpai players
-            }
-            showDangers(GS.heroPidx, tenpaiPidx, unseenTiles, genbutsu)
-        }
-    }
+    GS.ui.genericModalBody.append(dangersDiv)
     showModalAndWait(GS.ui.genericModal)
 }
 

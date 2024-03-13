@@ -345,7 +345,7 @@ table, th, td {
     margin: 2px;
     text-wrap: nowrap;
 }
-#generic-modal-body > * {
+#generic-modal-body * {
     margin: 2px;
 }
 .controls > *:hover {
