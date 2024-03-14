@@ -27,7 +27,8 @@ class GlobalState {
         this.C_soft_T = 2
 
         this.C_zoom = getComputedStyle(document.documentElement).getPropertyValue('--zoom')
-        this.C_zoom = ((30*this.C_zoom)+4) / (30+4)
+        this.C_zoomTiles =  (34*this.C_zoom - 4) / (34-4)
+
         this.C_db_height = 60
         this.C_db_totWidth = 605
         this.C_db_handPadding = 15
@@ -37,8 +38,6 @@ class GlobalState {
         this.C_db_mortBarWidth = 10
         this.C_cb_heroBarHeight = 60
         this.C_cb_mortBarHeightRatio = 0.9
-        this.C_cb_totHeight = 115
-        this.C_cb_totWidth = 260
         this.C_cb_padding = 10
         this.C_cb_widthFactor = 1.5
         this.C_cb_maxShown = 4
@@ -259,8 +258,9 @@ class UI {
     clearCallBars() {
         const callBars = document.querySelector('.killer-call-bars')
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        svgElement.setAttribute("width", GS.C_cb_totWidth)
-        svgElement.setAttribute("height", GS.C_cb_totHeight)
+        svgElement.setAttribute('transform-origin', 'top left')
+        svgElement.setAttribute('transform', `scale(${GS.C_zoom})`)
+        svgElement.setAttribute('style', 'position:absolute')
         callBars.replaceChildren(svgElement)
     }
     createTileSvg(x, y, tile) {
@@ -344,7 +344,7 @@ class UI {
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
         svgElement.setAttribute("padding", GS.C_db_padding)
-        svgElement.setAttribute('transform-origin', 'bottom left')
+        svgElement.setAttribute('transform-origin', 'top left')
         svgElement.setAttribute('transform', `scale(${GS.C_zoom})`)
         discardBars.replaceChildren(svgElement)
     }

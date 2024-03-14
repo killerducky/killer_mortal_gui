@@ -2,8 +2,15 @@
     --main-width: 750px;
     --main-height: 800px;
     --max-width: 1100px;
-    --zoom: 1;
-    --tile-img-width: calc(var(--zoom) * 30px);
+    --zoom: 1.0;
+    /*
+    zoom 0.5
+    34x44 tile-div goes to 17x40
+    30x40 tile-img goes to 14x36
+    zoom-tiles = 14/30 = 0.466 = ((34*0.5)-4)/(34-4)
+    */
+    --zoom-tiles: calc(((34 * var(--zoom)) - 4) / (34 - 4));
+    --tile-img-width: calc(var(--zoom-tiles) * 30px);
     --tile-img-height: calc(var(--tile-img-width) * 4 / 3);
     --tile-width:calc(var(--tile-img-width) + 4px);
     --tile-height:calc(var(--tile-img-height) + 4px);
@@ -288,7 +295,7 @@ h1{
 .discard-bars {
     display: grid;
     grid-template-columns: 1fr;
-    height:62px;
+    height:calc(var(--zoom-tiles) * 62px);
 }
 .sidebar {
     margin:10px;
@@ -299,7 +306,7 @@ h1{
 }
 .controls {
     display:grid;
-    grid-template-columns: repeat(2, 120px);
+    grid-template-columns: repeat(2, calc(var(--zoom)*120px));
     padding:10px;
     background:var(--color-accent);
 }
@@ -367,11 +374,13 @@ button:hover, select:hover {
 .killer-call-bars {
     background: var(--color-accent3);
     padding: 10px;
+    width: calc(var(--zoom)*260px);
+    height: calc(var(--zoom)*115px);
     margin: auto;
 }
 .killer-call-img {
     margin: auto;
-    width:128px;
+    width:calc(var(--zoom)*128px);
     margin-top: 20px;
 }
 .about-metadata table {
@@ -389,16 +398,20 @@ button:hover, select:hover {
 }
 
 @media screen and (max-width: 900px) {
+    :root{
+        --zoom:0.5;
+        font-size:x-small;
+    }
     .outer {
         flex-direction: column;
         align-items: center;
     }
     .controls > * {
-        margin:12px;
+        /* margin:12px;
         padding-left:12px;
         padding-right:12px;
         padding-top: 20px;
-        padding-bottom: 20px;
-        font-size:larger;
+        padding-bottom: 20px; */
+        font-size:x-small;
     }
 }
