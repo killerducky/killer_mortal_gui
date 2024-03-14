@@ -2,6 +2,10 @@
     --main-width: 750px;
     --main-height: 800px;
     --max-width: 1100px;
+    --tile-img-width: 30px;
+    --tile-img-height: calc(var(--tile-img-width) * 4 / 3);
+    --tile-width:calc(var(--tile-img-width) + 4px);
+    --tile-height:calc(var(--tile-img-height) + 4px);
 
     /* blue-green, accents go lighter */
     --color-main:   hsl(190, 100%, 8%);
@@ -141,8 +145,8 @@ h1{
     padding-right:20px;
 }
 .tileImg {
-    width:30px;
-    height:40px;
+    width:calc(var(--tile-img-width));
+    height:calc(var(--tile-img-height));
     background:white;
     filter:brightness(92%) saturate(80%);
     border: 1px solid grey;
@@ -155,33 +159,33 @@ h1{
 .called {
     opacity:var(--opacity-called);
 }
-.tileDiv { width:34px; height:44px; }
-.pov-p1 > div { width:44px; height:34px; }
-.pov-p3 > div { width:44px; height:34px; }
-.pov-p1 > div { width:44px; height:34px; }
-.pov-p3 > div { width:44px; height:34px; }
-.pov-p0 > div:has(.rotate) { width:44px; height:44px; }
-.pov-p1 > div:has(.rotate) { width:44px; height:44px; }
-.pov-p2 > div:has(.rotate) { width:44px; height:44px; }
-.pov-p3 > div:has(.rotate) { width:44px; height:44px; }
-.pov-p0 > .narrow { width:17px; }
-.pov-p1 > .narrow { height:17px; }
-.pov-p2 > .narrow { width:17px; }
-.pov-p3 > .narrow { height:17px; }
+.tileDiv { width:var(--tile-width); height:var(--tile-height); }
+.pov-p1 > div { width:var(--tile-height); height:var(--tile-width); }
+.pov-p3 > div { width:var(--tile-height); height:var(--tile-width); }
+.pov-p1 > div { width:var(--tile-height); height:var(--tile-width); }
+.pov-p3 > div { width:var(--tile-height); height:var(--tile-width); }
+.pov-p0 > div:has(.rotate) { width:var(--tile-height); height:var(--tile-height); }
+.pov-p1 > div:has(.rotate) { width:var(--tile-height); height:var(--tile-height); }
+.pov-p2 > div:has(.rotate) { width:var(--tile-height); height:var(--tile-height); }
+.pov-p3 > div:has(.rotate) { width:var(--tile-height); height:var(--tile-height); }
+.pov-p0 > .narrow { width:calc(0.5 * var(--tile-width)); }
+.pov-p1 > .narrow { height:calc(0.5 * var(--tile-width)); }
+.pov-p2 > .narrow { width:calc(0.5 * var(--tile-width)); }
+.pov-p3 > .narrow { height:calc(0.5 * var(--tile-width)); }
 /* .pov-p0 > div > img  no transform needed */
-.pov-p0 > div > .rotate { transform-origin: bottom left; transform: rotate(90deg) translate(-34px, 0px); }
-.pov-p0 > div > .float { transform-origin: bottom left; transform: rotate(90deg) translate(-68px, 44px); }
-.pov-p1 > div > img { transform-origin: top left; transform: rotate(-90deg) translate(-34px, 0px); }
+.pov-p0 > div > .rotate { transform-origin: bottom left; transform: rotate(90deg) translate(calc(-1 * var(--tile-width)), 0px); }
+.pov-p0 > div > .float { transform-origin: bottom left; transform: rotate(90deg) translate(calc(-2 * var(--tile-width)), var(--tile-height)); }
+.pov-p1 > div > img { transform-origin: top left; transform: rotate(-90deg) translate(calc(-1 * var(--tile-width)), 0px); }
 .pov-p1 > div > .rotate { float: right; transform: translate(0px, 0px); }
-.pov-p1 > div > .float { transform: translate(-34px, 0px);}
+.pov-p1 > div > .float { transform: translate(calc(-1 * var(--tile-width)), 0px);}
 .pov-p2 > div > img { transform: rotate(180deg); }
-.pov-p2 > div > .rotate { transform-origin: top left; transform: rotate(-90deg) translate(-34px, 0px); }
-.pov-p2 > div > .float { transform-origin: top left; transform: rotate(-90deg) translate(-68px, 0px); }
-.pov-p3 > div > img { float:right; transform-origin:top right; transform: rotate(90deg) translate(34px, 0px); }
+.pov-p2 > div > .rotate { transform-origin: top left; transform: rotate(-90deg) translate(calc(-1 * var(--tile-width)), 0px); }
+.pov-p2 > div > .float { transform-origin: top left; transform: rotate(-90deg) translate(calc(-2 * var(--tile-width)), 0px); }
+.pov-p3 > div > img { float:right; transform-origin:top right; transform: rotate(90deg) translate(var(--tile-width), 0px); }
 .pov-p3 > div > .rotate { float:left; transform: translate(0px, 0px); }
-.pov-p3 > div > .float { transform: translate(34px, -44px); }
+.pov-p3 > div > .float { transform: translate(var(--tile-width), calc(-1 * var(--tile-height))); }
 .pov-p0 > div:has(.float) { width:0px; height: 0px;}
-.pov-p1 > div:has(.float) { width:44px; height: 0px;}
+.pov-p1 > div:has(.float) { width:var(--tile-height); height: 0px;}
 .pov-p2 > div:has(.float) { width:0px; height: 0px;}
 .pov-p3 > div:has(.float) { width:0px; height: 0px;}
 .pov-p0 > div:has(.last-discard) { transform: translate(6px, 6px); }
