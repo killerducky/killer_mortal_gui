@@ -2,8 +2,9 @@
     --main-width: 750px;
     --main-height: 800px;
     --max-width: 1100px;
-    --tile-img-width: 30px;
-    --tile-img-height: calc(var(--tile-img-width) * 4 / 3);
+    --zoom: 0.5;
+    --tile-img-width: calc(var(--zoom) * 30px);
+    --tile-img-height: calc(var(--tile-img-width) * 4px / 3px);
     --tile-width:calc(var(--tile-img-width) + 4px);
     --tile-height:calc(var(--tile-img-height) + 4px);
 
@@ -115,7 +116,7 @@ h1{
 .grid-hand-p0-container{
     grid-area: ah-p0;
     background: var(--color-accent);
-    padding-top: 20px;
+    padding-top: calc(var(--zoom) * 20px);
 }
 .hand-closed-p3 {display: flex; flex-direction: column; }
 .hand-closed-p2 {display: flex; flex-direction: row-reverse; }
@@ -126,23 +127,23 @@ h1{
 .hand-calls-p1 {display: flex; flex-direction: column-reverse; }
 .hand-calls-p0 {display: flex; flex-direction: row; }
 .grid-hand-p0{
-    padding-left: 15px;
-    padding-right: 15px;
+    padding-left: calc(var(--zoom) * 15px);
+    padding-right: calc(var(--zoom) * 15px);
 }
 .grid-hand-p1{
-    padding-top: 15px;
-    padding-bottom: 15px;
-    padding-left: 20px;
+    padding-top: calc(var(--zoom) * 15px);
+    padding-bottom: calc(var(--zoom) * 15px);
+    padding-left: calc(var(--zoom) * 20px);
 }
 .grid-hand-p2{
-    padding-left: 15px;
-    padding-right: 15px;
-    padding-bottom: 20px;
+    padding-left: calc(var(--zoom) * 15px);
+    padding-right: calc(var(--zoom) * 15px);
+    padding-bottom: calc(var(--zoom) * 20px);
 }
 .grid-hand-p3{
-    padding-bottom: 15px;
-    padding-top: 15px;
-    padding-right:20px;
+    padding-bottom: calc(var(--zoom) * 15px);
+    padding-top: calc(var(--zoom) * 15px);
+    padding-right:calc(var(--zoom) * 20px);
 }
 .tileImg {
     width:calc(var(--tile-img-width));
