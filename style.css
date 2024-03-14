@@ -84,8 +84,8 @@ h1{
 .grid-main{
     flex-shrink: 0;
     display: grid;
-    width:705px;
-    height:755px;
+    width:calc(var(--zoom) * 705px);
+    height:calc(var(--zoom) * 755px);
     grid-template-columns: 13.5% 22.0% 29.1% 22.0% 13.5%;
     grid-template-rows: 12.6% 20.5% 27.1% 20.5% 19.2%;
     grid-template-areas: "ah-p2 ah-p2 ah-p2   ah-p2 ah-p1"
@@ -201,32 +201,34 @@ h1{
 }
 .grid-discard-p3 {
     grid-area: ad-p3;
-    height:360px;
+    height:calc(var(--zoom) * 360px);
     flex-flow: column wrap-reverse;
 }
 .grid-discard-p2 {
     grid-area: ad-p2;
-    width:360px;
+    width:calc(var(--zoom) * 360px);
     justify-self:end;
     flex-flow: row-reverse wrap-reverse;
 }
 .grid-discard-p1 {
     grid-area: ad-p1;
-    height:360px;
+    height:calc(var(--zoom) * 360px);
     align-self: end;
     flex-flow: column-reverse wrap;
 }
 .grid-discard-p0 {
     grid-area: ad-p0;
-    width:360px;
+    width:calc(var(--zoom) * 360px);
 }
 .grid-info {
+    width: calc(var(--zoom) * 200px);
+    height: calc(var(--zoom) * 200px);
     grid-area: a-info;
     display: grid;
     border: 1px solid black;
     margin: auto;
-    grid-template-columns: 30px 5px 130px 5px 30px;
-    grid-template-rows: repeat(5, 40px);
+    grid-template-columns: 15% 3% 65% 2% 15%;
+    grid-template-rows: repeat(5, 1fr);
     grid-template-areas:
       "ai-p3 ai-p2 ai-p2   ai-p2 ai-p2"
       "ai-p3 .    ai-round   .     ai-p1"
@@ -253,35 +255,35 @@ h1{
 }
 .gi-p0-outer {
     grid-area: ai-p0;
-    margin: auto 10px;
+    margin: auto calc(var(--zoom) * 10px);
 }
 .gi-p1-outer {
     grid-area: ai-p1;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    margin: 10px auto;
+    margin: calc(var(--zoom) * 10px) auto;
 }
 .gi-p2-outer {
     grid-area: ai-p2;
     transform: rotate(180deg);
-    margin: auto 10px;
+    margin: auto calc(var(--zoom) * 10px);
 }
 .gi-p3-outer {
     grid-area: ai-p3;
     writing-mode: vertical-rl;
-    margin: 10px auto;
+    margin: calc(var(--zoom) * 10px) auto;
 }
 .rotate > img {
     transform: rotate(99deg);
     /* Adjust so these rotated tiles are next to each other */
 }
 .info-doras > * > * {
-    width:20px;
-    height:26.6px;
+    width:calc(var(--tile-img-width) * 0.58);
+    height:calc(var(--tile-img-height) * 0.58);
 }
 .info-doras > * {
-    width:24px;
-    height:30.6px;
+    width:calc(var(--tile-img-width) * 0.58 + 4px);
+    height:calc(var(--tile-img-height) * 0.58 + 4px);
 }
 .discard-bars {
     display: grid;
