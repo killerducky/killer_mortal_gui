@@ -1018,14 +1018,14 @@ function incrementalCalcDangerHelper(currPly) {
     for (let ply=0; ply <= currPly; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
         if (event.dora_marker) {
-            weseeitnow(unseenTiles, event.dora_marker, -1)
+            weseeitnow(unseenTiles, normRedFive(event.dora_marker), -1)
         }
         if (event.type == 'tsumo') { // draw
             unseenTiles[event.actor][normRedFive(event.pai)]--
         } else if (['chi', 'pon', 'daiminikan', 'ankan'].includes(event.type)) {
             // the other players will see the consumed tiles
             for (let tile of event.consumed) {
-                weseeitnow(unseenTiles, tile, event.actor)
+                weseeitnow(unseenTiles, normRedFive(tile), event.actor)
             }
         } else if (event.type == 'kakan') {
             weseeitnow(unseenTiles, event.pai, event.actor)
@@ -1036,7 +1036,7 @@ function incrementalCalcDangerHelper(currPly) {
                 }
             }
         } else if (event.type == 'dahai') { // discard
-            weseeitnow(unseenTiles, event.pai, event.actor)
+            weseeitnow(unseenTiles, normRedFive(event.pai), event.actor)
             for (let pidx=0; pidx<4; pidx++) {
                 /// genbutsu = we discarded it ourselves, or we reach_accepted and anyone discarded it
                 if (event.actor == pidx || reach_accepted[pidx]) {
@@ -1589,6 +1589,7 @@ function convertConsumed(data) {
 function convertPai2Tenhou(data) {
     deepMap(data, 'pai', tm2t)
     deepMap(data, 'tile', tm2t)
+    deepMap(data, 'dora_marker', tm2t)
     deepMap(data, 'consumed', convertConsumed)
 }
 function getBody(data) {
