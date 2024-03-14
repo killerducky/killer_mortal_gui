@@ -26,8 +26,8 @@ class GlobalState {
 
         this.C_soft_T = 2
 
-        this.C_zoom = getComputedStyle(document.documentElement).getPropertyValue('--zoom')
-        this.C_zoomTiles =  (34*this.C_zoom - 4) / (34-4)
+        this.updateZoom()
+        this.mediaBreak = getComputedStyle(document.documentElement).getPropertyValue('--media-break')
 
         this.C_db_height = 60
         this.C_db_totWidth = 605
@@ -53,7 +53,13 @@ class GlobalState {
         this.alphaTestMode = false
         // this.alphaTestMode = true
     }
+    updateZoom() {
+        this.C_zoom = getComputedStyle(document.documentElement).getPropertyValue('--zoom')
+        this.C_zoomTiles =  (34*this.C_zoom - 4) / (34-4)
+    }
 }
+
+
 
 class GameState {
     constructor(log) {
@@ -1526,6 +1532,10 @@ function connectUI() {
             console.log(event)
         }
     })
+    window.matchMedia(`(max-width: ${GS.mediaBreak})`).onchange = (event) => {
+        GS.updateZoom()
+        updateState()
+    }
 }
 
 function mergeMortalEvals(data) {
