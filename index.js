@@ -819,11 +819,11 @@ function updateState() {
     for (const hand of GS.gs.hands) {
         hand.sort(tileSort)
     }
-    // discardOverflowTest()
     GS.ui.reset()
     GS.ui.updateHandInfo()
     GS.ui.updateDiscardPond()
     GS.ui.updateGridInfo()
+    // discardOverflowTest()
 }
 
 function generateWaits() {
@@ -915,17 +915,6 @@ function calcCombos(waitsArray, genbutsu, heroUnseenTiles) {
             if (!combos[t]) { combos[t]={'all':0, 'types':[]} }
             combos[t]['all'] += wait.combos
             combos[t]['types'].push(wait)
-        }
-    }
-    let test = false
-    if (test) {
-        let tot = 0
-        for (let t in comboTypes) {
-            // let undoShanponMod = t == 'shanpon' ? 2 : 1
-            let undoShanponMod = 1
-            let p = comboTypes[t]/combos['all']/undoShanponMod
-            tot += p
-            console.log(t, comboTypes[t],(p*100).toFixed(1)) 
         }
     }
     return combos
@@ -1696,38 +1685,20 @@ function discardOverflowTest() {
     }
     for (let pidx=0; pidx<4; pidx++) {
         GS.ui.addHandTiles(pidx, 'hand', [], true)
-        GS.ui.addHandTiles(pidx, 'hand', ['1m'], false)
+        GS.ui.addHandTiles(pidx, 'hand', ['6m'], false)
         GS.ui.addBlankSpace(pidx, true)
-        GS.ui.addHandTiles(pidx, 'hand', ['1m'], false)
+        GS.ui.addHandTiles(pidx, 'hand', ['7m'], false)
 
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.rotateLastTile(pidx, 'hand')
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.rotateLastTile(pidx, 'hand')
-        GS.ui.floatLastTile(pidx)
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.rotateLastTile(pidx, 'hand')
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.rotateLastTile(pidx, 'hand')
-        GS.ui.floatLastTile(pidx)
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.rotateLastTile(pidx, 'hand')
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.rotateLastTile(pidx, 'hand')
-        GS.ui.floatLastTile(pidx)
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.rotateLastTile(pidx, 'hand')
-        GS.ui.addHandTiles(pidx, 'call', ['1m'], false)
-        GS.ui.rotateLastTile(pidx, 'hand')
-        GS.ui.floatLastTile(pidx)
+        for (let i=1; i<=4; i++) {
+            console.log(i, tenhou2str(`${i}m`))
+            GS.ui.addHandTiles(pidx, 'call', [`${i}m`], false)
+            GS.ui.addHandTiles(pidx, 'call', [`${i}m`], false)
+            GS.ui.addHandTiles(pidx, 'call', [`${i}m`], false)
+            GS.ui.rotateLastTile(pidx, 'hand')
+            GS.ui.addHandTiles(pidx, 'call', [`${i}m`], false)
+            GS.ui.rotateLastTile(pidx, 'hand')
+            GS.ui.floatLastTile(pidx)
+        }
     }
 }
 
