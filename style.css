@@ -89,10 +89,10 @@ h1{
 .grid-main{
     flex-shrink: 0;
     display: grid;
-    width:calc(var(--zoom) * 705px);
-    height:calc(var(--zoom) * 755px);
-    grid-template-columns: 13.5% 22.0% 29.1% 22.0% 13.5%;
-    grid-template-rows: 12.6% 20.5% 27.1% 20.5% 19.2%;
+    width:calc(var(--zoom) * 655px);
+    height:calc(var(--zoom) * 705px);
+    grid-template-columns: calc(90/655*100%) calc(135/655*100%) calc(205/655*100%) calc(135/655*100%) calc(90/655*100%);
+    grid-template-rows: calc(90/705*100%) calc(135/705*100%) calc(205/705*100%) calc(135/705*100%) calc((90 + 50)/705*100%);
     grid-template-areas: "ah-p2 ah-p2 ah-p2   ah-p2 ah-p1"
                          "ah-p3     . ad-p2   .     ah-p1"
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"

@@ -2,7 +2,6 @@
 
 import { calculateMinimumShanten, calculateStandardShanten } from "./shanten.js";
 import { calculateUkeire } from "./efficiency.js"
-// // const { calculateMinimumShanten, calculateStandardShanten } = require("./shanten");
 
 class GlobalState {
     constructor() {
@@ -58,8 +57,6 @@ class GlobalState {
         this.C_zoomTiles =  (34*this.C_zoom - 4) / (34-4)
     }
 }
-
-
 
 class GameState {
     constructor(log) {
