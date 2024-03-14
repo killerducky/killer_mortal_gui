@@ -28,14 +28,13 @@ class GlobalState {
         this.updateZoom()
         this.mediaBreak = getComputedStyle(document.documentElement).getPropertyValue('--media-break')
 
-        this.C_db_height = 60
+        this.C_db_height = 40
         this.C_db_totWidth = 605
-        this.C_db_handPadding = 15
-        this.C_db_padding = 15
+        this.C_db_handPadding = 5
         this.C_db_tileWidth = 34
         this.C_db_heroBarWidth = 20
         this.C_db_mortBarWidth = 10
-        this.C_cb_heroBarHeight = 60
+        this.C_cb_heroBarHeight = 40
         this.C_cb_mortBarHeightRatio = 0.9
         this.C_cb_padding = 10
         this.C_cb_widthFactor = 1.5
@@ -346,7 +345,6 @@ class UI {
         const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
-        svgElement.setAttribute("padding", GS.C_db_padding)
         svgElement.setAttribute('transform-origin', 'top left')
         svgElement.setAttribute('transform', `scale(${GS.C_zoom})`)
         discardBars.replaceChildren(svgElement)

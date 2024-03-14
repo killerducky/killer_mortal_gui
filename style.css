@@ -90,9 +90,9 @@ h1{
     flex-shrink: 0;
     display: grid;
     width:calc(var(--zoom) * 655px);
-    height:calc(var(--zoom) * 705px);
+    height:calc(var(--zoom) * 675px);
     grid-template-columns: calc(90/655*100%) calc(135/655*100%) calc(205/655*100%) calc(135/655*100%) calc(90/655*100%);
-    grid-template-rows: calc(90/705*100%) calc(135/705*100%) calc(205/705*100%) calc(135/705*100%) calc((90 + 50)/705*100%);
+    grid-template-rows: calc(90/675*100%) calc(135/675*100%) calc(205/675*100%) calc(135/675*100%) calc((90 + 20)/675*100%);
     grid-template-areas: "ah-p2 ah-p2 ah-p2   ah-p2 ah-p1"
                          "ah-p3     . ad-p2   .     ah-p1"
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"
@@ -121,7 +121,7 @@ h1{
 .grid-hand-p0-container{
     grid-area: ah-p0;
     background: var(--color-accent);
-    padding-top: calc(var(--zoom) * 20px);
+    padding-top: calc(var(--zoom) * 10px);
 }
 .hand-closed-p3 {display: flex; flex-direction: column; }
 .hand-closed-p2 {display: flex; flex-direction: row-reverse; }
@@ -132,22 +132,22 @@ h1{
 .hand-calls-p1 {display: flex; flex-direction: column-reverse; }
 .hand-calls-p0 {display: flex; flex-direction: row; }
 .grid-hand-p0{
-    padding-left: calc(var(--zoom) * 15px);
+    padding-left: calc(var(--zoom) * 5px);
     padding-right: calc(var(--zoom) * 15px);
 }
 .grid-hand-p1{
     padding-top: calc(var(--zoom) * 15px);
-    padding-bottom: calc(var(--zoom) * 15px);
+    padding-bottom: calc(var(--zoom) * 5px);
     padding-left: calc(var(--zoom) * 20px);
 }
 .grid-hand-p2{
     padding-left: calc(var(--zoom) * 15px);
-    padding-right: calc(var(--zoom) * 15px);
+    padding-right: calc(var(--zoom) * 5px);
     padding-bottom: calc(var(--zoom) * 20px);
 }
 .grid-hand-p3{
     padding-bottom: calc(var(--zoom) * 15px);
-    padding-top: calc(var(--zoom) * 15px);
+    padding-top: calc(var(--zoom) * 5px);
     padding-right:calc(var(--zoom) * 20px);
 }
 .tileImg {
@@ -293,7 +293,7 @@ h1{
 .discard-bars {
     display: grid;
     grid-template-columns: 1fr;
-    height:calc(var(--zoom-tiles) * 62px);
+    height:calc(var(--zoom-tiles) * 42px);
 }
 .sidebar {
     margin:10px;
@@ -373,7 +373,7 @@ button:hover, select:hover {
     background: var(--color-accent3);
     padding: 10px;
     width: calc(var(--zoom)*260px);
-    height: calc(var(--zoom)*115px);
+    height: calc(var(--zoom)*100px);
     margin: auto;
 }
 .killer-call-img {
