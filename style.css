@@ -2,9 +2,9 @@
     --main-width: 750px;
     --main-height: 800px;
     --max-width: 1100px;
-    --zoom: 0.5;
+    --zoom: 1;
     --tile-img-width: calc(var(--zoom) * 30px);
-    --tile-img-height: calc(var(--tile-img-width) * 4px / 3px);
+    --tile-img-height: calc(var(--tile-img-width) * 4 / 3);
     --tile-width:calc(var(--tile-img-width) + 4px);
     --tile-height:calc(var(--tile-img-height) + 4px);
 
