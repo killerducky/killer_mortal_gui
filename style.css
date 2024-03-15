@@ -155,8 +155,9 @@ h1{
     height:calc(var(--tile-img-height));
     background:white;
     filter:brightness(92%) saturate(80%);
-    border: 1px solid grey;
-    padding: 1px;
+    box-shadow: inset 0 0 calc(var(--zoom-tiles)*2px) black;
+    padding: 2px; /* TODO: zoom this also, would simplify everything else! */
+    border-radius: calc(var(--zoom-tiles)*4px);
 }
 .tsumogiri {
     background:var(--color-tsumogiri);
@@ -394,22 +395,22 @@ button:hover, select:hover {
 .about-metadata td:nth-child(2) {
     text-align: left;
 }
-
-@media screen and (max-width: 900px) {
+/* @media screen and (max-width: 900px) { */
+@media (pointer:coarse) {
     :root{
-        --zoom:0.5;
         font-size:x-small;
     }
     .outer {
-        flex-direction: column;
-        align-items: center;
+        /* reserve space for phone status bar? */
+        margin-top:30px;
     }
-    .controls > * {
-        /* margin:12px;
-        padding-left:12px;
-        padding-right:12px;
-        padding-top: 20px;
-        padding-bottom: 20px; */
+    @media (orientation:portrait) {
+        .outer {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+    button {
         font-size:x-small;
     }
 }

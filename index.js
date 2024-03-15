@@ -25,8 +25,8 @@ class GlobalState {
 
         this.C_soft_T = 2
 
-        this.updateZoom()
         this.mediaBreak = getComputedStyle(document.documentElement).getPropertyValue('--media-break')
+        this.updateZoom()
 
         this.C_db_height = 40
         this.C_db_totWidth = 605
@@ -52,7 +52,15 @@ class GlobalState {
         // this.alphaTestMode = true
     }
     updateZoom() {
-        this.C_zoom = getComputedStyle(document.documentElement).getPropertyValue('--zoom')
+        if (screen.width > 900) {
+            this.C_zoom = 1
+        } else if (window.matchMedia("(orientation: portrait)").matches) {
+            this.C_zoom = screen.width / 655
+        } else {
+            // reserve space for the phone status bar?
+            this.C_zoom = (screen.height - 50) / 675
+        }
+        document.documentElement.style.setProperty('--zoom', this.C_zoom)
         this.C_zoomTiles =  (34*this.C_zoom - 4) / (34-4)
     }
 }
@@ -1527,7 +1535,11 @@ function connectUI() {
             console.log(event)
         }
     })
-    window.matchMedia(`(max-width: ${GS.mediaBreak})`).onchange = (event) => {
+    // window.matchMedia(`(max-width: ${GS.mediaBreak})`).onchange = (event) => {
+    //     GS.updateZoom()
+    //     updateState()
+    // }
+    window.matchMedia("(orientation: portrait)").onchange = (event) => {
         GS.updateZoom()
         updateState()
     }
