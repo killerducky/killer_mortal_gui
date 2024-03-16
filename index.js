@@ -1068,7 +1068,6 @@ function doCalculateUkeire(pidx, thisUnseenTiles) {
     for (let i=0; i<38; i++) {
         ukerieUnseen[i] = i%10==0 ? 0 : thisUnseenTiles[i+10]
     }
-    let numUnseenTiles = sum(ukerieUnseen)
     let ukeire = calculateUkeire(ukeireHand, ukerieUnseen, calculateMinimumShanten)
     return ukeire
 }
@@ -1120,7 +1119,6 @@ function testDangers() {
 function calcDanger() {
     GS.ui.genericModal.style.marginRight = '0px'
     GS.ui.genericModalBody.replaceChildren()
-    GS.ui.genericModalBody.style.fontFamily = "Courier New"
     GS.ui.genericModal.querySelector(".title").textContent = i18next.t("Dealin Danger")
     // testDangers()
     let dangers = [[],[],[],[]]
@@ -1162,9 +1160,9 @@ function calcDanger() {
         }
     }
     let resultTypeStr = GS.ui.getResultTypeStr()
-    GS.ui.genericModalBody.append(createElemWithText('pre', 'Final Result:'))
+    GS.ui.genericModalBody.append(createElemWithText('p', 'Final Result:'))
     for (let s of resultTypeStr) {
-        GS.ui.genericModalBody.append(createElemWithText('pre', s))
+        GS.ui.genericModalBody.append(createElemWithText('p', s))
     }
     const dangersDiv = document.createElement('div')
     for (let pidx=0; pidx<4; pidx++) {
@@ -1510,6 +1508,11 @@ function connectUI() {
                     genericModal.close()
                 }
             }
+        } else if (event.key == 'b') {
+            const urlParams = new URLSearchParams(window.location.search)
+            urlParams.set('hand', GS.hand_counter)
+            urlParams.set('ply', GS.ply_counter)
+            window.location.href = window.location.pathname + '?' + urlParams.toString()
         }
     });
     document.addEventListener('wheel', function(event) {
@@ -1609,8 +1612,6 @@ function getBody(data) {
     return data
 }
 function parseMortalJsonStr(data) {
-    GS.ply_counter = 0 // TODO where does it make sense to reset this stuff?
-    GS.hand_counter = 0
     GS.fullData = data
     GS.heroPidx = GS.fullData.player_id
     GS.ui.setPovPidx(GS.fullData.player_id)
@@ -1672,28 +1673,6 @@ function getCurrGe() {
     return GS.ge[GS.hand_counter][GS.ply_counter]
 }
 
-function testUkeire() {
-    let remainingTiles = Array(38).fill(4); // lazy just say all there who cares
-    let handTiles = Array(38).fill(0);
-    handTiles[31] = 1
-    handTiles[32] = 1
-    handTiles[33] = 1
-    handTiles[34] = 1
-    handTiles[35] = 1
-    handTiles[36] = 1
-    handTiles[37] = 1
-    handTiles[ 2] = 1
-    handTiles[ 5] = 1
-    handTiles[ 8] = 1
-    handTiles[12] = 1
-    handTiles[15] = 1
-    handTiles[18] = 1
-    console.log('a',calculateMinimumShanten(handTiles))
-    let shantenFunction = calculateMinimumShanten
-    console.log(calculateUkeire(handTiles, remainingTiles, shantenFunction))
-}
-// testUkeire()
-
 function discardOverflowTest() {
     for (let pidx=0; pidx<4; pidx++) {
         // for (let i=0; i<27; i++) {
@@ -1747,6 +1726,8 @@ function tmpTest() {
 function parseUrl() {
     const urlParams = new URLSearchParams(window.location.search)
     let dataParam = urlParams.get('data')
+    let hand_counter = urlParams.get('hand')
+    let ply_counter = urlParams.get('ply')
     if (!dataParam) {
         alert("Invalid URL: data parameter not given")
         return
@@ -1758,6 +1739,14 @@ function parseUrl() {
         var status = xhr.status;
         if (status == 200) {
             setMortalJsonStr(xhr.response)
+            GS.hand_counter = 0
+            GS.ply_counter = 0
+            if (!isNaN(hand_counter) && hand_counter < GS.ge.length) {
+                GS.hand_counter = hand_counter
+            }
+            if (!isNaN(ply_counter) && ply_counter < GS.ge[GS.hand_counter].length) {
+                GS.ply_counter = ply_counter
+            }
             // tmpTest()
             updateState()
             connectUI()

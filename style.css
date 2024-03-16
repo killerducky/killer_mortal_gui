@@ -43,6 +43,9 @@ body, .modal {
     line-height: 1.5;
     background: var(--color-main);
 }
+body {
+    margin-top: 30px;
+}
 .options-div {
     display:grid;
     gap:10px;
