@@ -49,7 +49,6 @@ class GlobalState {
         this.C_windStr = ['E', 'S', 'W', 'N']
 
         this.alphaTestMode = false
-        // this.alphaTestMode = true
     }
     updateZoom() {
         if (screen.width > 900) {
@@ -496,32 +495,25 @@ class UI {
     lastDiscardWasCalled(pidx) {
         this.discards[pidx].lastChild.classList.add('called')
     }
-    addTableRow(table, str, value){
-        let tr = table.insertRow()
-        let cell = tr.insertCell()
-        cell.textContent = `${str}`
-        cell = tr.insertCell()
-        cell.textContent = `${value}`
-    }
     updateAbout() {
         let table = document.createElement("table")
         let metadata = document.querySelector('.about-metadata')
         metadata.replaceChildren(table)
-        this.addTableRow(table, i18next.t('Engine'), GS.fullData['engine'])
-        this.addTableRow(table, i18next.t('Model tag'), GS.fullData['review']['model_tag'])
-        this.addTableRow(table, i18next.t('Mjai-reviewer version'), GS.fullData['version'])
-        this.addTableRow(table, i18next.t('Game length'), i18next.t(GS.fullData['game_length']))
-        this.addTableRow(table, i18next.t('Loading time'), GS.fullData['loading_time'])
-        this.addTableRow(table, i18next.t('Review time'), GS.fullData['review_time'])
-        this.addTableRow(table, i18next.t('Temperature'), GS.fullData['review']['temperature'])
+        addTableRow(table, [i18next.t('Engine'), GS.fullData['engine']])
+        addTableRow(table, [i18next.t('Model tag'), GS.fullData['review']['model_tag']])
+        addTableRow(table, [i18next.t('Mjai-reviewer version'), GS.fullData['version']])
+        addTableRow(table, [i18next.t('Game length'), i18next.t(GS.fullData['game_length'])])
+        addTableRow(table, [i18next.t('Loading time'), GS.fullData['loading_time']])
+        addTableRow(table, [i18next.t('Review time'), GS.fullData['review_time']])
+        addTableRow(table, [i18next.t('Temperature'), GS.fullData['review']['temperature']])
         {
             let m = GS.fullData['review']['total_matches']
             let r = GS.fullData['review']['total_reviewed']
             let p = (m/r*100).toFixed(1)
             let s = `${m}/${r} = ${p}%`
-            this.addTableRow(table, i18next.t('Matches/total'), s)
+            addTableRow(table, [i18next.t('Matches/total'), s])
         }
-        this.addTableRow(table, i18next.t('Rating'), (GS.fullData.review.rating*100).toFixed(1))
+        addTableRow(table, [i18next.t('Rating'), (GS.fullData.review.rating*100).toFixed(1)])
     }
     updateResultsTable() {
         let table = document.createElement("table")
@@ -617,6 +609,13 @@ function relativeToHeroStr(pidx) {
 }
 function sum(a) {
     return a.reduce((a,b)=>a+b,0)
+}
+function addTableRow(table, values){
+    let tr = table.insertRow()
+    for (let v of values) {
+        let cell = tr.insertCell()
+        cell.textContent = v
+    }
 }
 
 class Tile {
@@ -1073,18 +1072,20 @@ function doCalculateUkeire(pidx, thisUnseenTiles) {
 }
 function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, event, dangersDiv) {
     dangersDiv.replaceChildren()
+
     let thisUnseenTiles = unseenTiles[thisPidx]
     let waitsArray = generateWaits()
     let combos = calcCombos(waitsArray, genbutsu[tenpaiPidx], thisUnseenTiles)
-    dangersDiv.append(createElemWithText('pre', ('------------------------------------------')))
-    dangersDiv.append(createElemWithText('pre', (`${relativeToHeroStr(thisPidx)} ${i18next.t(event.type)} ${tenhou2strH(event.pai)} while ${relativeToHeroStr(tenpaiPidx)} is tenpai!`)))
+    dangersDiv.append(createElemWithText('pre', ' '))
+    dangersDiv.append(createElemWithText('p', `${relativeToHeroStr(thisPidx)} ${i18next.t(event.type)} ${tenhou2strH(event.pai)} while ${relativeToHeroStr(tenpaiPidx)} is tenpai!`))
     let [sujiCnt, sujiStrArray] = showSujis(genbutsu[tenpaiPidx])
     for (let str of sujiStrArray) {
         dangersDiv.append(createElemWithText('pre', str))
     }
-    dangersDiv.append(createElemWithText('pre', (`sujis tested ${18-sujiCnt}/18`)))
-    dangersDiv.append(createElemWithText('pre', (`suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`)))
-    dangersDiv.append(createElemWithText('pre', ('wait pattern combos:')))
+    dangersDiv.append(createElemWithText('p', `Sujis tested ${18-sujiCnt}/18`))
+    dangersDiv.append(createElemWithText('p', `Suji dealin danger ${(1/sujiCnt*100).toFixed(0)}%`))
+
+    dangersDiv.append(createElemWithText('p', 'Wait pattern combos:'))
     let sumP = 0
     for (let [key,combo] of Object.entries(combos)) {
         if (key=='all') {
@@ -1094,7 +1095,7 @@ function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, event, dangers
         dangersDiv.append(createElemWithText('pre', (combo2strAndP(key,combos))[0]))
     }
     dangersDiv.append(createElemWithText('pre', (`sumP ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
-    dangersDiv.append(createElemWithText('pre', ('------------------------------------------')))
+    dangersDiv.append(createElemWithText('pre', ' '))
 }
 function testDangers() {
         // Pretend we don't see any tiles.
@@ -1165,13 +1166,15 @@ function calcDanger() {
         GS.ui.genericModalBody.append(createElemWithText('p', s))
     }
     const dangersDiv = document.createElement('div')
+    let table = document.createElement("table")
+    GS.ui.genericModalBody.append(table)
+    addTableRow(table, ['Pusher', 'Tenpai', 'Tile', 'This %', 'Total %'])
     for (let pidx=0; pidx<4; pidx++) {
         let accumP = 0
         for (let d of dangers[pidx]) {
             accumP = accumP + (1-accumP)*d['comboP']
-            GS.ui.genericModalBody.append(createElemWithText('pre', 
-                `${String(relativeToHeroStr(d['thisPidx'])).padStart(6)} ${String((accumP*100).toFixed(1)).padStart(4)}% -> ${d['tenpaiStr']} ${d['comboStr']}`))
-            GS.ui.genericModalBody.lastChild.addEventListener('click', (event) => {
+            addTableRow(table, [relativeToHeroStr(d['thisPidx']), d['tenpaiStr'], tenhou2strH(d['event'].pai), (d['comboP']*100).toFixed(1), (accumP*100).toFixed(1)])
+            table.lastChild.addEventListener('click', (event) => {
                 showDangers(d['thisPidx'], d['tenpaiPidx'], d['unseenTiles'], d['genbutsu'], d['event'], dangersDiv)
                 GS.ply_counter = d['ply']
                 updateState()
@@ -1179,14 +1182,15 @@ function calcDanger() {
         }
     }
     GS.ui.genericModalBody.append(createElemWithText('pre', ' '))
+    table = document.createElement("table")
+    GS.ui.genericModalBody.append(table)
+    addTableRow(table, ['Tenpai', 'This %', 'Total %'])
     for (let pidx=0; pidx<4; pidx++) {
         let accumP = 0
         let who = relativeToHeroStr(pidx)
         for (let tf of tsumoFails[pidx]) {
             accumP = accumP + (1-accumP)*tf[0]/tf[1]
-            let accumPstr = String((accumP*100).toFixed(1)).padStart(4)
-            let pStr = String((tf[0]/tf[1]*100).toFixed(1)).padStart(4)
-            GS.ui.genericModalBody.append(createElemWithText('pre', `${who} miss Tsumo ${accumPstr}% ${pStr}% ${tf[0]}/${tf[1]}`))
+            addTableRow(table, [`${who} miss Tsumo`, (tf[0]/tf[1]*100).toFixed(1), (accumP*100).toFixed(1)])
         }
     }
     GS.ui.genericModalBody.append(dangersDiv)
@@ -1711,27 +1715,18 @@ function debugState() {
     console.log('event', getCurrGe())
 }
 
-// one-off tests for a given problem
-function tmpTest() {
-    GS.hand_counter = 5
-    GS.ply_counter = 127
-    // let currGe = getCurrGe()
-    // currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.5})
-    // currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.4})
-    // currGe.mortalEval.details.push({action:{type:'chi', consumed:[33,33], pai:'fake'}, normProb:.3})
-    // updateState()
-    // debugState()
-}
-
 function parseUrl() {
     const urlParams = new URLSearchParams(window.location.search)
     let dataParam = urlParams.get('data')
     let hand_counter = urlParams.get('hand')
     let ply_counter = urlParams.get('ply')
+    if (urlParams.get('alphaTestMode')) {
+        GS.alphaTestMode = true
+    }
     if (!dataParam) {
         alert("Invalid URL: data parameter not given")
         return
-    }
+    } 
     var xhr = new XMLHttpRequest();
     xhr.open('GET', `${dataParam}`, true);
     xhr.responseType = 'json';
@@ -1747,7 +1742,6 @@ function parseUrl() {
             if (!isNaN(ply_counter) && ply_counter < GS.ge[GS.hand_counter].length) {
                 GS.ply_counter = ply_counter
             }
-            // tmpTest()
             updateState()
             connectUI()
         } else {
