@@ -16,6 +16,7 @@ class GlobalState {
         this.heroPidx = null   // player index mortal reviewed
         this.showHands = false
         this.showMortal = true
+        this.showDealinRate = null // set by localStorage
         this.uiConnected = false
 
         // calcCombos Weights
@@ -373,7 +374,7 @@ class UI {
             discardSvgElem.appendChild(createSvgText(60,30,i18next.t("spoiler")))
             return
         }
-        let showDangerBars = GS.alphaTestMode && 'danger' in gameEvent
+        let showDangerBars = GS.showDealinRate && ('danger' in gameEvent)
         if (!mortalEval && !showDangerBars) {
             return // nothing to display
         }
@@ -1371,6 +1372,11 @@ function i18nElem(key) {
     elem.innerHTML = i18next.t(key)
     return elem
 }
+function toggleDealinRate() {
+    GS.showDealinRate = !GS.showDealinRate
+    localStorage.setItem("showDealinRate", GS.showDealinRate ? 1 : 0)
+    updateState()
+}
 function connectUI() {
     // first part might run more than once when people change language
     document.title = i18next.t("title")
@@ -1385,6 +1391,7 @@ function connectUI() {
     const options = i18nElem("options")
     const toggleShowHands =  i18nElem("toggle-hands")
     const toggleMortalAdvice = i18nElem("toggle-mortal-advice")
+    const toggleDealinRateElem = i18nElem("toggle-dealin-rate")
     const about =  i18nElem("about")
     const aboutBody = document.getElementById("about-body")
     const langLabel = i18nElem("langLabel")
@@ -1478,6 +1485,9 @@ function connectUI() {
         GS.showMortal = !GS.showMortal
         updateState()
     })
+    toggleDealinRateElem.addEventListener("click", () => {
+        toggleDealinRate()
+    })
     about.addEventListener("click", () => {
         showModalAndWait(aboutModal)
     })
@@ -1561,6 +1571,8 @@ function connectUI() {
             decPlyCounter()
             updateState()
         } else if (event.key == 'd') {
+            toggleDealinRate()
+        } else if (event.key == 'a') {
             if (GS.alphaTestMode) {
                 if (!genericModal.open) {
                     showDangerTable()
@@ -1810,7 +1822,8 @@ function parseUrl() {
 const GS = new GlobalState
 export default { main, GS, debugState } // So we can access these from dev console
 function main() {
-    const lang = localStorage.getItem("lang") || "en"
+    const lang = ("lang" in localStorage) ? localStorage.getItem("lang") : "en"
+    GS.showDealinRate = ("showDealinRate" in localStorage) ? localStorage.getItem("showDealinRate") : false
     i18next_data.lng = lang
     i18next.init(i18next_data).then(parseUrl(true))
 }
