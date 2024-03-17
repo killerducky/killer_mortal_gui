@@ -45,7 +45,9 @@ class GlobalState {
         this.C_colorBarHero = getComputedStyle(document.documentElement).getPropertyValue('--color-bar-hero')
         this.C_colorTsumogiri = getComputedStyle(document.documentElement).getPropertyValue('--color-tsumogiri')
         this.C_colorTileBg = getComputedStyle(document.documentElement).getPropertyValue('--color-tile-bg')
-
+        this.C_colorOpps = [getComputedStyle(document.documentElement).getPropertyValue('--color-shimo'),
+                            getComputedStyle(document.documentElement).getPropertyValue('--color-toimen'),
+                            getComputedStyle(document.documentElement).getPropertyValue('--color-kami')]
         this.C_windStr = ['E', 'S', 'W', 'N']
 
         this.alphaTestMode = false
@@ -349,23 +351,31 @@ class UI {
     }
     clearDiscardBars() {
         const discardBars = document.getElementById("discard-bars")
-        const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
         svgElement.setAttribute('transform-origin', 'top left')
         svgElement.setAttribute('transform', `scale(${GS.C_zoom})`)
         discardBars.replaceChildren(svgElement)
+        svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        svgElement.setAttribute("width", GS.C_db_totWidth)
+        svgElement.setAttribute("height", GS.C_db_height)
+        svgElement.setAttribute('transform-origin', 'top left')
+        svgElement.setAttribute('transform', `scale(${GS.C_zoom}, ${-GS.C_zoom}) translate(0, ${-GS.C_zoom*86})`)
+        discardBars.append(svgElement)
     }
     updateDiscardBars() {
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
+        let nextGameEvent = GS.ge[GS.hand_counter][GS.ply_counter+1]
         let mortalEval = gameEvent.mortalEval
         const discardBars = document.getElementById("discard-bars")
-        let svgElement = discardBars.firstElementChild
+        let [discardSvgElem, dangerSvgElem] = discardBars.children
         if (!GS.showMortal) {
-            svgElement.appendChild(createSvgText(60,30,i18next.t("spoiler")))
+            discardSvgElem.appendChild(createSvgText(60,30,i18next.t("spoiler")))
             return
         }
-        if (!mortalEval) {
+        let showDangerBars = GS.alphaTestMode && nextGameEvent && nextGameEvent.actor==GS.heroPidx && nextGameEvent['danger']
+        if (!mortalEval && !showDangerBars) {
             return // nothing to display
         }
         for (let i = -1; i < GS.gs.hands[gameEvent.actor].length; i++) {
@@ -373,22 +383,51 @@ class UI {
             if (tile == null) {
                 continue // on calls there was no drawnTile
             }
-            let matchingDetailIdx = mortalEval.details.findIndex(x => x.action && x.action.type == 'dahai' && x.action.pai && x.action.pai==tile)
-            if (matchingDetailIdx == -1) {
-                continue // TODO: Check code for this. For now assume due to illegal calls swaps
-            }
-            let matchingDetail = mortalEval.details[matchingDetailIdx]
-            let Pval = matchingDetail.normProb*100
             let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+0.5
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
-            if (matchingDetailIdx == mortalEval.actual_index) {
-                svgElement.appendChild(createRect(
-                    xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
-                ))
+            if (mortalEval) {
+                let matchingDetailIdx = mortalEval.details.findIndex(x => x.action && x.action.type == 'dahai' && x.action.pai && x.action.pai==tile)
+                if (matchingDetailIdx == -1) {
+                    continue // TODO: Check code for this. For now assume due to illegal calls swaps
+                }
+                let matchingDetail = mortalEval.details[matchingDetailIdx]
+                let Pval = matchingDetail.normProb*100
+                if (matchingDetailIdx == mortalEval.actual_index) {
+                    discardSvgElem.appendChild(createRect(
+                        xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
+                    ))
+                }
+                discardSvgElem.appendChild(createRect(
+                    xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_db_height, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
+                ));
             }
-            svgElement.appendChild(createRect(
-                xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_db_height, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
-            ));
+            if (showDangerBars) {
+                for (let pidx=0; pidx<4; pidx++) {
+                    if (pidx == GS.heroPidx) {
+                        continue
+                    }
+                    let relToHero = relativeToHero(pidx)
+                    let color = GS.C_colorOpps[relToHero-1]
+                    let fakeDangers = false
+                    // fakeDangers = true
+                    let Pval
+                    if (fakeDangers) {
+                        Pval = 7*relToHero
+                    } else {
+                        let thisDanger = nextGameEvent['danger'][pidx]
+                        if (!thisDanger) {
+                            continue
+                        }
+                        let matchingCombo = thisDanger['combos'][tile]
+                        Pval = matchingCombo === undefined ? 0 : matchingCombo['all']/thisDanger['combos']['all']*100
+                    }
+                    let PvalZoom = Math.min(Pval*(100/20), 100)
+                    dangerSvgElem.appendChild(createRect(
+                        xloc-(relToHero-1.5)*GS.C_db_mortBarWidth, GS.C_db_mortBarWidth, GS.C_db_height, PvalZoom/100*GS.C_cb_mortBarHeightRatio, color
+                    ));
+                    //console.log('sdb', tile, Pval)
+                }
+            }
         }
     }
     updateHandInfo() {
@@ -602,8 +641,12 @@ function createSvgText(x, y, text) {
     svg.textContent = text
     return svg
 }
-function relativeToHeroStr(pidx) {
+function relativeToHero(pidx) {
     let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
+    return relIdx
+}
+function relativeToHeroStr(pidx) {
+    let relIdx = relativeToHero(pidx)
     let key = ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
     return i18next.t(`position-rel.${key}`)
 }
@@ -1002,8 +1045,7 @@ function weseeitnow(unseenTiles, tile, pidxAlreadySaw) {
         unseenTiles[pidx][normRedFive(tile)]--
     }
 }
-function incrementalCalcDangerHelper(currPly) {
-    let event = GS.ge[GS.hand_counter][currPly]
+function incrementalCalcDangerHelper(currHand, currPly, event, gs) {
     // For dahai(discards) or kakans, don't include that tile as genbutsu yet
     if (event.type == 'dahai' || event.type=='kakan') {
         currPly -= 1
@@ -1011,13 +1053,12 @@ function incrementalCalcDangerHelper(currPly) {
     let unseenTiles = []
     let genbutsu = []
     let reach_accepted = [false, false, false, false]
-    let gs = new GameState(GS.fullData.split_logs[GS.hand_counter].log[0])
     for (let pidx=0; pidx<4; pidx++) {
         unseenTiles[pidx] = initUnseenTiles(pidx, gs)
         genbutsu[pidx] = []
     }
     for (let ply=0; ply <= currPly; ply++) {
-        let event = GS.ge[GS.hand_counter][ply]
+        let event = GS.ge[currHand][ply]
         if (event.dora_marker) {
             weseeitnow(unseenTiles, normRedFive(event.dora_marker), -1)
         }
@@ -1054,6 +1095,7 @@ function incrementalCalcDangerHelper(currPly) {
 function doCalculateUkeire(pidx, thisUnseenTiles) {
     // TODO: Beware this assumes GS.gs.hands for tenpai player is correct
     // Which it is given reach_accepted==true and they cannot change wait shape
+    // TODO: Actually this is wrong now that I'm going to try to do this all before the GUI starts.
     let ukeireHand = Array(38).fill(0)
     for (let t of GS.gs.hands[pidx]) {
         ukeireHand[normRedFive(t)-10]++
@@ -1122,44 +1164,50 @@ function calcDanger() {
     GS.ui.genericModalBody.replaceChildren()
     GS.ui.genericModal.querySelector(".title").textContent = i18next.t("Dealin Danger")
     // testDangers()
-    let dangers = [[],[],[],[]]
-    let tsumoFails = [[],[],[],[]]
-    for (let ply=0; ply < GS.ge[GS.hand_counter].length; ply++) {
-        let event = GS.ge[GS.hand_counter][ply]
-        // TODO: No need to reloop all the events every time!
-        let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(ply)
-        for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
-            if (!reach_accepted[tenpaiPidx]) {
-                continue // skip non-tenpai players
-            }
-            let dangerousEvent = (event.type == 'dahai' || event.type=='kakan') && event.actor != tenpaiPidx
-            let tsumoAttempt = event.actor == tenpaiPidx && event.type == 'tsumo'
-            if (tsumoAttempt || dangerousEvent) {
-                let thisPidx = event.actor
-                let thisUnseenTiles = unseenTiles[thisPidx]
-                if (tsumoAttempt) {
-                    let numUnseenTiles = sum(Object.values(thisUnseenTiles))
-                    let ukeire = doCalculateUkeire(tenpaiPidx, thisUnseenTiles)
-                    tsumoFails[tenpaiPidx].push([ukeire['value'], numUnseenTiles])
-                } else if (dangerousEvent) {
-                    let thisDanger = {}
-                    thisDanger['waitsArray'] = generateWaits()
-                    thisDanger['combos'] = calcCombos(thisDanger['waitsArray'], genbutsu[tenpaiPidx], thisUnseenTiles)
-                    let [a,b] = combo2strAndP(event.pai, thisDanger['combos'])
-                    thisDanger['comboStr'] = a
-                    thisDanger['comboP'] = b
-                    thisDanger['tenpaiPidx'] = tenpaiPidx
-                    thisDanger['thisPidx'] = thisPidx
-                    thisDanger['unseenTiles'] = unseenTiles
-                    thisDanger['genbutsu'] = genbutsu
-                    thisDanger['tenpaiStr'] = relativeToHeroStr(tenpaiPidx).padStart(6)
-                    thisDanger['event'] = event
-                    thisDanger['ply'] = ply
-                    dangers[thisPidx].push(thisDanger)
+    for (let hand=0; hand < GS.ge.length; hand++) {
+        let gs = new GameState(GS.fullData.split_logs[hand].log[0])
+        GS.ge[hand].dangers = [[],[],[],[]]
+        GS.ge[hand].tsumoFails = [[],[],[],[]]
+        for (let ply=0; ply < GS.ge[hand].length; ply++) {
+            let event = GS.ge[hand][ply]
+            // TODO: No need to reloop all the events every time!
+            let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(hand, ply, event, gs)
+            for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
+                if (!reach_accepted[tenpaiPidx]) {
+                    continue // skip non-tenpai players
+                }
+                let dangerousEvent = (event.type == 'dahai' || event.type=='kakan') && event.actor != tenpaiPidx
+                let tsumoAttempt = event.actor == tenpaiPidx && event.type == 'tsumo'
+                if (tsumoAttempt || dangerousEvent) {
+                    let thisPidx = event.actor
+                    let thisUnseenTiles = unseenTiles[thisPidx]
+                    if (false && tsumoAttempt) { // TODO: This is broken for now
+                        let numUnseenTiles = sum(Object.values(thisUnseenTiles))
+                        let ukeire = doCalculateUkeire(gs, tenpaiPidx, thisUnseenTiles)
+                        GS.ge[hand].tsumoFails[tenpaiPidx].push([ukeire['value'], numUnseenTiles])
+                    } else if (dangerousEvent) {
+                        let thisDanger = {}
+                        thisDanger['waitsArray'] = generateWaits()
+                        thisDanger['combos'] = calcCombos(thisDanger['waitsArray'], genbutsu[tenpaiPidx], thisUnseenTiles)
+                        let [a,b] = combo2strAndP(event.pai, thisDanger['combos'])
+                        thisDanger['comboStr'] = a
+                        thisDanger['comboP'] = b
+                        thisDanger['tenpaiPidx'] = tenpaiPidx
+                        thisDanger['thisPidx'] = thisPidx
+                        thisDanger['unseenTiles'] = unseenTiles
+                        thisDanger['genbutsu'] = genbutsu
+                        thisDanger['tenpaiStr'] = relativeToHeroStr(tenpaiPidx).padStart(6)
+                        thisDanger['event'] = event
+                        thisDanger['ply'] = ply
+                        if (!('danger' in [event])) { event['danger'] = []}
+                        event['danger'][tenpaiPidx] = thisDanger
+                        GS.ge[hand].dangers[thisPidx].push(thisDanger)
+                    }
                 }
             }
         }
     }
+    return
     let resultTypeStr = GS.ui.getResultTypeStr()
     GS.ui.genericModalBody.append(createElemWithText('p', 'Final Result:'))
     for (let s of resultTypeStr) {
@@ -1174,7 +1222,7 @@ function calcDanger() {
         for (let d of dangers[pidx]) {
             accumP = accumP + (1-accumP)*d['comboP']
             addTableRow(table, [relativeToHeroStr(d['thisPidx']), d['tenpaiStr'], tenhou2strH(d['event'].pai), (d['comboP']*100).toFixed(1), (accumP*100).toFixed(1)])
-            table.lastChild.addEventListener('click', (event) => {
+            table.lastChild.lastChild.addEventListener('click', (event) => {
                 showDangers(d['thisPidx'], d['tenpaiPidx'], d['unseenTiles'], d['genbutsu'], d['event'], dangersDiv)
                 GS.ply_counter = d['ply']
                 updateState()
@@ -1195,6 +1243,7 @@ function calcDanger() {
     }
     GS.ui.genericModalBody.append(dangersDiv)
     showModalAndWait(GS.ui.genericModal)
+    updateState() // TODO do all this calculation beforehand?
 }
 
 function addResult() {
@@ -1507,7 +1556,7 @@ function connectUI() {
         } else if (event.key == 'd') {
             if (GS.alphaTestMode) {
                 if (!genericModal.open) {
-                    calcDanger()
+                    // calcDanger()   TODO rework this after doing the bars
                 } else {
                     genericModal.close()
                 }
@@ -1635,7 +1684,6 @@ function parseMortalJsonStr(data) {
             continue
         }
         if (data.mjai_log[idx-1].type == 'dora') {
-            // TODO: Convert to tenhou
             event.dora_marker = data.mjai_log[idx-1].dora_marker
         }
         currGe.push(event)
@@ -1660,6 +1708,7 @@ function setMortalJsonStr(data) {
     convertPai2Tenhou(data)
     normalizeMortalEvals(data)
     mergeMortalEvals(data)
+    calcDanger()
     addResult()
     GS.ui.updateResultsTable()
     GS.ui.updateAbout()
@@ -1718,8 +1767,8 @@ function debugState() {
 function parseUrl() {
     const urlParams = new URLSearchParams(window.location.search)
     let dataParam = urlParams.get('data')
-    let hand_counter = urlParams.get('hand')
-    let ply_counter = urlParams.get('ply')
+    let hand_counter = Number(urlParams.get('hand'))
+    let ply_counter = Number(urlParams.get('ply'))
     if (urlParams.get('alphaTestMode')) {
         GS.alphaTestMode = true
     }
@@ -1736,10 +1785,10 @@ function parseUrl() {
             setMortalJsonStr(xhr.response)
             GS.hand_counter = 0
             GS.ply_counter = 0
-            if (!isNaN(hand_counter) && hand_counter < GS.ge.length) {
+            if (hand_counter !== null && hand_counter < GS.ge.length) {
                 GS.hand_counter = hand_counter
             }
-            if (!isNaN(ply_counter) && ply_counter < GS.ge[GS.hand_counter].length) {
+            if (ply_counter !== null && ply_counter < GS.ge[GS.hand_counter].length) {
                 GS.ply_counter = ply_counter
             }
             updateState()
