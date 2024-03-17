@@ -424,6 +424,8 @@ class UI {
                     dangerSvgElem.appendChild(createRect(
                         xloc-(2.5-relToHero)*GS.C_db_mortBarWidth, GS.C_db_mortBarWidth, GS.C_db_height, PvalZoom/100*GS.C_cb_mortBarHeightRatio, color
                     ));
+                    // TODO doesn't work
+                    // dangerSvgElem.lastChild.setAttribute('filter', 'drop-shadow(0 0 4px 4px inset rgba(0, 0, 0, 0.9))')
                     // console.log('sdb', tile, Pval)
                 }
             }
