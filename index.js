@@ -418,12 +418,12 @@ class UI {
                         if (!thisDanger) {
                             continue
                         }
-                        let matchingCombo = thisDanger['combos'][tile]
+                        let matchingCombo = thisDanger['combos'][normRedFive(tile)]
                         Pval = matchingCombo === undefined ? 0 : matchingCombo['all']/thisDanger['combos']['all']*100
                     }
-                    let PvalZoom = Math.min(Pval*(100/20), 100)
+                    let PvalZoom = Math.min(Pval*(100/12), 100)
                     dangerSvgElem.appendChild(createRect(
-                        xloc-(relToHero-1.5)*GS.C_db_mortBarWidth, GS.C_db_mortBarWidth, GS.C_db_height, PvalZoom/100*GS.C_cb_mortBarHeightRatio, color
+                        xloc-(2.5-relToHero)*GS.C_db_mortBarWidth, GS.C_db_mortBarWidth, GS.C_db_height, PvalZoom/100*GS.C_cb_mortBarHeightRatio, color
                     ));
                     //console.log('sdb', tile, Pval)
                 }
@@ -1160,10 +1160,9 @@ function testDangers() {
         GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
 }
 function calcDanger() {
-    GS.ui.genericModal.style.marginRight = '0px'
-    GS.ui.genericModalBody.replaceChildren()
-    GS.ui.genericModal.querySelector(".title").textContent = i18next.t("Dealin Danger")
     // testDangers()
+    // let save_hand_counter = GS.hand_counter
+    // let save_ply_counter = GS.ply_counter
     for (let hand=0; hand < GS.ge.length; hand++) {
         let gs = new GameState(GS.fullData.split_logs[hand].log[0])
         GS.ge[hand].dangers = [[],[],[],[]]
@@ -1207,7 +1206,11 @@ function calcDanger() {
             }
         }
     }
-    return
+}
+function showDangerTable() {
+    GS.ui.genericModal.style.marginRight = '0px'
+    GS.ui.genericModalBody.replaceChildren()
+    GS.ui.genericModal.querySelector(".title").textContent = i18next.t("Dealin Danger")
     let resultTypeStr = GS.ui.getResultTypeStr()
     GS.ui.genericModalBody.append(createElemWithText('p', 'Final Result:'))
     for (let s of resultTypeStr) {
@@ -1219,7 +1222,7 @@ function calcDanger() {
     addTableRow(table, ['Pusher', 'Tenpai', 'Tile', 'This %', 'Total %'])
     for (let pidx=0; pidx<4; pidx++) {
         let accumP = 0
-        for (let d of dangers[pidx]) {
+        for (let d of GS.ge[GS.hand_counter].dangers[pidx]) {
             accumP = accumP + (1-accumP)*d['comboP']
             addTableRow(table, [relativeToHeroStr(d['thisPidx']), d['tenpaiStr'], tenhou2strH(d['event'].pai), (d['comboP']*100).toFixed(1), (accumP*100).toFixed(1)])
             table.lastChild.lastChild.addEventListener('click', (event) => {
@@ -1236,7 +1239,7 @@ function calcDanger() {
     for (let pidx=0; pidx<4; pidx++) {
         let accumP = 0
         let who = relativeToHeroStr(pidx)
-        for (let tf of tsumoFails[pidx]) {
+        for (let tf of GS.ge[GS.hand_counter].tsumoFails[pidx]) {
             accumP = accumP + (1-accumP)*tf[0]/tf[1]
             addTableRow(table, [`${who} miss Tsumo`, (tf[0]/tf[1]*100).toFixed(1), (accumP*100).toFixed(1)])
         }
@@ -1556,7 +1559,7 @@ function connectUI() {
         } else if (event.key == 'd') {
             if (GS.alphaTestMode) {
                 if (!genericModal.open) {
-                    // calcDanger()   TODO rework this after doing the bars
+                    showDangerTable()
                 } else {
                     genericModal.close()
                 }
