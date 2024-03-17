@@ -442,7 +442,7 @@ const i18next_data = {
                 "Ron"     : "론",
                 "Tsumo"   : "쯔모",
                 "win-by"  : "{{winner}}의 {{type}}",
-                "ron-full"  : "{{winner}}의 론 {{loser}}",
+                "ron-full"  : "{{winner}}의 {{loser}} 론",
                 "tsumo-full"  : "{{winner}}의 쯔모",
                 "流局"    : "유국",
                 "流し満貫" : "유국만관",
