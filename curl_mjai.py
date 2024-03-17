@@ -11,7 +11,7 @@ args = parser.parse_args()
 
 json_url = re.sub('killerducky.*=/', '', args.url)
 local_file_path = re.sub('.*=/', '', args.url)
-local_url = (f"http://127.0.0.1:5500/index.html?data={local_file_path}")
+local_url = (f"http://127.0.0.1:5500/index.html?data={local_file_path}&alphaTestMode=1")
 os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
 
 print('server url ', args.url)

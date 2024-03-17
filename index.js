@@ -366,7 +366,6 @@ class UI {
     }
     updateDiscardBars() {
         let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
-        let nextGameEvent = GS.ge[GS.hand_counter][GS.ply_counter+1]
         let mortalEval = gameEvent.mortalEval
         const discardBars = document.getElementById("discard-bars")
         let [discardSvgElem, dangerSvgElem] = discardBars.children
@@ -374,39 +373,39 @@ class UI {
             discardSvgElem.appendChild(createSvgText(60,30,i18next.t("spoiler")))
             return
         }
-        let showDangerBars = GS.alphaTestMode && nextGameEvent && nextGameEvent.actor==GS.heroPidx && nextGameEvent['danger']
+        let showDangerBars = GS.alphaTestMode && 'danger' in gameEvent
         if (!mortalEval && !showDangerBars) {
             return // nothing to display
         }
-        for (let i = -1; i < GS.gs.hands[gameEvent.actor].length; i++) {
-            let tile = (i==-1) ? GS.gs.drawnTile[gameEvent.actor] : GS.gs.hands[gameEvent.actor][i]
+        for (let i = -1; i < GS.gs.hands[GS.heroPidx].length; i++) {
+            let tile = (i==-1) ? GS.gs.drawnTile[GS.heroPidx] : GS.gs.hands[GS.heroPidx][i]
             if (tile == null) {
                 continue // on calls there was no drawnTile
             }
-            let slot = (i !== -1) ? i : GS.gs.hands[gameEvent.actor].length+0.5
+            let slot = (i !== -1) ? i : GS.gs.hands[GS.heroPidx].length+0.5
             let xloc = GS.C_db_handPadding + GS.C_db_tileWidth/2 + slot*GS.C_db_tileWidth
             if (mortalEval) {
                 let matchingDetailIdx = mortalEval.details.findIndex(x => x.action && x.action.type == 'dahai' && x.action.pai && x.action.pai==tile)
-                if (matchingDetailIdx == -1) {
-                    continue // TODO: Check code for this. For now assume due to illegal calls swaps
-                }
-                let matchingDetail = mortalEval.details[matchingDetailIdx]
-                let Pval = matchingDetail.normProb*100
-                if (matchingDetailIdx == mortalEval.actual_index) {
+                // TODO: Check code for this. For now assume due to illegal calls swaps
+                if (matchingDetailIdx != -1) {
+                    let matchingDetail = mortalEval.details[matchingDetailIdx]
+                    let Pval = matchingDetail.normProb*100
+                    if (matchingDetailIdx == mortalEval.actual_index) {
+                        discardSvgElem.appendChild(createRect(
+                            xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
+                        ))
+                    }
                     discardSvgElem.appendChild(createRect(
-                        xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_db_height, 1, GS.C_colorBarHero
-                    ))
+                        xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_db_height, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
+                    ));
                 }
-                discardSvgElem.appendChild(createRect(
-                    xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_db_height, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
-                ));
             }
             if (showDangerBars) {
-                for (let pidx=0; pidx<4; pidx++) {
-                    if (pidx == GS.heroPidx) {
+                for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
+                    if (tenpaiPidx == GS.heroPidx) {
                         continue
                     }
-                    let relToHero = relativeToHero(pidx)
+                    let relToHero = relativeToHero(tenpaiPidx)
                     let color = GS.C_colorOpps[relToHero-1]
                     let fakeDangers = false
                     // fakeDangers = true
@@ -414,7 +413,7 @@ class UI {
                     if (fakeDangers) {
                         Pval = 7*relToHero
                     } else {
-                        let thisDanger = nextGameEvent['danger'][pidx]
+                        let thisDanger = gameEvent['danger'][tenpaiPidx][GS.heroPidx]
                         if (!thisDanger) {
                             continue
                         }
@@ -425,7 +424,7 @@ class UI {
                     dangerSvgElem.appendChild(createRect(
                         xloc-(2.5-relToHero)*GS.C_db_mortBarWidth, GS.C_db_mortBarWidth, GS.C_db_height, PvalZoom/100*GS.C_cb_mortBarHeightRatio, color
                     ));
-                    //console.log('sdb', tile, Pval)
+                    // console.log('sdb', tile, Pval)
                 }
             }
         }
@@ -1172,36 +1171,36 @@ function calcDanger() {
             // TODO: No need to reloop all the events every time!
             let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(hand, ply, event, gs)
             for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
-                if (!reach_accepted[tenpaiPidx]) {
-                    continue // skip non-tenpai players
+                if (!reach_accepted[tenpaiPidx] || event.actor === undefined) {
+                    continue // skip non-tenpai players, and e.g. ryukyoku
                 }
-                let dangerousEvent = (event.type == 'dahai' || event.type=='kakan') && event.actor != tenpaiPidx
-                let tsumoAttempt = event.actor == tenpaiPidx && event.type == 'tsumo'
-                if (tsumoAttempt || dangerousEvent) {
-                    let thisPidx = event.actor
+                for (let thisPidx=0; thisPidx<4; thisPidx++) {
+                    let dangerousEvent = (event.type == 'dahai' || event.type=='kakan') && 
+                                        event.actor != tenpaiPidx && event.actor == thisPidx
+                    let tsumoAttempt = event.actor == tenpaiPidx && event.type == 'tsumo'
                     let thisUnseenTiles = unseenTiles[thisPidx]
                     if (false && tsumoAttempt) { // TODO: This is broken for now
                         let numUnseenTiles = sum(Object.values(thisUnseenTiles))
                         let ukeire = doCalculateUkeire(gs, tenpaiPidx, thisUnseenTiles)
                         GS.ge[hand].tsumoFails[tenpaiPidx].push([ukeire['value'], numUnseenTiles])
-                    } else if (dangerousEvent) {
-                        let thisDanger = {}
-                        thisDanger['waitsArray'] = generateWaits()
-                        thisDanger['combos'] = calcCombos(thisDanger['waitsArray'], genbutsu[tenpaiPidx], thisUnseenTiles)
-                        let [a,b] = combo2strAndP(event.pai, thisDanger['combos'])
-                        thisDanger['comboStr'] = a
-                        thisDanger['comboP'] = b
-                        thisDanger['tenpaiPidx'] = tenpaiPidx
-                        thisDanger['thisPidx'] = thisPidx
-                        thisDanger['unseenTiles'] = unseenTiles
-                        thisDanger['genbutsu'] = genbutsu
-                        thisDanger['tenpaiStr'] = relativeToHeroStr(tenpaiPidx).padStart(6)
-                        thisDanger['event'] = event
-                        thisDanger['ply'] = ply
-                        if (!('danger' in [event])) { event['danger'] = []}
-                        event['danger'][tenpaiPidx] = thisDanger
-                        GS.ge[hand].dangers[thisPidx].push(thisDanger)
                     }
+                    let thisDanger = {}
+                    thisDanger['dangerousEvent'] = dangerousEvent
+                    thisDanger['waitsArray'] = generateWaits()
+                    thisDanger['combos'] = calcCombos(thisDanger['waitsArray'], genbutsu[tenpaiPidx], thisUnseenTiles)
+                    let [a,b] = combo2strAndP(event.pai, thisDanger['combos'])
+                    thisDanger['comboStr'] = a
+                    thisDanger['comboP'] = b
+                    thisDanger['tenpaiPidx'] = tenpaiPidx
+                    thisDanger['thisPidx'] = thisPidx
+                    thisDanger['unseenTiles'] = unseenTiles
+                    thisDanger['genbutsu'] = genbutsu
+                    thisDanger['tenpaiStr'] = relativeToHeroStr(tenpaiPidx).padStart(6)
+                    thisDanger['event'] = event
+                    thisDanger['ply'] = ply
+                    if (!('danger' in event)) { event['danger'] = [[],[],[],[]]}
+                    event['danger'][tenpaiPidx][thisPidx] = thisDanger
+                    GS.ge[hand].dangers[thisPidx].push(thisDanger)
                 }
             }
         }
@@ -1223,6 +1222,9 @@ function showDangerTable() {
     for (let pidx=0; pidx<4; pidx++) {
         let accumP = 0
         for (let d of GS.ge[GS.hand_counter].dangers[pidx]) {
+            if (!d['dangerousEvent']) {
+                continue
+            }
             accumP = accumP + (1-accumP)*d['comboP']
             addTableRow(table, [relativeToHeroStr(d['thisPidx']), d['tenpaiStr'], tenhou2strH(d['event'].pai), (d['comboP']*100).toFixed(1), (accumP*100).toFixed(1)])
             table.lastChild.lastChild.addEventListener('click', (event) => {
