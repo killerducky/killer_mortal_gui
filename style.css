@@ -25,10 +25,9 @@
     --color-bar-mortal: hsl(120, 70%, 34%);
     --color-bar-hero: hsl(70, 60%, 48%);
 
-    /* --color-toimen: hsl(70, 82%, 43%); */
-    --color-shimo: hsl(355, 60%, 40%);
-    --color-toimen: hsl(50, 60%, 50%);
-    --color-kami: hsl(277, 70%, 40%);
+    --color-shimo: hsl(0, 60%, 60%);
+    --color-toimen: hsl(60, 60%, 60%);
+    --color-kami: hsl(277, 70%, 60%);
     /* Discard tsumogiri background: Mix in some color and make less bright */
     /* The brightness affects both background and foreground, the color only affects the background */
     --color-tsumogiri: hsl(30, 100%, 92%);
