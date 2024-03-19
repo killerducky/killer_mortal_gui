@@ -661,10 +661,9 @@ function addTableRow(table, values){
     let tr = table.insertRow()
     for (let v of values) {
         let cell = tr.insertCell()
-        cell.textContent = v
+        cell.innerHTML = v
     }
 }
-
 class Tile {
     constructor(tile) {
         this.tile = tile
@@ -1423,19 +1422,23 @@ function connectUI() {
     const toggleMortalAdvice = i18nElem("toggle-mortal-advice")
     const toggleDealinRateElem = i18nElem("toggle-dealin-rate")
     const about =  i18nElem("about")
-    const aboutBody = document.getElementById("about-body")
+    const aboutBody = [document.getElementById("about-body-0"), document.getElementById("about-body-1")]
     const langLabel = i18nElem("langLabel")
     const optionsLabel = i18nElem("options-label")
-    aboutBody.replaceChildren(document.createElement("ul"))
-    let aboutBodyList = i18next.t("about-body", {returnObjects:true})
-    for (let i=0; i<aboutBodyList.length; i++) {
+    let aboutBodyLists = [i18next.t("about-body-0", {returnObjects:true}), i18next.t("about-body-1", {returnObjects:true})]
+    aboutBody[0].replaceChildren(document.createElement("ul"))
+    for (let i=0; i<aboutBodyLists[0].length; i++) {
         let ul = document.createElement("li")
         let node = document.createElement("span")
-        node.innerHTML = aboutBodyList[i]
+        node.innerHTML = aboutBodyLists[0][i]
         ul.appendChild(node)
-        aboutBody.appendChild(ul)
+        aboutBody[0].appendChild(ul)
     }
-
+    let table = document.createElement("table")
+    aboutBody[1].replaceChildren(table)
+    for (let i=0; i<aboutBodyLists[1].length; i++) {
+        addTableRow(table, aboutBodyLists[1][i])
+    }
     // only run the rest once ever
     if (GS.uiConnected) {
         return
@@ -1623,6 +1626,8 @@ function connectUI() {
             urlParams.set('hand', GS.hand_counter)
             urlParams.set('ply', GS.ply_counter)
             window.location.href = window.location.pathname + '?' + urlParams.toString()
+        } else if (event.key == '?') {
+            showModalAndWait(aboutModal)
         }
     });
     document.addEventListener('wheel', function(event) {

@@ -399,6 +399,16 @@ button:hover, select:hover {
 .about-metadata td:nth-child(2) {
     text-align: left;
 }
+#about-body-1 td:first-child {
+    text-align:right;
+}
+#about-body-1 td:nth-child(2) {
+    text-align:left;
+}
+code {
+    background-color: var(--color-accent);
+    padding: 3px;
+}
 /* @media screen and (max-width: 900px) { */
 @media (pointer:coarse) {
     :root{
