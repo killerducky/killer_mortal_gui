@@ -98,9 +98,9 @@ h1{
     flex-shrink: 0;
     display: grid;
     width:calc(var(--zoom) * 655px);
-    height:calc(var(--zoom) * 715px);
+    height:calc(var(--zoom) * 735px);
     grid-template-columns: calc(90/655*100%) calc(135/655*100%) calc(205/655*100%) calc(135/655*100%) calc(90/655*100%);
-    grid-template-rows: calc(90/715*100%) calc(135/715*100%) calc(205/715*100%) calc(135/715*100%) calc((90 + 50)/715*100%);
+    grid-template-rows: calc(90/735*100%) calc(135/735*100%) calc(205/735*100%) calc(135/735*100%) calc((90 + 70)/735*100%);
     grid-template-areas: "ah-p2 ah-p2 ah-p2   ah-p2 ah-p1"
                          "ah-p3     . ad-p2   .     ah-p1"
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"
@@ -302,7 +302,7 @@ h1{
 .discard-bars {
     display: grid;
     grid-template-columns: 1fr;
-    height:calc(var(--zoom-tiles) * 42px);
+    height:calc(var(--zoom-tiles) * 50px);
 }
 .sidebar {
     margin:10px;
@@ -381,7 +381,7 @@ button:hover, select:hover {
     background: var(--color-accent3);
     padding: 10px;
     width: calc(var(--zoom)*260px);
-    height: calc(var(--zoom)*100px);
+    height: calc(var(--zoom)*110px);
     margin: auto;
 }
 .killer-call-img {

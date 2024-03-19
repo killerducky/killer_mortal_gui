@@ -29,10 +29,12 @@ class GlobalState {
         this.mediaBreak = getComputedStyle(document.documentElement).getPropertyValue('--media-break')
         this.updateZoom()
 
-        this.C_db_height = 40
+        this.C_db_height = 50
+        this.C_db_dealinMax = 15
         this.C_db_totWidth = 605
         this.C_db_handPadding = 5
         this.C_db_tileWidth = 34
+        this.C_db_tileHeight = 44
         this.C_db_heroBarWidth = 20
         this.C_db_mortBarWidth = 10
         this.C_cb_heroBarHeight = 40
@@ -362,7 +364,7 @@ class UI {
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
         svgElement.setAttribute('transform-origin', 'top left')
-        svgElement.setAttribute('transform', `scale(${GS.C_zoom}, ${-GS.C_zoom}) translate(0, ${-GS.C_zoom*86})`)
+        svgElement.setAttribute('transform', `scale(${GS.C_zoom}, ${-GS.C_zoom}) translate(0, ${-GS.C_zoom*(GS.C_db_height+GS.C_db_tileHeight)})`)
         discardBars.append(svgElement)
     }
     updateDiscardBars() {
@@ -421,7 +423,7 @@ class UI {
                         let matchingCombo = thisDanger['combos'][normRedFive(tile)]
                         Pval = matchingCombo === undefined ? 0 : matchingCombo['all']/thisDanger['combos']['all']*100
                     }
-                    let PvalZoom = Math.min(Pval*(100/12), 100)
+                    let PvalZoom = Math.min(Pval*(100/GS.C_db_dealinMax), 100)
                     dangerSvgElem.appendChild(createRect(
                         xloc-(2.5-relToHero)*GS.C_db_mortBarWidth, GS.C_db_mortBarWidth, GS.C_db_height, PvalZoom/100*GS.C_cb_mortBarHeightRatio, color
                     ));
