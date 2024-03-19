@@ -37,7 +37,7 @@ class GlobalState {
         this.C_db_tileHeight = 44
         this.C_db_heroBarWidth = 20
         this.C_db_mortBarWidth = 10
-        this.C_cb_heroBarHeight = 40
+        this.C_cb_heroBarHeight = this.C_db_height // maybe don't need separate one...
         this.C_cb_mortBarHeightRatio = 0.9
         this.C_cb_padding = 10
         this.C_cb_widthFactor = 1.5
@@ -1560,24 +1560,24 @@ function connectUI() {
         } else if (event.key == 'm') {
             GS.showMortal = !GS.showMortal
             updateState()
-        } else if (event.key == 'PageUp') {
+        } else if (event.key == 'PageUp' || event.key == ',') {
             do {
                 decPlyCounter();
             } while (!stopCondition(true))
             updateState()
-        } else if (event.key == 'PageDown') {
+        } else if (event.key == 'PageDown' || event.key == '.') {
             do {
                 incPlyCounter();
             } while (!stopCondition(true))
             updateState()
-        } else if (event.key == 'Home') {
+        } else if (event.key == 'Home' || event.key == '[') {
             if (GS.ply_counter != 0) {
                 GS.ply_counter = 0
             } else {
                 decRoundCounter()
             }
             updateState()
-        } else if (event.key == 'End') {
+        } else if (event.key == 'End' || event.key == ']') {
             if (GS.ply_counter != GS.ge[GS.hand_counter].length-1) {
                 GS.ply_counter = GS.ge[GS.hand_counter].length-1
             } else {
