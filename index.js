@@ -1636,7 +1636,7 @@ function connectUI() {
         for (let thisModal of allModals) {
             if (thisModal.open) {
                 // Except don't close the danger modal, since we may need to scroll it
-                if (thisModal != genericModal) {
+                if (!([genericModal, aboutModal, infoRoundModal].includes(thisModal))) {
                     thisModal.close()
                 }
                 return
