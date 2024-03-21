@@ -1121,8 +1121,7 @@ function doCalculateUkeire(pidx, thisUnseenTiles) {
 function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, event, dangersDiv) {
     // dangersDiv.replaceChildren()
     let thisUnseenTiles = unseenTiles[thisPidx]
-    let waitsArray = generateWaits()
-    let combos = calcCombos(waitsArray, genbutsu[tenpaiPidx], thisUnseenTiles)
+    let combos = calcCombos(generateWaits(), genbutsu[tenpaiPidx], thisUnseenTiles)
     // dangersDiv.append(createElemWithText('pre', ' '))
     // dangersDiv.append(createElemWithText('pre', ' '))
     // dangersDiv.append(createElemWithText('p', `${relativeToHeroStr(thisPidx)} ${i18next.t(event.type)} ${tenhou2strH(event.pai)} while ${relativeToHeroStr(tenpaiPidx)} is tenpai!`))
@@ -1195,8 +1194,7 @@ function calcDanger() {
                     }
                     let thisDanger = {}
                     thisDanger['dangerousEvent'] = dangerousEvent
-                    thisDanger['waitsArray'] = generateWaits()
-                    thisDanger['combos'] = calcCombos(thisDanger['waitsArray'], genbutsu[tenpaiPidx], thisUnseenTiles)
+                    thisDanger['combos'] = calcCombos(generateWaits(), genbutsu[tenpaiPidx], thisUnseenTiles)
                     let [a,b] = combo2strAndP(event.pai, thisDanger['combos'])
                     thisDanger['comboStr'] = a
                     thisDanger['comboP'] = b
