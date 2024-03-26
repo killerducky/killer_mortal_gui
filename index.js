@@ -20,9 +20,15 @@ class GlobalState {
         this.uiConnected = false
 
         // calcCombos Weights
-        this.C_ccw_ryanmen = 3
-        this.C_ccw_honorTankiShanpon = 2
-        this.C_ccw_nonHonorTankiShanpon = 0.5
+        // penchan anchor at 1
+        this.C_ccw_ryanmen = 3.5
+        this.C_ccw_honorTankiShanpon = 1.7
+        this.C_ccw_nonHonorTankiShanpon = 1.0
+        this.C_ccw_kanchan = 0.21
+        this.C_ccw_kanchanRiichiSujiTrap = 2.6
+        this.C_ccw_uraSuji = 1.3
+        this.C_ccw_matagiSujiEarly = 0.6
+        this.C_ccw_matagiSujiRiichi = 1.2
 
         this.C_soft_T = 2
 
@@ -931,9 +937,10 @@ function generateWaits() {
     return waitsArray
 }
 
-function calcCombos(waitsArray, genbutsu, heroUnseenTiles) {
+function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles) {
     let combos = {'all':0}
     let comboTypes = {}
+    let riichiTile = discardsToRiichi.slice(-1)[0]
     for (let wait of waitsArray) {
         console.assert(wait.tiles.length <= 2)
         wait.combos = 1
@@ -960,11 +967,40 @@ function calcCombos(waitsArray, genbutsu, heroUnseenTiles) {
         let honorTankiShanpon = ['shanpon','tanki'].includes(wait.type) && wait.tiles[0] > 40
         let nonHonorTankiShanpon = ['shanpon','tanki'].includes(wait.type) && wait.tiles[0] < 40
         if (['ryanmen'].includes(wait.type)) {
+            let uraSuji = false
+            let matagiSujiEarly = false
+            let matagiSujiRiichi = false
+            for (let discard of discardsToRiichi) {
+                if (wait.tiles.includes(discard)) { continue }
+                for (let waitTile of wait.tiles) {
+                    if (discard%10 >= 4 && discard%10 <= 6 && Math.abs(discard-waitTile) == 2) {
+                        uraSuji = true
+                    }
+                }
+            }
+            for (let discard of discardsToRiichi) {
+                if (wait.tiles.includes(discard)) {
+                    if (discard == riichiTile) {
+                        matagiSujiRiichi = true
+                    } else {
+                        matagiSujiEarly = true
+                    }
+                }
+            }
             wait.combos *= GS.C_ccw_ryanmen
+            if (uraSuji) { wait.combos *= GS.C_ccw_uraSuji }
+            if (matagiSujiEarly) { wait.combos *= GS.C_ccw_matagiSujiEarly}
+            if (matagiSujiRiichi) { wait.combos *= GS.C_ccw_matagiSujiRiichi}
         } else if (honorTankiShanpon) {
             wait.combos *= GS.C_ccw_honorTankiShanpon
         } else if (nonHonorTankiShanpon) {
             wait.combos *= GS.C_ccw_nonHonorTankiShanpon
+        } else if (['kanchan'].includes(wait.type)) {
+            if (riichiTile%10>=4 && riichiTile%10<=6 && Math.abs(wait.waitsOn[0]-riichiTile)==3) {
+                wait.combos *= GS.C_ccw_kanchanRiichiSujiTrap
+            } else {
+                wait.combos *= GS.C_ccw_kanchan
+            }
         }
         combos['all'] += wait.combos
         if (!comboTypes[wait.type]) { comboTypes[wait.type] = 0 }
@@ -991,11 +1027,14 @@ function combo2strAndP(key, combos) {
     let p = `${String((prob*100).toFixed(1)).padStart(4)}`
     let str = ''
     str += `${k}: ${p}%`
+    let str_all_combos = ''
     for (let type of keyCombo.types) {
-        str += ' '
-        str += type.tiles.map(x => tenhou2strH(x)).join('')
-        str += ':'+type.numUnseen.join('*')
+        str_all_combos += ' '
+        str_all_combos += type.tiles.map(x => tenhou2strH(x)).join('')
+        str_all_combos += ':'+type.numUnseen.join('*')
+        str_all_combos += ` ${(type.combos/combos['all']*100).toFixed(1)}%`
     }
+    str += str_all_combos
     return [str, prob]
 }
 
@@ -1057,11 +1096,11 @@ function incrementalCalcDangerHelper(currHand, currPly, event, gs) {
         currPly -= 1
     }
     let unseenTiles = []
-    let genbutsu = []
+    let genbutsu = [[],[],[],[]]
+    let discardsToRiichi = [[],[],[],[]]
     let reach_accepted = [false, false, false, false]
     for (let pidx=0; pidx<4; pidx++) {
         unseenTiles[pidx] = initUnseenTiles(pidx, gs)
-        genbutsu[pidx] = []
     }
     for (let ply=0; ply <= currPly; ply++) {
         let event = GS.ge[currHand][ply]
@@ -1090,13 +1129,16 @@ function incrementalCalcDangerHelper(currHand, currPly, event, gs) {
                 if (event.actor == pidx || reach_accepted[pidx]) {
                     genbutsu[pidx].push(normRedFive(event.pai))
                 }
+                if (event.actor == pidx && !reach_accepted[pidx]) {
+                    discardsToRiichi[pidx].push(normRedFive(event.pai))
+                }
             }
         } else if (event.type == 'reach_accepted') {
             reach_accepted[event.actor] = true
         }
     }
     genbutsu = [...new Set(genbutsu)];
-    return [unseenTiles, genbutsu, reach_accepted]
+    return [unseenTiles, genbutsu, reach_accepted, discardsToRiichi]
 }
 function doCalculateUkeire(pidx, thisUnseenTiles) {
     // TODO: Beware this assumes GS.gs.hands for tenpai player is correct
@@ -1118,10 +1160,10 @@ function doCalculateUkeire(pidx, thisUnseenTiles) {
     let ukeire = calculateUkeire(ukeireHand, ukerieUnseen, calculateMinimumShanten)
     return ukeire
 }
-function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, event, dangersDiv) {
+function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, discardsToRiichi, event, dangersDiv) {
     // dangersDiv.replaceChildren()
     let thisUnseenTiles = unseenTiles[thisPidx]
-    let combos = calcCombos(generateWaits(), genbutsu[tenpaiPidx], thisUnseenTiles)
+    let combos = calcCombos(generateWaits(), genbutsu[tenpaiPidx], discardsToRiichi[tenpaiPidx], thisUnseenTiles)
     // dangersDiv.append(createElemWithText('pre', ' '))
     // dangersDiv.append(createElemWithText('pre', ' '))
     // dangersDiv.append(createElemWithText('p', `${relativeToHeroStr(thisPidx)} ${i18next.t(event.type)} ${tenhou2strH(event.pai)} while ${relativeToHeroStr(tenpaiPidx)} is tenpai!`))
@@ -1156,7 +1198,7 @@ function testDangers() {
             numT[t] = 4
         }
         numT[47] = 1 // Test only 1 unseed Red dragon
-        let combos = calcCombos(generateWaits(), [], numT)
+        let combos = calcCombos(generateWaits(), [15,25,16,26,36], [25,16,26,36,15], numT)
         for (let [key,combo] of Object.entries(combos)) {
             if (key=='all') {
                 continue
@@ -1167,7 +1209,6 @@ function testDangers() {
         GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
 }
 function calcDanger() {
-    // testDangers()
     // let save_hand_counter = GS.hand_counter
     // let save_ply_counter = GS.ply_counter
     for (let hand=0; hand < GS.ge.length; hand++) {
@@ -1177,7 +1218,7 @@ function calcDanger() {
         for (let ply=0; ply < GS.ge[hand].length; ply++) {
             let event = GS.ge[hand][ply]
             // TODO: No need to reloop all the events every time!
-            let [unseenTiles, genbutsu, reach_accepted] = incrementalCalcDangerHelper(hand, ply, event, gs)
+            let [unseenTiles, genbutsu, reach_accepted, discardsToRiichi] = incrementalCalcDangerHelper(hand, ply, event, gs)
             for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
                 if (!reach_accepted[tenpaiPidx] || event.actor === undefined) {
                     continue // skip non-tenpai players, and e.g. ryukyoku
@@ -1194,7 +1235,7 @@ function calcDanger() {
                     }
                     let thisDanger = {}
                     thisDanger['dangerousEvent'] = dangerousEvent
-                    thisDanger['combos'] = calcCombos(generateWaits(), genbutsu[tenpaiPidx], thisUnseenTiles)
+                    thisDanger['combos'] = calcCombos(generateWaits(), genbutsu[tenpaiPidx], discardsToRiichi[tenpaiPidx], thisUnseenTiles)
                     let [a,b] = combo2strAndP(event.pai, thisDanger['combos'])
                     thisDanger['comboStr'] = a
                     thisDanger['comboP'] = b
@@ -1202,6 +1243,7 @@ function calcDanger() {
                     thisDanger['thisPidx'] = thisPidx
                     thisDanger['unseenTiles'] = unseenTiles
                     thisDanger['genbutsu'] = genbutsu
+                    thisDanger['discardsToRiichi'] = discardsToRiichi
                     thisDanger['tenpaiStr'] = relativeToHeroStr(tenpaiPidx).padStart(6)
                     thisDanger['event'] = event
                     thisDanger['ply'] = ply
@@ -1227,7 +1269,7 @@ function showDangerDetail() {
         }
         foundone = true
         let d = event.danger[tenpaiPidx][event.actor]
-        showDangers(d['thisPidx'], d['tenpaiPidx'], d['unseenTiles'], d['genbutsu'], d['event'], dangersDiv)
+        showDangers(d['thisPidx'], d['tenpaiPidx'], d['unseenTiles'], d['genbutsu'], d['discardsToRiichi'], d['event'], dangersDiv)
     }
     if (foundone) {
         showModalAndWait(GS.ui.genericModal)
@@ -1277,6 +1319,7 @@ function showDangerTable() {
         }
     }
     GS.ui.genericModalBody.append(dangersDiv)
+    // testDangers()
     showModalAndWait(GS.ui.genericModal)
     updateState() // TODO do all this calculation beforehand?
 }
