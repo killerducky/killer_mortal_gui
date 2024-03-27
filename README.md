@@ -74,6 +74,7 @@ You also need a local json file. Run a review on the mjai site, and then you can
 It will output some URLs for reference, the last one is an example URL to point your browser to locally. Modify the local IP/port for your system.
 
 # Credits
+* Equim-chan for creating Mortal and providing the online service for free!
 * Tiles https://github.com/FluffyStuff/riichi-mahjong-tiles
 * Tenhou log stuff from https://github.com/Equim-chan/tensoul/blob/main/convert.js
 * Ukeire, Shanten, etc utilities from https://github.com/Euophrys/mahjong-discord-bot
