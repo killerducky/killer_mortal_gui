@@ -371,7 +371,7 @@ class UI {
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
         svgElement.setAttribute('transform-origin', 'top left')
-        svgElement.setAttribute('transform', `scale(${GS.C_zoom}, ${-GS.C_zoom}) translate(0, ${-GS.C_zoom*(GS.C_db_height+GS.C_db_tileHeight)})`)
+        svgElement.setAttribute('transform', `scale(${GS.C_zoom}, ${-GS.C_zoom}) translate(0, ${-1*(GS.C_db_height+GS.C_db_tileHeight)})`)
         discardBars.append(svgElement)
     }
     updateDiscardBars() {
@@ -385,8 +385,13 @@ class UI {
         }
         let showDangerBars = GS.showDealinRate && ('danger' in gameEvent)
         if (!mortalEval && !showDangerBars) {
+            if (GS.showDealinRate) {
+                dangerSvgElem.appendChild(createSvgText(60,30,i18next.t("dealin-riichi-only")))
+                dangerSvgElem.lastChild.setAttribute('transform', 'translate(0, 50) scale(1, -1)')
+            }
             return // nothing to display
         }
+        let atLeastOnedanger = false
         for (let i = -1; i < GS.gs.hands[GS.heroPidx].length; i++) {
             let tile = (i==-1) ? GS.gs.drawnTile[GS.heroPidx] : GS.gs.hands[GS.heroPidx][i]
             if (tile == null) {
@@ -415,6 +420,7 @@ class UI {
                     if (tenpaiPidx == GS.heroPidx) {
                         continue
                     }
+                    atLeastOnedanger = true
                     let relToHero = relativeToHero(tenpaiPidx)
                     let color = GS.C_colorOpps[relToHero-1]
                     let fakeDangers = false
@@ -434,11 +440,12 @@ class UI {
                     dangerSvgElem.appendChild(createRect(
                         xloc-(2.5-relToHero)*GS.C_db_mortBarWidth, GS.C_db_mortBarWidth, GS.C_db_height, PvalZoom/100*GS.C_cb_mortBarHeightRatio, color
                     ));
-                    // TODO doesn't work
-                    // dangerSvgElem.lastChild.setAttribute('filter', 'drop-shadow(0 0 4px 4px inset rgba(0, 0, 0, 0.9))')
-                    // console.log('sdb', tile, Pval)
                 }
             }
+        }
+        if (GS.showDealinRate && !atLeastOnedanger) {
+            dangerSvgElem.appendChild(createSvgText(60,30,i18next.t("dealin-riichi-only")))
+            dangerSvgElem.lastChild.setAttribute('transform', 'translate(0, 50) scale(1, -1)')
         }
     }
     updateHandInfo() {
@@ -955,9 +962,9 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
                 wait.numUnseen.push(heroUnseenTiles[t])
             }
         }
-        // Shanpons: Order doesn't matter
-        if (wait.tiles[1] && wait.tiles[0] == wait.tiles[1]) {
-            wait.combos /= wait.tiles.length // Technically Math.exp(length) but it's always 2 for this case
+        if (wait.type == 'shanpon') {
+            // Shanpons: Order doesn't matter. Technically Math.exp(length) but it's always 2 for this case
+            wait.combos /= wait.tiles.length 
         }
         let thisGenbutsu = wait.waitsOn.reduce((accum,t) => accum || genbutsu.includes(t), false)
         if (thisGenbutsu) {

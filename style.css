@@ -304,7 +304,7 @@ h1{
 .discard-bars {
     display: grid;
     grid-template-columns: 1fr;
-    height:calc(var(--zoom-tiles) * 50px);
+    grid-template-rows: calc(var(--zoom-tiles) * 50px) 0;
 }
 .sidebar {
     margin:10px;
