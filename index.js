@@ -30,6 +30,7 @@ class GlobalState {
         this.C_ccw_matagiSujiEarly = 0.6
         this.C_ccw_matagiSujiRiichi = 1.2
         this.C_ccw_doraGreed = 1.2
+        this.C_ccw_akaDiscard = 0.14
 
         this.C_soft_T = 2
 
@@ -89,7 +90,7 @@ class GameState {
         this.thisRoundExtraDoras = 0
         this.tilesLeft = 70
         this.scores = log[logIdx++]
-        this.dora = log[logIdx++]
+        this.doraIndicator = log[logIdx++]
         this.uradora = log[logIdx++]
         this.hands = []
         this.draws = []
@@ -224,10 +225,10 @@ class UI {
             console.log('tiles left mismatch:', event.mortalEval.tiles_left, GS.gs.tilesLeft)
         }
         for (let i=0; i<5; i++) {
-            if (GS.gs.dora[i] == null || i > GS.gs.thisRoundExtraDoras) {
+            if (GS.gs.doraIndicator[i] == null || i > GS.gs.thisRoundExtraDoras) {
                 this.doras.append(createTile('back'))
             } else {
-                this.doras.append(createTile(tenhou2str(GS.gs.dora[i])))
+                this.doras.append(createTile(tenhou2str(GS.gs.doraIndicator[i])))
             }
         }
         if (GS.gs.handOver) {
@@ -255,18 +256,6 @@ class UI {
             table.style.margin = "10px auto"
             this.infoThisRoundTable.append(table)
 
-            // Still deciding on this. Maybe let some users try it with console commands...
-            //GS.resultsLoc = "Crab"
-            if (GS.resultsLoc == "Controls") {
-                let rect = document.querySelector('.controls').getBoundingClientRect()
-                this.infoThisRoundModal.style.marginRight = `${window.innerWidth - rect.right}px`
-                this.infoThisRoundModal.style.marginTop = `${rect.top}px`
-            } else if (GS.resultsLoc == "Crab") {
-                let controlsRect = document.querySelector('.controls').getBoundingClientRect()
-                let rect = document.querySelector('.grid-main').getBoundingClientRect()
-                this.infoThisRoundModal.style.marginRight = `${window.innerWidth - controlsRect.right}px`
-                this.infoThisRoundModal.style.marginBottom = `${window.innerHeight - rect.bottom}px`
-            }
             this.infoThisRoundModal.showModal()
             this.infoThisRoundModal.addEventListener('click', (event) => {
                 this.infoThisRoundModal.close()
@@ -945,10 +934,10 @@ function generateWaits() {
     return waitsArray
 }
 
-function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dora) {
+function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, doraIndicator) {
+    let discardsToRiichiNormRedFive = discardsToRiichi.map(normRedFive)
     let combos = {'all':0}
-    let comboTypes = {}
-    let riichiTile = discardsToRiichi.slice(-1)[0]
+    let riichiTile = discardsToRiichiNormRedFive.slice(-1)[0]
     for (let wait of waitsArray) {
         console.assert(wait.tiles.length <= 2)
         wait.combos = 1
@@ -978,7 +967,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
             let uraSuji = false
             let matagiSujiEarly = false
             let matagiSujiRiichi = false
-            for (let discard of discardsToRiichi) {
+            for (let discard of discardsToRiichiNormRedFive) {
                 if (wait.tiles.includes(discard)) { continue }
                 for (let waitTile of wait.tiles) {
                     if (discard%10 >= 4 && discard%10 <= 6 && Math.abs(discard-waitTile) == 2) {
@@ -986,7 +975,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
                     }
                 }
             }
-            for (let discard of discardsToRiichi) {
+            for (let discard of discardsToRiichiNormRedFive) {
                 if (wait.tiles.includes(discard)) {
                     if (discard == riichiTile) {
                         matagiSujiRiichi = true
@@ -1010,18 +999,32 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
                 wait.combos *= GS.C_ccw_kanchan
             }
         }
+
         let doraInvolved = false
         for (let tile of [...wait.tiles, ...wait.waitsOn]) {
-            if (tile == doraIndicator2dora(dora)) {
+            if (tile == doraIndicator2dora(doraIndicator)) {
                 doraInvolved = true
             }
         }
         if (doraInvolved) {
             wait.combos *= GS.C_ccw_doraGreed
         }
+
+        let akaInvolved = false
+        for (let discard of discardsToRiichi) {
+            if (discard != normRedFive(discard)) {
+                for (let tile of [...wait.tiles, ...wait.waitsOn]) {
+                    if (tile == normRedFive(discard)) {
+                        akaInvolved = true
+                    }
+                }
+            }
+        }
+        if (akaInvolved) {
+            wait.combos *= GS.C_ccw_akaDiscard
+        }
+
         combos['all'] += wait.combos
-        if (!comboTypes[wait.type]) { comboTypes[wait.type] = 0 }
-        comboTypes[wait.type] += wait.combos
         if (wait.type=='shanpon') {
             wait.combos *= 2 // Shanpons always have a partner pair, so multiply by 2 *after* adding the the 'all' combos denominator
         }
@@ -1035,6 +1038,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
 }
 
 function doraIndicator2dora(doraIndicator) {
+    doraIndicator = normRedFive(doraIndicator)
     if (doraIndicator%10 == 9) {
         return doraIndicator-8
     }
@@ -1104,7 +1108,7 @@ function initUnseenTiles(pidx, gs) {
     }
     let seenTiles = []
     seenTiles.push(...gs.hands[pidx])
-    seenTiles.push(gs.dora[0])
+    seenTiles.push(gs.doraIndicator[0])
     for (let t of seenTiles) {
         numT[normRedFive(t)]--
     }
@@ -1159,7 +1163,7 @@ function incrementalCalcDangerHelper(currHand, currPly, event, gs) {
                     genbutsu[pidx].push(normRedFive(event.pai))
                 }
                 if (event.actor == pidx && !reach_accepted[pidx]) {
-                    discardsToRiichi[pidx].push(normRedFive(event.pai))
+                    discardsToRiichi[pidx].push(event.pai)
                 }
             }
         } else if (event.type == 'reach_accepted') {
@@ -1189,10 +1193,10 @@ function doCalculateUkeire(pidx, thisUnseenTiles) {
     let ukeire = calculateUkeire(ukeireHand, ukerieUnseen, calculateMinimumShanten)
     return ukeire
 }
-function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, discardsToRiichi, event, dora, dangersDiv) {
+function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, discardsToRiichi, event, doraIndicator, dangersDiv) {
     // dangersDiv.replaceChildren()
     let thisUnseenTiles = unseenTiles[thisPidx]
-    let combos = calcCombos(generateWaits(), genbutsu[tenpaiPidx], discardsToRiichi[tenpaiPidx], thisUnseenTiles, dora)
+    let combos = calcCombos(generateWaits(), genbutsu[tenpaiPidx], discardsToRiichi[tenpaiPidx], thisUnseenTiles, doraIndicator)
     // dangersDiv.append(createElemWithText('pre', ' '))
     // dangersDiv.append(createElemWithText('pre', ' '))
     // dangersDiv.append(createElemWithText('p', `${relativeToHeroStr(thisPidx)} ${i18next.t(event.type)} ${tenhou2strH(event.pai)} while ${relativeToHeroStr(tenpaiPidx)} is tenpai!`))
@@ -1267,7 +1271,7 @@ function calcDanger() {
                     }
                     let thisDanger = {}
                     thisDanger['dangerousEvent'] = dangerousEvent
-                    thisDanger['combos'] = calcCombos(generateWaits(), genbutsu[tenpaiPidx], discardsToRiichi[tenpaiPidx], thisUnseenTiles, gs.dora)
+                    thisDanger['combos'] = calcCombos(generateWaits(), genbutsu[tenpaiPidx], discardsToRiichi[tenpaiPidx], thisUnseenTiles, gs.doraIndicator)
                     let [a,b] = combo2strAndP(event.pai, thisDanger['combos'])
                     thisDanger['comboStr'] = a
                     thisDanger['comboP'] = b
@@ -1280,7 +1284,7 @@ function calcDanger() {
                     thisDanger['event'] = event
                     thisDanger['hand'] = hand
                     thisDanger['ply'] = ply
-                    thisDanger['dora'] = gs.dora
+                    thisDanger['dora'] = gs.doraIndicator
                     if (!('danger' in event)) { event['danger'] = [[],[],[],[]]}
                     event['danger'][tenpaiPidx][thisPidx] = thisDanger
                     GS.ge[hand].dangers[thisPidx].push(thisDanger)
