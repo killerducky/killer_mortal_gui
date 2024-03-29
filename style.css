@@ -276,6 +276,7 @@ h1{
 .gi-p1-outer {
     grid-area: ai-p1;
     writing-mode: vertical-rl;
+    text-orientation: sideways;
     transform: rotate(180deg);
     margin: calc(var(--zoom) * 10px) auto;
 }
@@ -287,6 +288,7 @@ h1{
 .gi-p3-outer {
     grid-area: ai-p3;
     writing-mode: vertical-rl;
+    text-orientation: sideways;
     margin: calc(var(--zoom) * 10px) auto;
 }
 .rotate > img {
