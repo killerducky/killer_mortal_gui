@@ -91,6 +91,7 @@ class GameState {
         this.tilesLeft = 70
         this.scores = log[logIdx++]
         this.doraIndicator = log[logIdx++]
+        this.dora = this.doraIndicator.map(doraIndicator2dora)
         this.uradora = log[logIdx++]
         this.hands = []
         this.draws = []
@@ -124,6 +125,13 @@ class GameState {
         this.drawnTile = [null, null, null, null]
         this.calls = [[],[],[],[]]
         this.handOver = false
+        this.genbutsu = [new Set, new Set, new Set, new Set]
+        this.discardsToRiichi = [[],[],[],[]]
+        this.reach_accepted = [false, false, false, false]
+        this.unseenTiles = []
+        for (let pidx=0; pidx<4; pidx++) {
+            this.unseenTiles[pidx] = initUnseenTiles(pidx, this)
+        }
     }
 }
 
@@ -750,7 +758,7 @@ function tileSort(a, b) {
 }
 
 function normRedFive(t) {
-    return Math.floor(tileInt2Float(t))
+    return t<51? t : t == 51 ? 15 : t == 52 ? 25 : t == 53 ? 35 : null
 }
 
 // 15 == 51, 25 == 52 (aka 5s are equal to normal 5s)
@@ -934,7 +942,7 @@ function generateWaits() {
     return waitsArray
 }
 
-function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, doraIndicator) {
+function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dora) {
     let discardsToRiichiNormRedFive = discardsToRiichi.map(normRedFive)
     let combos = {'all':0}
     let riichiTile = discardsToRiichiNormRedFive.slice(-1)[0]
@@ -955,7 +963,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
             // Shanpons: Order doesn't matter. Technically Math.exp(length) but it's always 2 for this case
             wait.combos /= wait.tiles.length 
         }
-        let thisGenbutsu = wait.waitsOn.reduce((accum,t) => accum || genbutsu.includes(t), false)
+        let thisGenbutsu = wait.waitsOn.reduce((accum,t) => accum || genbutsu.has(t), false)
         if (thisGenbutsu) {
             continue
         }
@@ -1002,7 +1010,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
 
         let doraInvolved = false
         for (let tile of [...wait.tiles, ...wait.waitsOn]) {
-            if (tile == doraIndicator2dora(doraIndicator)) {
+            if (tile == dora) {
                 doraInvolved = true
             }
         }
@@ -1036,7 +1044,6 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
     }
     return combos
 }
-
 function doraIndicator2dora(doraIndicator) {
     doraIndicator = normRedFive(doraIndicator)
     if (doraIndicator%10 == 9) {
@@ -1077,7 +1084,7 @@ function showSujis(genbutsu) {
         let str = ''
         for (let suit=1; suit<=3; suit++) {
             for (let t of ta) {
-                str += genbutsu.includes(suit*10+t) ? '-- ' : tenhou2str(suit*10+t) + ' '
+                str += genbutsu.has(suit*10+t) ? '-- ' : tenhou2str(suit*10+t) + ' '
             }
             str += '  '
         }
@@ -1086,8 +1093,8 @@ function showSujis(genbutsu) {
     let sujiCnt = 18
     for (let t of [4,5,6]) {
         for (let suit=1; suit<=3; suit++) {
-            (genbutsu.includes(suit*10+t) || genbutsu.includes(suit*10+t-3)) && sujiCnt--
-            (genbutsu.includes(suit*10+t) || genbutsu.includes(suit*10+t+3)) && sujiCnt--
+            (genbutsu.has(suit*10+t) || genbutsu.has(suit*10+t-3)) && sujiCnt--
+            (genbutsu.has(suit*10+t) || genbutsu.has(suit*10+t+3)) && sujiCnt--
         }
     }
     return [sujiCnt, strArray]
@@ -1115,63 +1122,53 @@ function initUnseenTiles(pidx, gs) {
     return numT
 }
 
-function weseeitnow(unseenTiles, tile, pidxAlreadySaw) {
+function weseeitnow(gs, tile, pidxAlreadySaw) {
     for (let pidx=0; pidx<4; pidx++) {
         if (pidx==pidxAlreadySaw) {
             continue
         }
-        unseenTiles[pidx][normRedFive(tile)]--
+        gs.unseenTiles[pidx][normRedFive(tile)]--
     }
 }
-function incrementalCalcDangerHelper(currHand, currPly, event, gs) {
-    // For dahai(discards) or kakans, don't include that tile as genbutsu yet
-    if (event.type == 'dahai' || event.type=='kakan') {
-        currPly -= 1
-    }
-    let unseenTiles = []
-    let genbutsu = [[],[],[],[]]
-    let discardsToRiichi = [[],[],[],[]]
-    let reach_accepted = [false, false, false, false]
-    for (let pidx=0; pidx<4; pidx++) {
-        unseenTiles[pidx] = initUnseenTiles(pidx, gs)
-    }
-    for (let ply=0; ply <= currPly; ply++) {
-        let event = GS.ge[currHand][ply]
-        if (event.dora_marker) {
-            weseeitnow(unseenTiles, normRedFive(event.dora_marker), -1)
+function incrementalCalcDangerHelper(event, prevEvent, gs) {
+    // process dahai and kakans the turn after they happen
+    if (!prevEvent) {
+        // do nothing if it's null
+    } else if (prevEvent.type == 'kakan') {
+        weseeitnow(gs, prevEvent.pai, prevEvent.actor)
+        for (let pidx=0; pidx<4; pidx++) {
+            // genbutsu if reach_accepted player doesn't Rob the Kan
+            if (gs.reach_accepted[pidx]) {
+                gs.genbutsu[pidx].add(normRedFive(prevEvent.pai))
+            }
         }
-        if (event.type == 'tsumo') { // draw
-            unseenTiles[event.actor][normRedFive(event.pai)]--
-        } else if (['chi', 'pon', 'daiminikan', 'ankan'].includes(event.type)) {
-            // the other players will see the consumed tiles
-            for (let tile of event.consumed) {
-                weseeitnow(unseenTiles, normRedFive(tile), event.actor)
+    } else if (prevEvent.type == 'dahai') { // discard
+        weseeitnow(gs, normRedFive(prevEvent.pai), prevEvent.actor)
+        for (let pidx=0; pidx<4; pidx++) {
+            /// genbutsu = we discarded it ourselves, or we reach_accepted and anyone discarded it
+            if (prevEvent.actor == pidx || gs.reach_accepted[pidx]) {
+                gs.genbutsu[pidx].add(normRedFive(prevEvent.pai))
             }
-        } else if (event.type == 'kakan') {
-            weseeitnow(unseenTiles, event.pai, event.actor)
-            for (let pidx=0; pidx<4; pidx++) {
-                // genbutsu if reach_accepted player doesn't Rob the Kan
-                if (reach_accepted[pidx]) {
-                    genbutsu[pidx].push(normRedFive(event.pai))
-                }
+            if (prevEvent.actor == pidx && !gs.reach_accepted[pidx]) {
+                gs.discardsToRiichi[pidx].push(prevEvent.pai)
             }
-        } else if (event.type == 'dahai') { // discard
-            weseeitnow(unseenTiles, normRedFive(event.pai), event.actor)
-            for (let pidx=0; pidx<4; pidx++) {
-                /// genbutsu = we discarded it ourselves, or we reach_accepted and anyone discarded it
-                if (event.actor == pidx || reach_accepted[pidx]) {
-                    genbutsu[pidx].push(normRedFive(event.pai))
-                }
-                if (event.actor == pidx && !reach_accepted[pidx]) {
-                    discardsToRiichi[pidx].push(event.pai)
-                }
-            }
-        } else if (event.type == 'reach_accepted') {
-            reach_accepted[event.actor] = true
         }
     }
-    genbutsu = [...new Set(genbutsu)];
-    return [unseenTiles, genbutsu, reach_accepted, discardsToRiichi]
+
+    // other events on the turn they happen
+    if (event.dora_marker) {
+        weseeitnow(gs, normRedFive(event.dora_marker), -1)
+    }
+    if (event.type == 'tsumo') { // draw
+        gs.unseenTiles[event.actor][normRedFive(event.pai)]--
+    } else if (['chi', 'pon', 'daiminikan', 'ankan'].includes(event.type)) {
+        // the other players will see the consumed tiles
+        for (let tile of event.consumed) {
+            weseeitnow(gs, normRedFive(tile), event.actor)
+        }
+    } else if (event.type == 'reach_accepted') {
+        gs.reach_accepted[event.actor] = true
+    }
 }
 function doCalculateUkeire(pidx, thisUnseenTiles) {
     // TODO: Beware this assumes GS.gs.hands for tenpai player is correct
@@ -1193,10 +1190,10 @@ function doCalculateUkeire(pidx, thisUnseenTiles) {
     let ukeire = calculateUkeire(ukeireHand, ukerieUnseen, calculateMinimumShanten)
     return ukeire
 }
-function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, discardsToRiichi, event, doraIndicator, dangersDiv) {
+function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, discardsToRiichi, event, dora, dangersDiv) {
     // dangersDiv.replaceChildren()
     let thisUnseenTiles = unseenTiles[thisPidx]
-    let combos = calcCombos(generateWaits(), genbutsu[tenpaiPidx], discardsToRiichi[tenpaiPidx], thisUnseenTiles, doraIndicator)
+    let combos = calcCombos(generateWaits(), genbutsu[tenpaiPidx], discardsToRiichi[tenpaiPidx], thisUnseenTiles, dora)
     // dangersDiv.append(createElemWithText('pre', ' '))
     // dangersDiv.append(createElemWithText('pre', ' '))
     // dangersDiv.append(createElemWithText('p', `${relativeToHeroStr(thisPidx)} ${i18next.t(event.type)} ${tenhou2strH(event.pai)} while ${relativeToHeroStr(tenpaiPidx)} is tenpai!`))
@@ -1245,25 +1242,23 @@ function testDangers() {
     GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
 }
 function calcDanger() {
-    // let save_hand_counter = GS.hand_counter
-    // let save_ply_counter = GS.ply_counter
     for (let hand=0; hand < GS.ge.length; hand++) {
         let gs = new GameState(GS.fullData.split_logs[hand].log[0])
         GS.ge[hand].dangers = [[],[],[],[]]
         GS.ge[hand].tsumoFails = [[],[],[],[]]
         for (let ply=0; ply < GS.ge[hand].length; ply++) {
             let event = GS.ge[hand][ply]
-            // TODO: No need to reloop all the events every time!
-            let [unseenTiles, genbutsu, reach_accepted, discardsToRiichi] = incrementalCalcDangerHelper(hand, ply, event, gs)
+            let prevEvent = GS.ge[hand][ply-1]
+            incrementalCalcDangerHelper(event, prevEvent, gs)
             for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
-                if (!reach_accepted[tenpaiPidx] || event.actor === undefined) {
+                if (!gs.reach_accepted[tenpaiPidx] || event.actor === undefined) {
                     continue // skip non-tenpai players, and e.g. ryukyoku
                 }
                 for (let thisPidx=0; thisPidx<4; thisPidx++) {
                     let dangerousEvent = (event.type == 'dahai' || event.type=='kakan') && 
                                         event.actor != tenpaiPidx && event.actor == thisPidx
                     let tsumoAttempt = event.actor == tenpaiPidx && event.type == 'tsumo'
-                    let thisUnseenTiles = unseenTiles[thisPidx]
+                    let thisUnseenTiles = gs.unseenTiles[thisPidx]
                     if (false && tsumoAttempt) { // TODO: This is broken for now
                         let numUnseenTiles = sum(Object.values(thisUnseenTiles))
                         let ukeire = doCalculateUkeire(gs, tenpaiPidx, thisUnseenTiles)
@@ -1271,20 +1266,20 @@ function calcDanger() {
                     }
                     let thisDanger = {}
                     thisDanger['dangerousEvent'] = dangerousEvent
-                    thisDanger['combos'] = calcCombos(generateWaits(), genbutsu[tenpaiPidx], discardsToRiichi[tenpaiPidx], thisUnseenTiles, gs.doraIndicator)
+                    thisDanger['combos'] = calcCombos(generateWaits(), gs.genbutsu[tenpaiPidx], gs.discardsToRiichi[tenpaiPidx], thisUnseenTiles, gs.dora[0])
                     let [a,b] = combo2strAndP(event.pai, thisDanger['combos'])
                     thisDanger['comboStr'] = a
                     thisDanger['comboP'] = b
                     thisDanger['tenpaiPidx'] = tenpaiPidx
                     thisDanger['thisPidx'] = thisPidx
-                    thisDanger['unseenTiles'] = unseenTiles
-                    thisDanger['genbutsu'] = genbutsu
-                    thisDanger['discardsToRiichi'] = discardsToRiichi
+                    thisDanger['unseenTiles'] = _.cloneDeep(gs.unseenTiles)
+                    thisDanger['genbutsu'] = _.cloneDeep(gs.genbutsu)
+                    thisDanger['discardsToRiichi'] = _.cloneDeep(gs.discardsToRiichi)
                     thisDanger['tenpaiStr'] = relativeToHeroStr(tenpaiPidx).padStart(6)
                     thisDanger['event'] = event
                     thisDanger['hand'] = hand
                     thisDanger['ply'] = ply
-                    thisDanger['dora'] = gs.doraIndicator
+                    thisDanger['dora'] = gs.dora[0]
                     if (!('danger' in event)) { event['danger'] = [[],[],[],[]]}
                     event['danger'][tenpaiPidx][thisPidx] = thisDanger
                     GS.ge[hand].dangers[thisPidx].push(thisDanger)
