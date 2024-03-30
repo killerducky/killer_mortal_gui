@@ -1704,6 +1704,7 @@ function connectUI() {
             const urlParams = new URLSearchParams(window.location.search)
             urlParams.set('hand', GS.hand_counter)
             urlParams.set('ply', GS.ply_counter)
+            urlParams.set('showMortal', GS.showMortal ? 1 : 0)
             window.location.href = window.location.pathname + '?' + urlParams.toString()
         } else if (event.key == '?') {
             showModalAndWait(aboutModal)
@@ -1910,6 +1911,9 @@ function parseUrl() {
     let dataParam = urlParams.get('data')
     let hand_counter = Number(urlParams.get('hand'))
     let ply_counter = Number(urlParams.get('ply'))
+    if (urlParams.get('showMortal')) {
+        GS.showMortal = Number(urlParams.get('showMortal'))
+    }
     if (urlParams.get('alphaTestMode')) {
         GS.alphaTestMode = true
     }
