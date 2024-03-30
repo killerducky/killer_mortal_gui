@@ -895,6 +895,14 @@ function updateState() {
     // discardOverflowTest()
 }
 
+const waitType = {
+    ryanmen:0,
+    kanchan:1,
+    penchan:2,
+    tanki:3,
+    shanpon:4
+}
+Object.freeze(waitType)
 function generateWaits() {
     let waitsArray = []
     for (let ryanmen of [[2,3],[3,4],[4,5],[5,6],[6,7],[7,8]]) {
@@ -902,7 +910,7 @@ function generateWaits() {
             let wait = {}
             wait.tiles = [suit*10+ryanmen[0], suit*10+ryanmen[1]]
             wait.waitsOn = [suit*10+ryanmen[0]-1, suit*10+ryanmen[1]+1]
-            wait.type = 'ryanmen'
+            wait.type = waitType.ryanmen
             waitsArray.push(wait)
         }
     }
@@ -911,7 +919,7 @@ function generateWaits() {
             let wait = {}
             wait.tiles = [suit*10+kanchan[0], suit*10+kanchan[1]]
             wait.waitsOn = [suit*10+kanchan[0]+1]
-            wait.type = 'kanchan'
+            wait.type = waitType.kanchan
             waitsArray.push(wait)
         }
     }
@@ -921,19 +929,19 @@ function generateWaits() {
             let wait = {}
             wait.tiles = [suit*10+penchan[0], suit*10+penchan[1]]
             wait.waitsOn = [suit*10+penchan[2]]
-            wait.type = 'penchan'
+            wait.type = waitType.penchan
             waitsArray.push(wait)
         }
     }
     for (let tankiShanpon of ([1,2,3,4,5,6,7,8,9])) {
-        for (let type of ['tanki', 'shanpon']) {
+        for (let type of [waitType.tanki, waitType.shanpon]) {
             for (let suit=1; suit<=4; suit++) {
                 if (suit==4 && tankiShanpon>7) {
                     continue // honors are 41-47 only
                 }
                 let wait = {}
                 wait.type = type
-                wait.tiles = Array(type=='tanki' ? 1:2).fill([suit*10+tankiShanpon])
+                wait.tiles = Array(type==waitType.tanki ? 1:2).fill([suit*10+tankiShanpon])
                 wait.waitsOn = [suit*10+tankiShanpon]
                 waitsArray.push(wait)
             }
@@ -948,10 +956,14 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
     let riichiTile = discardsToRiichiNormRedFive.slice(-1)[0]
     for (let wait of waitsArray) {
         console.assert(wait.tiles.length <= 2)
+        let thisGenbutsu = wait.waitsOn.reduce((accum,t) => accum || genbutsu.has(t), false)
+        if (thisGenbutsu) {
+            continue
+        }
         wait.combos = 1
         wait.numUnseen = []
         for (let [i,t] of wait.tiles.entries()) {
-            if (i>0 && wait.type=='shanpon') {
+            if (i>0 && wait.type==waitType.shanpon) {
                 wait.combos *= heroUnseenTiles[t]-1 // Shanpons pull the same tile, so after the first one there is 1 less remaining
                 wait.numUnseen.push(heroUnseenTiles[t]-1)
             } else {
@@ -959,19 +971,15 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
                 wait.numUnseen.push(heroUnseenTiles[t])
             }
         }
-        if (wait.type == 'shanpon') {
+        if (wait.type == waitType.shanpon) {
             // Shanpons: Order doesn't matter. Technically Math.exp(length) but it's always 2 for this case
             wait.combos /= wait.tiles.length 
         }
-        let thisGenbutsu = wait.waitsOn.reduce((accum,t) => accum || genbutsu.has(t), false)
-        if (thisGenbutsu) {
-            continue
-        }
         wait.origCombos = wait.combos
         // heuristic adjustment for waits that players tend to aim for
-        let honorTankiShanpon = ['shanpon','tanki'].includes(wait.type) && wait.tiles[0] > 40
-        let nonHonorTankiShanpon = ['shanpon','tanki'].includes(wait.type) && wait.tiles[0] < 40
-        if (['ryanmen'].includes(wait.type)) {
+        let honorTankiShanpon = [waitType.shanpon, waitType.tanki].includes(wait.type) && wait.tiles[0] > 40
+        let nonHonorTankiShanpon = [waitType.shanpon, waitType.tanki].includes(wait.type) && wait.tiles[0] < 40
+        if (waitType.ryanmen == wait.type) {
             let uraSuji = false
             let matagiSujiEarly = false
             let matagiSujiRiichi = false
@@ -980,6 +988,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
                 for (let waitTile of wait.tiles) {
                     if (discard%10 >= 4 && discard%10 <= 6 && Math.abs(discard-waitTile) == 2) {
                         uraSuji = true
+                        break
                     }
                 }
             }
@@ -1000,7 +1009,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
             wait.combos *= GS.C_ccw_honorTankiShanpon
         } else if (nonHonorTankiShanpon) {
             wait.combos *= GS.C_ccw_nonHonorTankiShanpon
-        } else if (['kanchan'].includes(wait.type)) {
+        } else if (waitType.kanchan == wait.type) {
             if (riichiTile%10>=4 && riichiTile%10<=6 && Math.abs(wait.waitsOn[0]-riichiTile)==3) {
                 wait.combos *= GS.C_ccw_kanchanRiichiSujiTrap
             } else {
@@ -1012,6 +1021,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
         for (let tile of [...wait.tiles, ...wait.waitsOn]) {
             if (tile == dora) {
                 doraInvolved = true
+                break
             }
         }
         if (doraInvolved) {
@@ -1020,10 +1030,12 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
 
         let akaInvolved = false
         for (let discard of discardsToRiichi) {
-            if (discard != normRedFive(discard)) {
+            let normedDiscard = normRedFive(discard)
+            if (discard != normedDiscard) {
                 for (let tile of [...wait.tiles, ...wait.waitsOn]) {
-                    if (tile == normRedFive(discard)) {
+                    if (tile == normedDiscard) {
                         akaInvolved = true
+                        break
                     }
                 }
             }
@@ -1033,7 +1045,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
         }
 
         combos['all'] += wait.combos
-        if (wait.type=='shanpon') {
+        if (wait.type==waitType.shanpon) {
             wait.combos *= 2 // Shanpons always have a partner pair, so multiply by 2 *after* adding the the 'all' combos denominator
         }
         for (let t of wait.waitsOn) {
