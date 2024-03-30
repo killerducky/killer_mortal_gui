@@ -47,6 +47,10 @@ The Mortal engine does not have a dealin rate output, but in Options you can opt
     | Riichi Matagi suji | 1.2 | Cut 3m late, could be from 233m or 334m |
   * Multipliers were tuned for best predictions on Tenhou Houou games
     * Credit [The Hopeless Girl on the Path of Houou](https://pathofhouou.blogspot.com/2021/04/guide-replay-analysis.html) for games and analysis framework code (which they got from ApplySci? And maybe other people?)
+  * Next release will include:
+    | Type | Multiplier | Description |
+    |-----|-----|-----|
+    | Red 5 discard | 0.14 | Probably not cutting 0m from 455m |
 * Examples of things not accounted for
   * Yaku reading
   * Assumes never furiten Riichi
