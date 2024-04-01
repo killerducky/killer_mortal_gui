@@ -76,6 +76,17 @@ const i18next_data = {
                 "7z":"$t(R)",
                 "spoiler": "(Spoiler: Mortal evaluations hidden. Click to show)",
                 "dealin-riichi-only": "Dealin rate: No opponents have called Riichi",
+                "dealin-rate": "Dealin Rate",
+                "dealin-pov": {
+                    "position": {
+                        "pov": "position-rel",
+                        "tenpai": "position-rel",
+                    },
+                    "full": "{{thisPosition}}'s dealin rate while {{tenpaiPosition}} is tenpai",
+                },
+                "sujis-tested": "Sujis tested",
+                "suji-dealin-rate": "Suji dealin rate",
+                "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
                 // Advice words
                 'dahai'   : 'Cut',
                 'pon'     : 'Pon',
@@ -268,6 +279,17 @@ const i18next_data = {
                 "R":"中",
                 "spoiler": "（注意：何切模式已开启。点击此处进行关闭）",
                 "dealin-riichi-only": "铳率条：没有对手宣告立直",
+                "dealin-rate": "Dealin Rate",
+                "dealin-pov": {
+                    "position": {
+                        "pov": "position-rel",
+                        "tenpai": "position-rel",
+                    },
+                    "full": "{{thisPosition}}'s dealin rate while {{tenpaiPosition}} is tenpai",
+                },
+                "sujis-tested": "Sujis tested",
+                "suji-dealin-rate": "Suji dealin rate",
+                "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
                 // Advice words
                 'dahai'   : '切',
                 'pon'     : '碰',
@@ -452,6 +474,27 @@ const i18next_data = {
                     "Kami" : "상가",
                     "Pot" : "공탁금",
                 },
+                "position-rel-subject": {
+                    "Hero" : "내가",
+                    "Shimo" : "하가이",
+                    "Toimen" : "대면이",
+                    "Kami" : "상가가",
+                    "Pot" : "공탁금이",
+                },
+                "position-rel-possessive": {
+                    "Hero" : "나의",
+                    "Shimo" : "하가의",
+                    "Toimen" : "대면의",
+                    "Kami" : "상가의",
+                    "Pot" : "공탁금의",
+                },
+                "position-rel-object": {
+                    "Hero" : "나를",
+                    "Shimo" : "하가를",
+                    "Toimen" : "대면을",
+                    "Kami" : "상가를",
+                    "Pot" : "공탁금을",
+                },
                 "E":"동",
                 "S":"남",
                 "W":"서",
@@ -461,6 +504,17 @@ const i18next_data = {
                 "R":"중",
                 "spoiler": "(모탈 선택 가려짐: 여기를 클릭하면 표시됩니다)",
                 "dealin-riichi-only": "Dealin rate: No opponents have called Riichi",
+                "dealin-rate": "Dealin Rate",
+                "dealin-pov": {
+                    "position": {
+                        "pov": "position-rel-possessive",
+                        "tenpai": "position-rel-object",
+                    },
+                    "full": "{{thisPosition}} dealin rate while {{tenpaiPosition}} is tenpai",
+                },
+                "sujis-tested": "Sujis tested",
+                "suji-dealin-rate": "Suji dealin rate",
+                "wait-pattern-combos": "Wait pattern combos",
                 // Advice words
                 'dahai'   : '타',
                 'pon'     : '퐁',
@@ -660,6 +714,17 @@ const i18next_data = {
                 "7z":"$t(R)",
                 "spoiler": "(ネタバレ注意: Mortalの意見は非表示。クリックで表示)",
                 "dealin-riichi-only": "Dealin rate: No opponents have called Riichi",
+                "dealin-rate": "Dealin Rate",
+                "dealin-pov": {
+                    "position": {
+                        "pov": "position-rel",
+                        "tenpai": "position-rel",
+                    },
+                    "full": "{{thisPosition}}'s dealin rate while {{tenpaiPosition}} is tenpai",
+                },
+                "sujis-tested": "Sujis tested",
+                "suji-dealin-rate": "Suji dealin rate",
+                "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
                 // Advice words
                 'dahai'   : '打',
                 'pon'     : 'ポン',

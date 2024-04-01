@@ -660,9 +660,12 @@ function relativeToHero(pidx) {
     let relIdx = pidx<4 ? (4 + GS.heroPidx - pidx) % 4 : pidx
     return relIdx
 }
-function relativeToHeroStr(pidx) {
+function relativeToHeroStr(pidx, English=0) {
     let relIdx = relativeToHero(pidx)
     let key = ['Hero', 'Kami', 'Toimen', 'Shimo', 'Pot'][relIdx]
+    if (English) {
+        return key
+    }
     return i18next.t(`position-rel.${key}`)
 }
 function sum(a) {
@@ -744,6 +747,12 @@ function tenhou2strH(tileInt) {
     return output
 }
 
+function tenhou2strShort(tileInt) {
+    if (tileInt >= 41 && tileInt <= 47) {
+        return i18next.t(tenhou2str(tileInt))
+    }
+    return tileInt % 10
+}
 // take 51 (0m) and return 15.1 for sorting
 function tileInt2Float(tileInt) {
     let f = tileInt == 51 ? 15.1 : tileInt == 52 ? 25.1 : tileInt == 53 ? 35.1 : tileInt
@@ -1082,14 +1091,13 @@ function combo2strAndP(key, combos) {
     let str_all_combos = ''
     for (let type of keyCombo.types) {
         str_all_combos += ' '
-        str_all_combos += type.tiles.map(x => tenhou2strH(x)).join('')
+        str_all_combos += type.tiles.map(x => tenhou2strShort(x)).join('')
         str_all_combos += ':'+type.numUnseen.join('*')
         str_all_combos += ` ${(type.combos/combos['all']*100).toFixed(1)}%`
     }
     str += str_all_combos
     return [str, prob]
 }
-
 function showSujis(genbutsu) {
     let strArray = []
     for (let ta of [[1,2,3], [4,5,6], [7,8,9]]) {
@@ -1203,32 +1211,75 @@ function doCalculateUkeire(pidx, thisUnseenTiles) {
     return ukeire
 }
 function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, discardsToRiichi, event, dora, dangersDiv) {
-    // dangersDiv.replaceChildren()
     let thisUnseenTiles = unseenTiles[thisPidx]
     let combos = calcCombos(generateWaits(), genbutsu[tenpaiPidx], discardsToRiichi[tenpaiPidx], thisUnseenTiles, dora)
-    // dangersDiv.append(createElemWithText('pre', ' '))
-    // dangersDiv.append(createElemWithText('pre', ' '))
-    // dangersDiv.append(createElemWithText('p', `${relativeToHeroStr(thisPidx)} ${i18next.t(event.type)} ${tenhou2strH(event.pai)} while ${relativeToHeroStr(tenpaiPidx)} is tenpai!`))
-    dangersDiv.append(createElemWithText('p', `${relativeToHeroStr(thisPidx)}'s dealin danger while ${relativeToHeroStr(tenpaiPidx)} is tenpai`))
+    let thisPosition = i18next.t('dealin-pov.position.pov')
+    thisPosition = i18next.t(`${thisPosition}.${relativeToHeroStr(thisPidx,1)}`)
+    let tenpaiPosition = i18next.t('dealin-pov.position.tenpai')
+    tenpaiPosition = i18next.t(`${tenpaiPosition}.${relativeToHeroStr(tenpaiPidx,1)}`)
+    dangersDiv.append(createElemWithText('p', i18next.t('dealin-pov.full', {thisPosition:thisPosition, tenpaiPosition:tenpaiPosition})))
     dangersDiv.append(createElemWithText('pre', ' '))
     let [sujiCnt, sujiStrArray] = showSujis(genbutsu[tenpaiPidx])
     for (let str of sujiStrArray) {
         dangersDiv.append(createElemWithText('pre', str))
     }
-    dangersDiv.append(createElemWithText('p', `${i18next.t('Sujis tested')} ${18-sujiCnt}/18`))
-    dangersDiv.append(createElemWithText('p', `${i18next.t('Suji dealin danger')} ${(1/sujiCnt*100).toFixed(0)}%`))
+    dangersDiv.append(createElemWithText('p', `${i18next.t('sujis-tested')} ${18-sujiCnt}/18 (${i18next.t('suji-dealin-rate')} 1/${sujiCnt} = ${(1/sujiCnt*100).toFixed(0)}%)`))
     dangersDiv.append(createElemWithText('pre', ' '))
-    dangersDiv.append(createElemWithText('p', `${i18next.t('Wait pattern combos:')}`))
-    let sumP = 0
-    for (let [key,combo] of Object.entries(combos)) {
-        if (key=='all') {
+
+    let span = document.createElement("span")
+    dangersDiv.append(span)
+    span.style.display = "inline-block"
+    let tables = []
+    for (let i=0; i<4; i++) {
+        tables[i] = document.createElement("table")
+        span.append(tables[i])
+        tables[i].style.display = "inline-block"
+        tables[i].style.verticalAlign = "top"
+    }
+    let dangersDetailDiv = document.createElement("div")
+    dangersDiv.append(dangersDetailDiv)
+    for (let tile=11; tile<=47; tile++) {
+        if (tile%10==0) { 
             continue
         }
-        sumP += combos[key]['all']
-        dangersDiv.append(createElemWithText('pre', (combo2strAndP(key,combos))[0]))
+        let suit = Math.floor(tile/10)
+        let k = `${String(tenhou2strH(tile))}`
+        let prob = 0
+        if (tile in combos) {
+            prob = combos[tile]['all']/combos['all']
+        }
+        let p = `${String((prob*100).toFixed(1))}%`
+        addTableRow(tables[suit-1], [k,p])
+        if (tile in combos) {
+            tables[suit-1].lastChild.lastChild.addEventListener('click', (event) => {
+                showDangersDetail(tile, combos, dangersDetailDiv)
+            })
+        }
     }
-    // dangersDiv.append(createElemWithText('pre', (`sumP ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
     dangersDiv.append(createElemWithText('pre', ' '))
+}
+function showDangersDetail(keyTile, combos, dangersDetailDiv) {
+    let table = document.createElement("table")
+    dangersDetailDiv.replaceChildren(table)
+    let keyCombo = combos[keyTile]
+    addTableRow(table, [tenhou2strH(keyTile), "", "", `${(keyCombo['all']/combos['all']*100).toFixed(1)}%`])
+    let numRows = 0
+    for (let wait of keyCombo.types) {
+        numRows++
+        let row = []
+        row.push(i18next.t(`waitTypeStr`, {returnObjects:true})[wait.type])
+        row.push(wait.tiles.map(x => tenhou2strShort(x)).join(''))
+        row.push(wait.numUnseen.join('*'))
+        row.push(`${(wait.combos/combos['all']*100).toFixed(1)}%`)
+        addTableRow(table, row)
+    }
+    for (let i=0; i<5-numRows; i++) {
+        addTableRow(table, ['-'])
+        table.lastChild.lastChild.style.visibility = 'hidden'
+        table.lastChild.lastChild.style.border = 'none'
+        table.lastChild.lastChild.lastChild.style.border = 'none'
+        table.lastChild.lastChild.lastChild.style.visibility = 'hidden'
+    }
 }
 function testDangers() {
     // Pretend we don't see any tiles.
@@ -1276,6 +1327,9 @@ function calcDanger() {
                         let ukeire = doCalculateUkeire(gs, tenpaiPidx, thisUnseenTiles)
                         GS.ge[hand].tsumoFails[tenpaiPidx].push([ukeire['value'], numUnseenTiles])
                     }
+                    if (thisPidx != GS.heroPidx && thisPidx != event.actor) {
+                        continue
+                    }
                     let thisDanger = {}
                     thisDanger['dangerousEvent'] = dangerousEvent
                     thisDanger['combos'] = calcCombos(generateWaits(), gs.genbutsu[tenpaiPidx], gs.discardsToRiichi[tenpaiPidx], thisUnseenTiles, gs.dora[0])
@@ -1303,7 +1357,7 @@ function calcDanger() {
 function showDangerDetail() {
     GS.ui.genericModal.style.marginRight = '0px'
     GS.ui.genericModalBody.replaceChildren()
-    GS.ui.genericModal.querySelector(".title").textContent = i18next.t("Dealin Danger")
+    GS.ui.genericModal.querySelector(".title").textContent = i18next.t("dealin-rate")
     const dangersDiv = document.createElement('div')
     GS.ui.genericModalBody.append(dangersDiv)
     let event = GS.ge[GS.hand_counter][GS.ply_counter]
@@ -1326,7 +1380,7 @@ function showDangerDetail() {
 function showDangerTable() {
     GS.ui.genericModal.style.marginRight = '0px'
     GS.ui.genericModalBody.replaceChildren()
-    GS.ui.genericModal.querySelector(".title").textContent = i18next.t("Dealin Danger")
+    GS.ui.genericModal.querySelector(".title").textContent = i18next.t("dealin-rate")
     let resultTypeStr = GS.ui.getResultTypeStr()
     GS.ui.genericModalBody.append(createElemWithText('p', 'Final Result:'))
     for (let s of resultTypeStr) {
