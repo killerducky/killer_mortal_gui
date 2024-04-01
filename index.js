@@ -799,7 +799,7 @@ function updateState() {
         if (event.type == 'tsumo') {
             GS.gs.drawnTile[event.actor] = event.pai
             GS.gs.tilesLeft--
-        } else if (event.type == 'chi' || event.type == 'pon') {
+        } else if (event.type == 'chi' || event.type == 'pon' || event.type == 'daiminkan') {
             let dp = GS.gs.discardPond[event.target]
             dp[dp.length-1].called = true
             GS.gs.hands[event.actor].push(event.pai)
@@ -813,23 +813,7 @@ function updateState() {
                 if (i==fromIdxRel) {
                     newCall.push('rotate')
                 }
-            }
-            GS.gs.calls[event.actor] = newCall.concat(GS.gs.calls[event.actor])
-        } else if (event.type == 'daiminkan') { // open kan
-            let dp = GS.gs.discardPond[event.target]
-            dp[dp.length-1].called = true
-            GS.gs.hands[event.actor].push(event.pai)
-            let newCall = []
-            let fromIdxRel = (4 + event.actor - event.target - 1) % 4
-            let consumed = [...event.consumed]
-            consumed.splice(fromIdxRel, 0, event.pai)
-            for (let i=0; i<consumed.length; i++) {
-                removeFromArray(GS.gs.hands[event.actor], consumed[i])
-                newCall.push(consumed[i])
-                if (fromIdxRel == i) {
-                    newCall.push('rotate')
-                }
-                if (fromIdxRel+1 == i) {
+                if (fromIdxRel+1 == i && event.type == 'daiminkan') {
                     newCall.push('rotate')
                     newCall.push('float')
                 }
@@ -883,12 +867,8 @@ function updateState() {
             // console.log('reach', GS.ply_counter)
         } else if (event.type == 'reach_accepted') {
             GS.gs.thisRoundSticks[event.actor]++
-            // console.log('reach_accepted', GS.ply_counter)
         } else if (event.type == 'hora' || event.type == 'ryukyoku') {
             GS.gs.handOver = true
-        } else if (event.type == 'dora') {
-            console.log('ERROR?')
-            throw new Error()
         } else {
             console.log(event)
             throw new Error('unknown type')
@@ -964,11 +944,11 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
     let combos = {'all':0}
     let riichiTile = discardsToRiichiNormRedFive.slice(-1)[0]
     for (let wait of waitsArray) {
-        console.assert(wait.tiles.length <= 2)
         let thisGenbutsu = wait.waitsOn.reduce((accum,t) => accum || genbutsu.has(t), false)
         if (thisGenbutsu) {
             continue
         }
+        let involvedTiles = [...wait.tiles, ...wait.waitsOn]
         wait.combos = 1
         wait.numUnseen = []
         for (let [i,t] of wait.tiles.entries()) {
@@ -984,7 +964,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
             // Shanpons: Order doesn't matter. Technically Math.exp(length) but it's always 2 for this case
             wait.combos /= wait.tiles.length 
         }
-        wait.origCombos = wait.combos
+        // wait.origCombos = wait.combos
         // heuristic adjustment for waits that players tend to aim for
         let honorTankiShanpon = [waitType.shanpon, waitType.tanki].includes(wait.type) && wait.tiles[0] > 40
         let nonHonorTankiShanpon = [waitType.shanpon, waitType.tanki].includes(wait.type) && wait.tiles[0] < 40
@@ -1027,7 +1007,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
         }
 
         let doraInvolved = false
-        for (let tile of [...wait.tiles, ...wait.waitsOn]) {
+        for (let tile of involvedTiles) {
             if (tile == dora) {
                 doraInvolved = true
                 break
@@ -1039,9 +1019,8 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
 
         let akaInvolved = false
         for (let discard of discardsToRiichi) {
-            let normedDiscard = normRedFive(discard)
-            if (discard != normedDiscard) {
-                for (let tile of [...wait.tiles, ...wait.waitsOn]) {
+            if (discard > 50) {
+                for (let tile of involvedTiles) {
                     if (tile == normedDiscard) {
                         akaInvolved = true
                         break
@@ -1210,16 +1189,15 @@ function doCalculateUkeire(pidx, thisUnseenTiles) {
     let ukeire = calculateUkeire(ukeireHand, ukerieUnseen, calculateMinimumShanten)
     return ukeire
 }
-function showDangers(thisPidx, tenpaiPidx, unseenTiles, genbutsu, discardsToRiichi, event, dora, dangersDiv) {
-    let thisUnseenTiles = unseenTiles[thisPidx]
-    let combos = calcCombos(generateWaits(), genbutsu[tenpaiPidx], discardsToRiichi[tenpaiPidx], thisUnseenTiles, dora)
+function showDangers(thisPidx, tenpaiPidx, thisUnseenTiles, genbutsu, discardsToRiichi, event, dora, dangersDiv) {
+    let combos = calcCombos(generateWaits(), genbutsu, discardsToRiichi, thisUnseenTiles, dora)
     let thisPosition = i18next.t('dealin-pov.position.pov')
     thisPosition = i18next.t(`${thisPosition}.${relativeToHeroStr(thisPidx,1)}`)
     let tenpaiPosition = i18next.t('dealin-pov.position.tenpai')
     tenpaiPosition = i18next.t(`${tenpaiPosition}.${relativeToHeroStr(tenpaiPidx,1)}`)
     dangersDiv.append(createElemWithText('p', i18next.t('dealin-pov.full', {thisPosition:thisPosition, tenpaiPosition:tenpaiPosition})))
     dangersDiv.append(createElemWithText('pre', ' '))
-    let [sujiCnt, sujiStrArray] = showSujis(genbutsu[tenpaiPidx])
+    let [sujiCnt, sujiStrArray] = showSujis(genbutsu)
     for (let str of sujiStrArray) {
         dangersDiv.append(createElemWithText('pre', str))
     }
@@ -1307,8 +1285,6 @@ function testDangers() {
 function calcDanger() {
     for (let hand=0; hand < GS.ge.length; hand++) {
         let gs = new GameState(GS.fullData.split_logs[hand].log[0])
-        GS.ge[hand].dangers = [[],[],[],[]]
-        GS.ge[hand].tsumoFails = [[],[],[],[]]
         for (let ply=0; ply < GS.ge[hand].length; ply++) {
             let event = GS.ge[hand][ply]
             let prevEvent = GS.ge[hand][ply-1]
@@ -1322,10 +1298,12 @@ function calcDanger() {
                                         event.actor != tenpaiPidx && event.actor == thisPidx
                     let tsumoAttempt = event.actor == tenpaiPidx && event.type == 'tsumo'
                     let thisUnseenTiles = gs.unseenTiles[thisPidx]
-                    if (false && tsumoAttempt) { // TODO: This is broken for now
+                    let stillBroken = true
+                    if (!stillBroken && tsumoAttempt) { // TODO: This is broken for now
                         let numUnseenTiles = sum(Object.values(thisUnseenTiles))
                         let ukeire = doCalculateUkeire(gs, tenpaiPidx, thisUnseenTiles)
                         GS.ge[hand].tsumoFails[tenpaiPidx].push([ukeire['value'], numUnseenTiles])
+                        event['tsumoFail'][tenpaiPidx] = [ukeire['value'], numUnseenTiles]
                     }
                     if (thisPidx != GS.heroPidx && thisPidx != event.actor) {
                         continue
@@ -1333,22 +1311,15 @@ function calcDanger() {
                     let thisDanger = {}
                     thisDanger['dangerousEvent'] = dangerousEvent
                     thisDanger['combos'] = calcCombos(generateWaits(), gs.genbutsu[tenpaiPidx], gs.discardsToRiichi[tenpaiPidx], thisUnseenTiles, gs.dora[0])
-                    let [a,b] = combo2strAndP(event.pai, thisDanger['combos'])
-                    thisDanger['comboStr'] = a
-                    thisDanger['comboP'] = b
-                    thisDanger['tenpaiPidx'] = tenpaiPidx
-                    thisDanger['thisPidx'] = thisPidx
-                    thisDanger['unseenTiles'] = _.cloneDeep(gs.unseenTiles)
-                    thisDanger['genbutsu'] = _.cloneDeep(gs.genbutsu)
-                    thisDanger['discardsToRiichi'] = _.cloneDeep(gs.discardsToRiichi)
-                    thisDanger['tenpaiStr'] = relativeToHeroStr(tenpaiPidx).padStart(6)
+                    thisDanger['unseenTiles'] = {...thisUnseenTiles}
+                    thisDanger['genbutsu'] = new Set(gs.genbutsu[tenpaiPidx])
+                    thisDanger['discardsToRiichi'] = new Array(gs.discardsToRiichi[tenpaiPidx])
                     thisDanger['event'] = event
                     thisDanger['hand'] = hand
                     thisDanger['ply'] = ply
                     thisDanger['dora'] = gs.dora[0]
                     if (!('danger' in event)) { event['danger'] = [[],[],[],[]]}
                     event['danger'][tenpaiPidx][thisPidx] = thisDanger
-                    GS.ge[hand].dangers[thisPidx].push(thisDanger)
                 }
             }
         }
@@ -1368,7 +1339,7 @@ function showDangerDetail() {
         }
         foundone = true
         let d = event.danger[tenpaiPidx][event.actor]
-        showDangers(d['thisPidx'], d['tenpaiPidx'], d['unseenTiles'], d['genbutsu'], d['discardsToRiichi'], d['event'], d['dora'], dangersDiv)
+        showDangers(event.actor, tenpaiPidx, d['unseenTiles'], d['genbutsu'], d['discardsToRiichi'], d['event'], d['dora'], dangersDiv)
     }
     if (foundone) {
         showModalAndWait(GS.ui.genericModal)
