@@ -785,11 +785,7 @@ function removeFromArray(array, value) {
     array.splice(indexToRemove, 1)
 }
 
-function updateState() {
-    if (GS.ge == null) {
-        console.log('no data to parse yet')
-        return
-    }
+function onlyUpdateState() {
     GS.gs = new GameState(GS.fullData.split_logs[GS.hand_counter].log[0])
     for (let ply=0; ply <= GS.ply_counter; ply++) {
         let event = GS.ge[GS.hand_counter][ply]
@@ -877,6 +873,9 @@ function updateState() {
     for (const hand of GS.gs.hands) {
         hand.sort(tileSort)
     }
+}
+function updateState() {
+    onlyUpdateState()
     GS.ui.reset()
     GS.ui.updateHandInfo()
     GS.ui.updateDiscardPond()
@@ -1169,16 +1168,16 @@ function incrementalCalcDangerHelper(event, prevEvent, gs) {
         gs.reach_accepted[event.actor] = true
     }
 }
-function doCalculateUkeire(pidx, thisUnseenTiles) {
+function doCalculateUkeire(finalHand, finalCalls, thisUnseenTiles) {
     // TODO: Beware this assumes GS.gs.hands for tenpai player is correct
     // Which it is given reach_accepted==true and they cannot change wait shape
     // TODO: Actually this is wrong now that I'm going to try to do this all before the GUI starts.
     let ukeireHand = Array(38).fill(0)
-    for (let t of GS.gs.hands[pidx]) {
+    for (let t of finalHand) {
         ukeireHand[normRedFive(t)-10]++
     }
     // For now we are only dealing with Riichi, so the only calls possible are ankans
-    let ankans = new Set(GS.gs.calls[pidx].filter(x => !isNaN(x)))
+    let ankans = new Set(finalCalls.filter(x => !isNaN(x)))
     for (const t of ankans) {
         ukeireHand[normRedFive(t)-10] += 3
     }
@@ -1283,11 +1282,18 @@ function testDangers() {
     GS.ui.genericModalBody.append(createElemWithText('pre', (`sumP ${String((sumP/combos['all']*100).toFixed(1)).padStart(4)}%`)))
 }
 function calcDanger() {
-    for (let hand=0; hand < GS.ge.length; hand++) {
-        let gs = new GameState(GS.fullData.split_logs[hand].log[0])
-        for (let ply=0; ply < GS.ge[hand].length; ply++) {
-            let event = GS.ge[hand][ply]
-            let prevEvent = GS.ge[hand][ply-1]
+    console.time('calcDanger')
+    let saveHand = GS.hand_counter
+    let savePly = GS.ply_counter
+    for (GS.hand_counter=0; GS.hand_counter < GS.ge.length; GS.hand_counter++) {
+        GS.ply_counter = GS.ge[GS.hand_counter].length-1
+        onlyUpdateState()
+        let finalHands = GS.gs.hands // Beware: For now don't need a deep copy...
+        let finalCalls = GS.gs.calls // Beware: For now don't need a deep copy...
+        for (let ply=0; ply < GS.ge[GS.hand_counter].length; ply++) {
+            let event = GS.ge[GS.hand_counter][ply]
+            let prevEvent = GS.ge[GS.hand_counter][ply-1]
+            let gs = GS.gs
             incrementalCalcDangerHelper(event, prevEvent, gs)
             for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
                 if (!gs.reach_accepted[tenpaiPidx] || event.actor === undefined) {
@@ -1298,12 +1304,10 @@ function calcDanger() {
                                         event.actor != tenpaiPidx && event.actor == thisPidx
                     let tsumoAttempt = event.actor == tenpaiPidx && event.type == 'tsumo'
                     let thisUnseenTiles = gs.unseenTiles[thisPidx]
-                    let stillBroken = true
-                    if (!stillBroken && tsumoAttempt) { // TODO: This is broken for now
+                    if (tsumoAttempt) {
                         let numUnseenTiles = sum(Object.values(thisUnseenTiles))
-                        let ukeire = doCalculateUkeire(gs, tenpaiPidx, thisUnseenTiles)
-                        GS.ge[hand].tsumoFails[tenpaiPidx].push([ukeire['value'], numUnseenTiles])
-                        event['tsumoFail'][tenpaiPidx] = [ukeire['value'], numUnseenTiles]
+                        let ukeire = doCalculateUkeire(finalHands[tenpaiPidx], finalCalls[tenpaiPidx], thisUnseenTiles)
+                        event['tsumoFail'] = [ukeire['value'], numUnseenTiles]
                     }
                     if (thisPidx != GS.heroPidx && thisPidx != event.actor) {
                         continue
@@ -1313,17 +1317,20 @@ function calcDanger() {
                     thisDanger['combos'] = calcCombos(generateWaits(), gs.genbutsu[tenpaiPidx], gs.discardsToRiichi[tenpaiPidx], thisUnseenTiles, gs.dora[0])
                     thisDanger['unseenTiles'] = {...thisUnseenTiles}
                     thisDanger['genbutsu'] = new Set(gs.genbutsu[tenpaiPidx])
-                    thisDanger['discardsToRiichi'] = new Array(gs.discardsToRiichi[tenpaiPidx])
+                    thisDanger['discardsToRiichi'] = [...gs.discardsToRiichi[tenpaiPidx]]
                     thisDanger['event'] = event
-                    thisDanger['hand'] = hand
                     thisDanger['ply'] = ply
                     thisDanger['dora'] = gs.dora[0]
                     if (!('danger' in event)) { event['danger'] = [[],[],[],[]]}
                     event['danger'][tenpaiPidx][thisPidx] = thisDanger
                 }
             }
+
         }
     }
+    GS.hand_counter = saveHand
+    GS.ply_counter = savePly
+    console.timeEnd('calcDanger')
 }
 function showDangerDetail() {
     GS.ui.genericModal.style.marginRight = '0px'
@@ -1351,41 +1358,49 @@ function showDangerDetail() {
 function showDangerTable() {
     GS.ui.genericModal.style.marginRight = '0px'
     GS.ui.genericModalBody.replaceChildren()
-    GS.ui.genericModal.querySelector(".title").textContent = i18next.t("dealin-rate")
+    GS.ui.genericModal.querySelector(".title").textContent = i18next.t("accum-dealin-rate")
     let resultTypeStr = GS.ui.getResultTypeStr()
-    GS.ui.genericModalBody.append(createElemWithText('p', 'Final Result:'))
+    GS.ui.genericModalBody.append(createElemWithText('p', i18next.t('Final Result:')))
     for (let s of resultTypeStr) {
         GS.ui.genericModalBody.append(createElemWithText('p', s))
     }
     const dangersDiv = document.createElement('div')
     let table = document.createElement("table")
     GS.ui.genericModalBody.append(table)
-    addTableRow(table, ['Pusher', 'Tenpai', 'Tile', 'This %', 'Total %'])
-    for (let pidx=0; pidx<4; pidx++) {
+    addTableRow(table, [i18next.t('Pusher'), i18next.t('Tenpai'), i18next.t('Tile'), i18next.t('This %'), i18next.t('Total %')])
+    for (let thisPidx=0; thisPidx<4; thisPidx++) {
         let accumP = 0
-        for (let d of GS.ge[GS.hand_counter].dangers[pidx]) {
-            if (!d['dangerousEvent']) {
-                continue
+        for (let event of GS.ge[GS.hand_counter]) {
+            if ('danger' in event && event['danger'][thisPidx]) {
+                for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
+                    if (event['danger'][tenpaiPidx][thisPidx] && event['danger'][tenpaiPidx][thisPidx]['dangerousEvent']) {
+                        let d = event['danger'][tenpaiPidx][thisPidx]
+                        let p = (event.pai in d['combos']) ? d['combos'][event.pai]['all']/d['combos']['all'] : 0
+                        accumP = accumP + (1-accumP)*p
+                        addTableRow(table, [relativeToHeroStr(thisPidx), relativeToHeroStr(tenpaiPidx), tenhou2strH(d['event'].pai), (p*100).toFixed(1), (accumP*100).toFixed(1)])
+                        table.lastChild.lastChild.addEventListener('click', (event) => {
+                            GS.ply_counter = d['ply']
+                            updateState()
+                        })
+                    }
+                }
             }
-            accumP = accumP + (1-accumP)*d['comboP']
-            addTableRow(table, [relativeToHeroStr(d['thisPidx']), d['tenpaiStr'], tenhou2strH(d['event'].pai), (d['comboP']*100).toFixed(1), (accumP*100).toFixed(1)])
-            table.lastChild.lastChild.addEventListener('click', (event) => {
-                showDangers(d['thisPidx'], d['tenpaiPidx'], d['unseenTiles'], d['genbutsu'], d['event'], dangersDiv)
-                GS.ply_counter = d['ply']
-                updateState()
-            })
+            continue
         }
     }
     GS.ui.genericModalBody.append(createElemWithText('pre', ' '))
     table = document.createElement("table")
     GS.ui.genericModalBody.append(table)
-    addTableRow(table, ['Tenpai', 'This %', 'Total %'])
+    addTableRow(table, [i18next.t('Tenpai'), i18next.t('This %'), i18next.t('Total %')])
     for (let pidx=0; pidx<4; pidx++) {
         let accumP = 0
         let who = relativeToHeroStr(pidx)
-        for (let tf of GS.ge[GS.hand_counter].tsumoFails[pidx]) {
-            accumP = accumP + (1-accumP)*tf[0]/tf[1]
-            addTableRow(table, [`${who} miss Tsumo`, (tf[0]/tf[1]*100).toFixed(1), (accumP*100).toFixed(1)])
+        for (let event of GS.ge[GS.hand_counter]) {
+            if (event.actor == pidx && 'tsumoFail' in event) {
+                let p = event['tsumoFail'][0]/event['tsumoFail'][1]
+                accumP = accumP + (1-accumP)*p
+                addTableRow(table, [i18next.t('pid-miss-tsumo', {pid:who}), (p*100).toFixed(1), (accumP*100).toFixed(1)])
+            }
         }
     }
     GS.ui.genericModalBody.append(dangersDiv)

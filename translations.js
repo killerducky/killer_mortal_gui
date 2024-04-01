@@ -39,9 +39,16 @@ const i18next_data = {
                     ['<code>Home</code> <code>End</code> or <code>[</code> <code>]</code>', 'Next/Prev Round'],
                     ['<code>m</code>', 'Toggle Mortal advice'],
                     ['<code>h</code>', 'Toggle show hands'],
-                    ['<code>d</code>', 'Toggle dealin display<br>(Not output by Mortal, simple heuristics for riichi only)'],
                     ['<code>b</code>', 'Bookmark current position in URL'],
                     ['<code>?</code>', 'Show about'],
+                    ['', 'Optional extra features:'
+                        + '<br>The following are not output by Mortal.'
+                        + '<br>Simple heuristics for riichi only.'
+                        + '<br>Enable with <code>d</code>.'
+                    ],
+                    ['<code>d</code>', 'Toggle dealin display'],
+                    ['<code>a</code>', 'Show accumulated dealin rate'],
+                    ['<code>z</code>', 'Show detailed dealin rate'],
                 ],
                 'Engine'                : 'Engine'                     ,
                 'Model tag'             : 'Model tag'                  ,
@@ -77,6 +84,13 @@ const i18next_data = {
                 "spoiler": "(Spoiler: Mortal evaluations hidden. Click to show)",
                 "dealin-riichi-only": "Dealin rate: No opponents have called Riichi",
                 "dealin-rate": "Dealin Rate",
+                "accum-dealin-rate": "Accumulated Dealin Rate",
+                "Pusher": "Pusher",
+                "Tenpai": "Tenpai",
+                "Tile": "Tile",
+                "This %": "This %",
+                "Total %": "Total %",
+                "pid-miss-tsumo": "{{pid}} miss Tsumo",
                 "dealin-pov": {
                     "position": {
                         "pov": "position-rel",
@@ -103,6 +117,7 @@ const i18next_data = {
                 'kakan'   : 'Kan',
                 // Results
                 "Final"   : "Final", // Final score in score table
+                "Final Result:"   : "Final Result:", // Final result in accum-dealin-rate table
                 "Round"   : "Round",
                 "Ron"     : "Ron",
                 "win-by"  : "{{type}} by {{winner}}",
@@ -249,9 +264,17 @@ const i18next_data = {
                     ['<code>Home</code> <code>End</code> 或 <code>[</code> <code>]</code>', '上一/下一局'],
                     ['<code>m</code>', '开关 Mortal 提示'],
                     ['<code>h</code>', '开关别家手牌'],
-                    ['<code>d</code>', '开关铳率条<br>（非 Mortal 输出，仅针对立直家，使用简单启发式算法）'],
                     ['<code>b</code>', '将当前局面表示在网址中，方便以后访问'],
                     ['<code>?</code>', '显示关于窗口'],
+                    ['', 'Optional extra features:'
+                        + '<br>The following are not output by Mortal.'
+                        + '<br>Simple heuristics for riichi only.'
+                        + '<br>Enable with <code>d</code>.'
+                    ],
+                  ['<code>d</code>', '开关铳率条<br>（非 Mortal 输出，仅针对立直家，使用简单启发式算法）'],
+                  ['<code>d</code>', 'Toggle dealin display'],
+                  ['<code>a</code>', 'Show accumulated dealin rate'],
+                  ['<code>z</code>', 'Show detailed dealin rate'],
                 ],
                 'Engine'                : 'AI 引擎'                ,
                 'Model tag'             : '模型版本'               ,
@@ -280,6 +303,13 @@ const i18next_data = {
                 "spoiler": "（注意：何切模式已开启。点击此处进行关闭）",
                 "dealin-riichi-only": "铳率条：没有对手宣告立直",
                 "dealin-rate": "Dealin Rate",
+                "accum-dealin-rate": "Accumulated Dealin Rate",
+                "Pusher": "Pusher",
+                "Tenpai": "Tenpai",
+                "Tile": "Tile",
+                "This %": "This %",
+                "Total %": "Total %",
+                "pid-miss-tsumo": "{{pid}} miss Tsumo",
                 "dealin-pov": {
                     "position": {
                         "pov": "position-rel",
@@ -306,6 +336,7 @@ const i18next_data = {
                 'kakan'   : '杠',
                 // Results
                 "Final"   : "结果", // Final score in score table
+                "Final Result:"   : "Final Result:", // Final result in accum-dealin-rate table
                 "Round"   : "局",
                 "Ron"     : "荣和",
                 "Tsumo"   : "自摸",
@@ -453,9 +484,16 @@ const i18next_data = {
                     ['<code>Home</code> <code>End</code> or <code>[</code> <code>]</code>', 'Next/Prev Round'],
                     ['<code>m</code>', 'Toggle Mortal advice'],
                     ['<code>h</code>', 'Toggle show hands'],
-                    ['<code>d</code>', 'Toggle dealin display<br>(Not output by Mortal, simple heuristics for riichi only)'],
                     ['<code>b</code>', 'Bookmark current position in URL'],
                     ['<code>?</code>', 'Show about'],
+                    ['', 'Optional extra features:'
+                        + '<br>The following are not output by Mortal.'
+                        + '<br>Simple heuristics for riichi only.'
+                        + '<br>Enable with <code>d</code>.'
+                    ],
+                    ['<code>d</code>', 'Toggle dealin display'],
+                    ['<code>a</code>', 'Show accumulated dealin rate'],
+                    ['<code>z</code>', 'Show detailed dealin rate'],
                 ],
                 'Engine'                : '엔진'                 ,
                 'Model tag'             : '모델 태그'              ,
@@ -505,6 +543,13 @@ const i18next_data = {
                 "spoiler": "(모탈 선택 가려짐: 여기를 클릭하면 표시됩니다)",
                 "dealin-riichi-only": "Dealin rate: No opponents have called Riichi",
                 "dealin-rate": "Dealin Rate",
+                "accum-dealin-rate": "Accumulated Dealin Rate",
+                "Pusher": "Pusher",
+                "Tenpai": "Tenpai",
+                "Tile": "Tile",
+                "This %": "This %",
+                "Total %": "Total %",
+                "pid-miss-tsumo": "{{pid}} miss Tsumo",
                 "dealin-pov": {
                     "position": {
                         "pov": "position-rel-possessive",
@@ -531,6 +576,7 @@ const i18next_data = {
                 'kakan'   : '깡',
                 // Results
                 "Final"   : "최종", // Final score in score table
+                "Final Result:"   : "Final Result:", // Final result in accum-dealin-rate table
                 "Round"   : "국",
                 "Ron"     : "론",
                 "Tsumo"   : "쯔모",
@@ -677,9 +723,16 @@ const i18next_data = {
                     ['<code>Home</code> <code>End</code> or <code>[</code> <code>]</code>', '次/前の局'],
                     ['<code>m</code>', 'Mortalのアドバイスを表示/非表示'],
                     ['<code>h</code>', '相手の手牌を表示/非表示'],
-                    ['<code>d</code>', '放銃率を表示/非表示<br><br>(Mortalによる出力ではなく、単純なヒューリスティックのみ)'],
                     ['<code>b</code>', '現在の局面をURLに反映'],
                     ['<code>?</code>', 'ヘルプを表示'],
+                    ['', 'Optional extra features:'
+                        + '<br>The following are not output by Mortal.'
+                        + '<br>Simple heuristics for riichi only.'
+                        + '<br>Enable with <code>d</code>.'
+                    ],
+                    ['<code>d</code>', '放銃率を表示/非表示<br><br>(Mortalによる出力ではなく、単純なヒューリスティックのみ)'],
+                    ['<code>a</code>', 'Show accumulated dealin rate'],
+                    ['<code>z</code>', 'Show detailed dealin rate'],
                 ],
                 'Engine'                : 'エンジン'                     ,
                 'Model tag'             : 'モデルタグ'                   ,
@@ -715,6 +768,13 @@ const i18next_data = {
                 "spoiler": "(ネタバレ注意: Mortalの意見は非表示。クリックで表示)",
                 "dealin-riichi-only": "Dealin rate: No opponents have called Riichi",
                 "dealin-rate": "Dealin Rate",
+                "accum-dealin-rate": "Accumulated Dealin Rate",
+                "Pusher": "Pusher",
+                "Tenpai": "Tenpai",
+                "Tile": "Tile",
+                "This %": "This %",
+                "Total %": "Total %",
+                "pid-miss-tsumo": "{{pid}} miss Tsumo",
                 "dealin-pov": {
                     "position": {
                         "pov": "position-rel",
@@ -740,7 +800,8 @@ const i18next_data = {
                 'daiminkan' : 'カン',
                 'kakan'   : 'カン',
                 // Results
-                "Final"   : "最終結果", // Final score in score table
+                "Final"   : "最終結果", // 
+                "Final Result:"   : "Final Result:", // Final result in accum-dealin-rate table
                 "Round"   : "局",
                 "Ron"     : "ロン",
                 "win-by"  : "{{winner}} {{type}}",
