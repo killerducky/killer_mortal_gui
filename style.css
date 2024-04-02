@@ -350,13 +350,17 @@ table, th, td {
     white-space: nowrap;
     border-collapse: collapse;
 }
-.info-round-table table, th, td {
+.info-round-table table,
+.info-round-table th,
+.info-round-table td {
     text-align: right;
     border: 1px solid var(--color-text);
     padding: 0.4rem;
     background: var(--color-accent);
 }
-.info-this-round-table table, th, td {
+.info-this-round-table table,
+.info-this-round-table th,
+.info-this-round-table td {
     text-align: right;
     border: 1px solid var(--color-text);
     padding: 0.4rem;
@@ -371,6 +375,23 @@ table, th, td {
 }
 #generic-modal-body * {
     margin: 2px;
+}
+#generic-modal-body .tileImg {
+    width:calc(var(--tile-img-width) * 0.50);
+    height:calc(var(--tile-img-height) * 0.50);
+    margin:0px;
+}
+#generic-modal-body .tileDiv {
+    width:calc(var(--tile-img-width) * 0.50 + 2px);
+    height:calc(var(--tile-img-height) * 0.50 + 2px);
+    margin:0px;
+}
+#generic-modal-body table {
+    background: var(--color-accent);
+    padding:5px;
+}
+#generic-modal-body td {
+    padding: 4px; margin:0px; 
 }
 .controls > *:hover {
     background:var(--color-hover);

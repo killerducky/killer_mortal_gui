@@ -100,6 +100,7 @@ const i18next_data = {
                 },
                 "sujis-tested": "Sujis tested",
                 "suji-dealin-rate": "Suji dealin rate",
+                "Tile dealin rates": "Tile dealin rates",
                 "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
                 // Advice words
                 'dahai'   : 'Cut',
@@ -319,6 +320,7 @@ const i18next_data = {
                 },
                 "sujis-tested": "Sujis tested",
                 "suji-dealin-rate": "Suji dealin rate",
+                "Tile dealin rates": "Tile dealin rates",
                 "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
                 // Advice words
                 'dahai'   : '切',
@@ -559,7 +561,8 @@ const i18next_data = {
                 },
                 "sujis-tested": "Sujis tested",
                 "suji-dealin-rate": "Suji dealin rate",
-                "wait-pattern-combos": "Wait pattern combos",
+                "Tile dealin rates": "Tile dealin rates",
+                "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
                 // Advice words
                 'dahai'   : '타',
                 'pon'     : '퐁',
@@ -784,6 +787,7 @@ const i18next_data = {
                 },
                 "sujis-tested": "Sujis tested",
                 "suji-dealin-rate": "Suji dealin rate",
+                "Tile dealin rates": "Tile dealin rates",
                 "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
                 // Advice words
                 'dahai'   : '打',

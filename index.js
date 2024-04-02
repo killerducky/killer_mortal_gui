@@ -292,13 +292,12 @@ class UI {
         backgroundRect.setAttribute("width", "20")
         backgroundRect.setAttribute("height", "26")
         backgroundRect.setAttribute("fill", GS.C_colorTileBg)
+        backgroundRect.setAttribute("rx", "2px")
+        backgroundRect.setAttribute("ry", "2px")
         const tileSvg = document.createElementNS("http://www.w3.org/2000/svg", "image")
         tileSvg.setAttribute('href', `media/Regular_shortnames/${tenhou2str(tile)}.svg`)
         tileSvg.setAttribute("x", x)
         tileSvg.setAttribute("y", y)
-        tileSvg.style.background = GS.C_colorTileBg
-        tileSvg.style.border = "5px solid red"
-        tileSvg.style.padding = "1px 1px 1px 1px"
         tileSvg.setAttribute("width", 18)
         return [backgroundRect, tileSvg]
     }
@@ -675,7 +674,11 @@ function addTableRow(table, values){
     let tr = table.insertRow()
     for (let v of values) {
         let cell = tr.insertCell()
-        cell.innerHTML = v
+        if (typeof v == 'object') {
+            cell.appendChild(v)
+        } else {
+            cell.innerHTML = v
+        }
     }
 }
 class Tile {
@@ -1078,16 +1081,20 @@ function combo2strAndP(key, combos) {
     return [str, prob]
 }
 function showSujis(genbutsu) {
-    let strArray = []
-    for (let ta of [[1,2,3], [4,5,6], [7,8,9]]) {
-        let str = ''
-        for (let suit=1; suit<=3; suit++) {
+    let tables = []
+    for (let suit=1; suit<=3; suit++) {
+        tables[suit-1] = []
+        for (let ta of [[1,2,3], [4,5,6], [7,8,9]]) {
+            let row = []
             for (let t of ta) {
-                str += genbutsu.has(suit*10+t) ? '-- ' : tenhou2str(suit*10+t) + ' '
+                let tile = createTile(tenhou2str(suit*10+t))
+                row.push(tile)
+                if (genbutsu.has(suit*10+t)) {
+                    tile.classList.add('called')
+                }
             }
-            str += '  '
+            tables[suit-1].push(row)
         }
-        strArray.push(str)
     }
     let sujiCnt = 18
     for (let t of [4,5,6]) {
@@ -1096,7 +1103,7 @@ function showSujis(genbutsu) {
             (genbutsu.has(suit*10+t) || genbutsu.has(suit*10+t+3)) && sujiCnt--
         }
     }
-    return [sujiCnt, strArray]
+    return [sujiCnt, tables]
 }
 
 // For now just return true if they called riichi
@@ -1197,14 +1204,26 @@ function showDangers(thisPidx, tenpaiPidx, thisUnseenTiles, genbutsu, discardsTo
     tenpaiPosition = i18next.t(`${tenpaiPosition}.${relativeToHeroStr(tenpaiPidx,1)}`)
     dangersDiv.append(createElemWithText('p', i18next.t('dealin-pov.full', {thisPosition:thisPosition, tenpaiPosition:tenpaiPosition})))
     dangersDiv.append(createElemWithText('pre', ' '))
-    let [sujiCnt, sujiStrArray] = showSujis(genbutsu)
-    for (let str of sujiStrArray) {
-        dangersDiv.append(createElemWithText('pre', str))
+
+    let [sujiCnt, sujiTables] = showSujis(genbutsu)
+    dangersDiv.append(createElemWithText('p', `${i18next.t('sujis-tested')} ${18-sujiCnt}/18 (${i18next.t('suji-dealin-rate')} 1/${sujiCnt} = ${(1/sujiCnt*100).toFixed(1)}%)`))
+    let span
+    span = document.createElement("span")
+    dangersDiv.append(span)
+    span.style.display = "inline-block"
+    for (let table of sujiTables) {
+        let tableElem = document.createElement("table")
+        span.append(tableElem)
+        tableElem.style.display = "inline-block"
+        tableElem.style.margin = "10px"
+        for (let row of table) {
+            addTableRow(tableElem, row)
+        }
     }
-    dangersDiv.append(createElemWithText('p', `${i18next.t('sujis-tested')} ${18-sujiCnt}/18 (${i18next.t('suji-dealin-rate')} 1/${sujiCnt} = ${(1/sujiCnt*100).toFixed(0)}%)`))
     dangersDiv.append(createElemWithText('pre', ' '))
 
-    let span = document.createElement("span")
+    dangersDiv.append(createElemWithText('p', `${i18next.t('Tile dealin rates')}`))
+    span = document.createElement("span")
     dangersDiv.append(span)
     span.style.display = "inline-block"
     let tables = []
@@ -1213,6 +1232,7 @@ function showDangers(thisPidx, tenpaiPidx, thisUnseenTiles, genbutsu, discardsTo
         span.append(tables[i])
         tables[i].style.display = "inline-block"
         tables[i].style.verticalAlign = "top"
+        tables[i].style.margin = "10px"
     }
     let dangersDetailDiv = document.createElement("div")
     dangersDiv.append(dangersDetailDiv)
@@ -1221,13 +1241,14 @@ function showDangers(thisPidx, tenpaiPidx, thisUnseenTiles, genbutsu, discardsTo
             continue
         }
         let suit = Math.floor(tile/10)
+        let tileDiv = createTile(tenhou2str(tile)).innerHTML
         let k = `${String(tenhou2strH(tile))}`
-        let prob = 0
+        let probStr = '-'
         if (tile in combos) {
-            prob = combos[tile]['all']/combos['all']
+            let prob = combos[tile]['all']/combos['all']
+            probStr = `${String((prob*100).toFixed(1))}%`
         }
-        let p = `${String((prob*100).toFixed(1))}%`
-        addTableRow(tables[suit-1], [k,p])
+        addTableRow(tables[suit-1], [tileDiv,probStr])
         if (tile in combos) {
             tables[suit-1].lastChild.lastChild.addEventListener('click', (event) => {
                 showDangersDetail(tile, combos, dangersDetailDiv)
@@ -1235,9 +1256,11 @@ function showDangers(thisPidx, tenpaiPidx, thisUnseenTiles, genbutsu, discardsTo
         }
     }
     dangersDiv.append(createElemWithText('pre', ' '))
+    dangersDiv.append(createElemWithText('pre', ' '))
 }
 function showDangersDetail(keyTile, combos, dangersDetailDiv) {
     let table = document.createElement("table")
+    table.style.marginTop = "10px"
     dangersDetailDiv.replaceChildren(table)
     let keyCombo = combos[keyTile]
     addTableRow(table, [tenhou2strH(keyTile), "", "", `${(keyCombo['all']/combos['all']*100).toFixed(1)}%`])
@@ -1378,9 +1401,9 @@ function showDangerTable() {
                         let d = event['danger'][tenpaiPidx][thisPidx]
                         let p = (event.pai in d['combos']) ? d['combos'][event.pai]['all']/d['combos']['all'] : 0
                         accumP = accumP + (1-accumP)*p
-                        addTableRow(table, [relativeToHeroStr(thisPidx), relativeToHeroStr(tenpaiPidx), tenhou2strH(d['event'].pai), (p*100).toFixed(1), (accumP*100).toFixed(1)])
+                        addTableRow(table, [relativeToHeroStr(thisPidx), relativeToHeroStr(tenpaiPidx), createTile(tenhou2str(d['event'].pai)), (p*100).toFixed(1), (accumP*100).toFixed(1)])
                         table.lastChild.lastChild.addEventListener('click', (event) => {
-                            GS.ply_counter = d['ply']
+                            GS.ply_counter = d['ply']-1
                             updateState()
                         })
                     }
