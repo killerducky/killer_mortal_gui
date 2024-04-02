@@ -1019,6 +1019,7 @@ function calcCombos(waitsArray, genbutsu, discardsToRiichi, heroUnseenTiles, dor
         let akaInvolved = false
         for (let discard of discardsToRiichi) {
             if (discard > 50) {
+                let normedDiscard = normRedFive(discard)
                 for (let tile of involvedTiles) {
                     if (tile == normedDiscard) {
                         akaInvolved = true
