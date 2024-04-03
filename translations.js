@@ -130,6 +130,7 @@ const i18next_data = {
                 "九種九牌" : 'Nine Terminal Draw',
                 "四家立直" : "Draw: Quadruple riichi",
                 "三家和了" : "Draw: Triple Ron",
+                "四風連打" : "Draw: Four Winds",
                 // Yakus, points
                 '飜' : 'Han',
                 '符' : 'Fu',
@@ -350,6 +351,7 @@ const i18next_data = {
                 "九種九牌" : "九种九牌",
                 "四家立直" : "四家立直",
                 "三家和了" : "三家和了",
+                "四風連打" : "四風連打",
                 // Yakus, points
                 '飜' : '番',
                 '符' : '符',
@@ -591,6 +593,7 @@ const i18next_data = {
                 "九種九牌" : '구종구패',
                 "四家立直" : "사가리치",
                 "三家和了" : "삼가화",
+                "四風連打" : "Draw: Four Winds",
                 // Yakus, points
                 '飜' : '판',
                 '符' : '부',
@@ -817,6 +820,7 @@ const i18next_data = {
                 "九種九牌" : '九種九牌',
                 "四家立直" : "四家立直",
                 "三家和了" : "三家和了",
+                "四風連打" : "四風連打",
                 // Yakus, points
                 '飜' : '飜',
                 '符': '符',
