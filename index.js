@@ -1246,7 +1246,7 @@ function showDangers(thisPidx, tenpaiPidx, thisUnseenTiles, genbutsu, discardsTo
         let probStr = '-'
         if (tile in combos) {
             let prob = combos[tile]['all']/combos['all']
-            probStr = `${String((prob*100).toFixed(1))}%`
+            probStr = `${String((prob*100).toFixed(1))}`
         }
         addTableRow(tables[suit-1], [tileDiv,probStr])
         if (tile in combos) {
@@ -1261,19 +1261,24 @@ function showDangers(thisPidx, tenpaiPidx, thisUnseenTiles, genbutsu, discardsTo
 function showDangersDetail(keyTile, combos, dangersDetailDiv) {
     let table = document.createElement("table")
     table.style.marginTop = "10px"
-    dangersDetailDiv.replaceChildren(table)
+    let span = document.createElement('span')
+    let tileDiv = createTile(tenhou2str(keyTile))
+    span.innerHTML = tileDiv.innerHTML + ' ' + i18next.t('Details')
+    dangersDetailDiv.replaceChildren(span)
+    dangersDetailDiv.append(table)
     let keyCombo = combos[keyTile]
-    addTableRow(table, [tenhou2strH(keyTile), "", "", `${(keyCombo['all']/combos['all']*100).toFixed(1)}%`])
     let numRows = 0
+    addTableRow(table, ["Wait type", "Tiles", "Unseen", "%"])
     for (let wait of keyCombo.types) {
         numRows++
         let row = []
         row.push(i18next.t(`waitTypeStr`, {returnObjects:true})[wait.type])
-        row.push(wait.tiles.map(x => tenhou2strShort(x)).join(''))
+        row.push(wait.tiles.map(x => createTile(tenhou2str(x)).innerHTML).join(''))
         row.push(wait.numUnseen.join('*'))
-        row.push(`${(wait.combos/combos['all']*100).toFixed(1)}%`)
+        row.push(`${(wait.combos/combos['all']*100).toFixed(1)}`)
         addTableRow(table, row)
     }
+    addTableRow(table, ["Total %", "", "", `${(keyCombo['all']/combos['all']*100).toFixed(1)}`])
     for (let i=0; i<5-numRows; i++) {
         addTableRow(table, ['-'])
         table.lastChild.lastChild.style.visibility = 'hidden'
@@ -1317,6 +1322,7 @@ function calcDanger() {
         for (let ply=0; ply < GS.ge[GS.hand_counter].length; ply++) {
             let event = GS.ge[GS.hand_counter][ply]
             let prevEvent = GS.ge[GS.hand_counter][ply-1]
+            let nextEvent = GS.ge[GS.hand_counter][ply+1]
             let gs = GS.gs
             incrementalCalcDangerHelper(event, prevEvent, gs)
             for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
@@ -1331,7 +1337,8 @@ function calcDanger() {
                     if (tsumoAttempt) {
                         let numUnseenTiles = sum(Object.values(thisUnseenTiles))
                         let ukeire = doCalculateUkeire(finalHands[tenpaiPidx], finalCalls[tenpaiPidx], thisUnseenTiles)
-                        event['tsumoFail'] = [ukeire['value'], numUnseenTiles]
+                        let success = nextEvent.type == 'hora'
+                        event['tsumoAttempt'] = [success, ukeire['value'], numUnseenTiles]
                     }
                     if (thisPidx != GS.heroPidx && thisPidx != event.actor) {
                         continue
@@ -1415,15 +1422,17 @@ function showDangerTable() {
     GS.ui.genericModalBody.append(createElemWithText('pre', ' '))
     table = document.createElement("table")
     GS.ui.genericModalBody.append(table)
-    addTableRow(table, [i18next.t('Tenpai'), i18next.t('This %'), i18next.t('Total %')])
+    addTableRow(table, [i18next.t('Tenpai'), i18next.t('Tsumo'), i18next.t('This %'), i18next.t('Total %')])
     for (let pidx=0; pidx<4; pidx++) {
         let accumP = 0
         let who = relativeToHeroStr(pidx)
         for (let event of GS.ge[GS.hand_counter]) {
-            if (event.actor == pidx && 'tsumoFail' in event) {
-                let p = event['tsumoFail'][0]/event['tsumoFail'][1]
+            if (event.actor == pidx && 'tsumoAttempt' in event) {
+                let ta = event['tsumoAttempt']
+                let p = ta[1]/ta[2]
                 accumP = accumP + (1-accumP)*p
-                addTableRow(table, [i18next.t('pid-miss-tsumo', {pid:who}), (p*100).toFixed(1), (accumP*100).toFixed(1)])
+                let result = ta[0] ? i18next.t('hit') : i18next.t('miss')
+                addTableRow(table, [who, result, (p*100).toFixed(1), (accumP*100).toFixed(1)])
             }
         }
     }
@@ -1756,20 +1765,16 @@ function connectUI() {
         } else if (event.key == 'd') {
             toggleDealinRate()
         } else if (event.key == 'a') {
-            if (GS.alphaTestMode) {
-                if (!genericModal.open) {
-                    showDangerTable()
-                } else {
-                    genericModal.close()
-                }
+            if (!genericModal.open) {
+                showDangerTable()
+            } else {
+                genericModal.close()
             }
         } else if (event.key == 'z') {
-            if (GS.alphaTestMode) {
-                if (!genericModal.open) {
-                    showDangerDetail()
-                } else {
-                    genericModal.close()
-                }
+            if (!genericModal.open) {
+                showDangerDetail()
+            } else {
+                genericModal.close()
             }
         } else if (event.key == 'b') {
             const urlParams = new URLSearchParams(window.location.search)

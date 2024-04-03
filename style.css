@@ -291,10 +291,6 @@ h1{
     text-orientation: sideways;
     margin: calc(var(--zoom) * 10px) auto;
 }
-.rotate > img {
-    transform: rotate(99deg);
-    /* Adjust so these rotated tiles are next to each other */
-}
 .info-doras > * > * {
     width:calc(var(--tile-img-width) * 0.58);
     height:calc(var(--tile-img-height) * 0.58);
@@ -350,6 +346,10 @@ table, th, td {
     white-space: nowrap;
     border-collapse: collapse;
 }
+#about-modal td {
+    border: 1px solid var(--color-text);
+    padding:0.4rem;
+}
 .info-round-table table,
 .info-round-table th,
 .info-round-table td {
@@ -391,7 +391,9 @@ table, th, td {
     padding:5px;
 }
 #generic-modal-body td {
-    padding: 4px; margin:0px; 
+    padding: 4px;
+    margin:0px;
+    text-align: right;
 }
 .controls > *:hover {
     background:var(--color-hover);
