@@ -267,15 +267,14 @@ const i18next_data = {
                     ['<code>h</code>', '开关别家手牌'],
                     ['<code>b</code>', '将当前局面表示在网址中，方便以后访问'],
                     ['<code>?</code>', '显示关于窗口'],
-                    ['', 'Optional extra features:'
-                        + '<br>The following are not output by Mortal.'
-                        + '<br>Simple heuristics for riichi only.'
-                        + '<br>Enable with <code>d</code>.'
+                    ['', '可选的额外功能：'
+                        + '<br>以下内容不是 Mortal 的输出。'
+                        + '<br>仅使用了简单的启发式算法，仅针对立直家。'
+                        + '<br>按 <code>d</code> 键启用。'
                     ],
-                  ['<code>d</code>', '开关铳率条<br>（非 Mortal 输出，仅针对立直家，使用简单启发式算法）'],
-                  ['<code>d</code>', 'Toggle dealin display'],
-                  ['<code>a</code>', 'Show accumulated dealin rate'],
-                  ['<code>z</code>', 'Show detailed dealin rate'],
+                  ['<code>d</code>', '开关铳率条'],
+                  ['<code>a</code>', '显示累积铳率'],
+                  ['<code>z</code>', '显示详细铳率'],
                 ],
                 'Engine'                : 'AI 引擎'                ,
                 'Model tag'             : '模型版本'               ,
@@ -303,23 +302,24 @@ const i18next_data = {
                 "R":"中",
                 "spoiler": "（注意：何切模式已开启。点击此处进行关闭）",
                 "dealin-riichi-only": "铳率条：没有对手宣告立直",
-                "dealin-rate": "Dealin Rate",
-                "accum-dealin-rate": "Accumulated Dealin Rate",
-                "Pusher": "Pusher",
-                "Tenpai": "Tenpai",
-                "Tile": "Tile",
-                "This %": "This %",
-                "Total %": "Total %",
-                "Details": "Details",
-                "hit": "hit", // Tenpai player drew and won
-                "miss": "miss", // Tenpai player's draw was not 
-                "sujis-tested": "Sujis tested",
-                "suji-dealin-rate": "Suji dealin rate",
-                "Tile dealin rates": "Tile dealin rates",
-                "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
-                "Wait type": "Wait type",
-                "Tiles": "Tiles",
-                "Left": "Left",
+<<<<<<< HEAD
+                "dealin-rate": "铳率",
+                "accum-dealin-rate": "累积铳率",
+                "Pusher": "切牌家",
+                "Tenpai": "听牌家",
+                "Tile": "牌",
+                "This %": "此行 %",
+                "Total %": "累积 %",
+                "Details": "详细信息",
+                "hit": "成功", // Tenpai player drew and won
+                "miss": "失败", // Tenpai player's draw was not 
+                "sujis-tested": "已通过的筋",
+                "suji-dealin-rate": "每条筋铳率",
+                "Tile dealin rates": "各牌的铳率",
+                "waitTypeStr": ['两面', '坎张', '边张', '单骑', '双碰'],
+                "Wait type": "听牌形",
+                "Tiles": "搭子",
+                "Left": "剩余",
                 // Advice words
                 'dahai'   : '切',
                 'pon'     : '碰',
@@ -337,7 +337,7 @@ const i18next_data = {
                 'kakan'   : '杠',
                 // Results
                 "Final"   : "结果", // Final score in score table
-                "Final Result:"   : "Final Result:", // Final result in accum-dealin-rate table
+                "Final Result:"   : "最终结果：", // Final result in accum-dealin-rate table
                 "Round"   : "局",
                 "Ron"     : "荣和",
                 "Tsumo"   : "自摸",
