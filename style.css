@@ -373,27 +373,32 @@ table, th, td {
     margin: 2px;
     text-wrap: nowrap;
 }
-#generic-modal-body * {
+.generic-modal-body * {
     margin: 2px;
 }
-#generic-modal-body .tileImg {
+.generic-modal-body .tileImg {
     width:calc(var(--tile-img-width) * 0.50);
     height:calc(var(--tile-img-height) * 0.50);
     margin:0px;
 }
-#generic-modal-body .tileDiv {
+.generic-modal-body .tileDiv {
     width:calc(var(--tile-img-width) * 0.50 + 2px);
     height:calc(var(--tile-img-height) * 0.50 + 2px);
     margin:0px;
 }
-#generic-modal-body table {
+.generic-modal-body table {
     background: var(--color-accent);
     padding:5px;
 }
-#generic-modal-body td {
+.generic-modal-body td {
     padding: 4px;
-    margin:0px;
     text-align: right;
+}
+.wider-table td {
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 6px;
+    padding-bottom: 6px;
 }
 .controls > *:hover {
     background:var(--color-hover);

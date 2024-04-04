@@ -153,7 +153,7 @@ class UI {
         this.infoThisRoundTable = document.querySelector('.info-this-round-table')
         this.infoThisRoundClose = document.querySelector('.info-this-round-close')
         this.genericModal = document.getElementById('generic-modal')
-        this.genericModalBody = document.getElementById('generic-modal-body')
+        this.genericModalBody = document.querySelector('.generic-modal-body')
         this.setPovPidx(0)
     }
     setPovPidx(newPidx) {
@@ -1273,7 +1273,7 @@ function showDangersDetail(keyTile, combos, dangersDetailDiv) {
     dangersDetailDiv.append(table)
     let keyCombo = combos[keyTile]
     let numRows = 0
-    addTableRow(table, ["Wait type", "Tiles", "Unseen", "%"])
+    addTableRow(table, [i18next.t("Wait type"), i18next.t("Tiles"), i18next.t("Left"), "%"])
     table.lastChild.lastChild.style.borderBottom = `1px solid ${GS.C_colorText}`;
     for (let wait of keyCombo.types) {
         numRows++
@@ -1403,19 +1403,26 @@ function showDangerTable() {
     }
     const dangersDiv = document.createElement('div')
     let table = document.createElement("table")
+    table.classList.add('wider-table')
     GS.ui.genericModalBody.append(table)
-    addTableRow(table, [i18next.t('Pusher'), i18next.t('Tenpai'), i18next.t('Tile'), '%', i18next.t('Total %')])
+    addTableRow(table, [i18next.t('Pusher'), i18next.t('Tile'), i18next.t('Tenpai'), '%', i18next.t('Total %')])
     for (let thisPidx=0; thisPidx<4; thisPidx++) {
         let accumP = 0
         let firstRow = true
         for (let event of GS.ge[GS.hand_counter]) {
+            let firstTenpai = true
             if ('danger' in event && event['danger'][thisPidx]) {
                 for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
                     if (event['danger'][tenpaiPidx][thisPidx] && event['danger'][tenpaiPidx][thisPidx]['dangerousEvent']) {
                         let d = event['danger'][tenpaiPidx][thisPidx]
                         let p = (event.pai in d['combos']) ? d['combos'][event.pai]['all']/d['combos']['all'] : 0
                         accumP = accumP + (1-accumP)*p
-                        addTableRow(table, [relativeToHeroStr(thisPidx), relativeToHeroStr(tenpaiPidx), createTile(tenhou2str(d['event'].pai)), (p*100).toFixed(1), (accumP*100).toFixed(1)])
+                        if (firstTenpai) {
+                            addTableRow(table, [relativeToHeroStr(thisPidx), createTile(tenhou2str(d['event'].pai)), relativeToHeroStr(tenpaiPidx), (p*100).toFixed(1), (accumP*100).toFixed(1)])
+                            firstTenpai = false
+                        } else {
+                            addTableRow(table, ['', '', relativeToHeroStr(tenpaiPidx), (p*100).toFixed(1), (accumP*100).toFixed(1)])
+                        }
                         if (firstRow) {
                             table.lastChild.lastChild.style.borderTop = `1px solid ${GS.C_colorText}`;
                             firstRow = false

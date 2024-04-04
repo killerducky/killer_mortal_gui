@@ -97,6 +97,9 @@ const i18next_data = {
                 "suji-dealin-rate": "Suji dealin rate",
                 "Tile dealin rates": "Tile dealin rates",
                 "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
+                "Wait type": "Wait type",
+                "Tiles": "Tiles",
+                "Left": "Left",
                 // Advice words
                 'dahai'   : 'Cut',
                 'pon'     : 'Pon',
@@ -314,6 +317,9 @@ const i18next_data = {
                 "suji-dealin-rate": "Suji dealin rate",
                 "Tile dealin rates": "Tile dealin rates",
                 "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
+                "Wait type": "Wait type",
+                "Tiles": "Tiles",
+                "Left": "Left",
                 // Advice words
                 'dahai'   : '切',
                 'pon'     : '碰',
@@ -552,6 +558,9 @@ const i18next_data = {
                 "suji-dealin-rate": "Suji dealin rate",
                 "Tile dealin rates": "Tile dealin rates",
                 "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
+                "Wait type": "Wait type",
+                "Tiles": "Tiles",
+                "Left": "Left",
                 // Advice words
                 'dahai'   : '타',
                 'pon'     : '퐁',
@@ -775,6 +784,9 @@ const i18next_data = {
                 "suji-dealin-rate": "Suji dealin rate",
                 "Tile dealin rates": "Tile dealin rates",
                 "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
+                "Wait type": "Wait type",
+                "Tiles": "Tiles",
+                "Left": "Left",
                 // Advice words
                 'dahai'   : '打',
                 'pon'     : 'ポン',
