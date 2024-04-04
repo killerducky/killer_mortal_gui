@@ -357,17 +357,25 @@ class UI {
     }
     clearDiscardBars() {
         const discardBars = document.getElementById("discard-bars")
+        let [discardSvgElem, dangerSvgElem] = discardBars.children
+        if (discardSvgElem) {
+            discardSvgElem.replaceChildren()
+            dangerSvgElem.replaceChildren()
+            return
+        }
         let svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
         svgElement.setAttribute('transform-origin', 'top left')
         svgElement.setAttribute('transform', `scale(${GS.C_zoom})`)
+        svgElement.classList.add('discard-bars-svg')
         discardBars.replaceChildren(svgElement)
         svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
         svgElement.setAttribute('transform-origin', 'top left')
         svgElement.setAttribute('transform', `scale(${GS.C_zoom}, ${-GS.C_zoom}) translate(0, ${-1*(GS.C_db_height+GS.C_db_tileHeight)})`)
+        svgElement.classList.add('danger-bars-svg')
         discardBars.append(svgElement)
     }
     updateDiscardBars() {
@@ -1198,11 +1206,8 @@ function doCalculateUkeire(finalHand, finalCalls, thisUnseenTiles) {
 }
 function showDangers(thisPidx, tenpaiPidx, thisUnseenTiles, genbutsu, discardsToRiichi, event, dora, dangersDiv) {
     let combos = calcCombos(generateWaits(), genbutsu, discardsToRiichi, thisUnseenTiles, dora)
-    let thisPosition = i18next.t('dealin-pov.position.pov')
-    thisPosition = i18next.t(`${thisPosition}.${relativeToHeroStr(thisPidx,1)}`)
-    let tenpaiPosition = i18next.t('dealin-pov.position.tenpai')
-    tenpaiPosition = i18next.t(`${tenpaiPosition}.${relativeToHeroStr(tenpaiPidx,1)}`)
-    dangersDiv.append(createElemWithText('p', i18next.t('dealin-pov.full', {thisPosition:thisPosition, tenpaiPosition:tenpaiPosition})))
+    dangersDiv.append(createElemWithText('p', i18next.t('Pusher') + ': ' + relativeToHeroStr(thisPidx)))
+    dangersDiv.append(createElemWithText('p', i18next.t('Tenpai') + ': ' + relativeToHeroStr(tenpaiPidx)))
     dangersDiv.append(createElemWithText('pre', ' '))
 
     let [sujiCnt, sujiTables] = showSujis(genbutsu)
@@ -1269,6 +1274,7 @@ function showDangersDetail(keyTile, combos, dangersDetailDiv) {
     let keyCombo = combos[keyTile]
     let numRows = 0
     addTableRow(table, ["Wait type", "Tiles", "Unseen", "%"])
+    table.lastChild.lastChild.style.borderBottom = `1px solid ${GS.C_colorText}`;
     for (let wait of keyCombo.types) {
         numRows++
         let row = []
@@ -1278,13 +1284,13 @@ function showDangersDetail(keyTile, combos, dangersDetailDiv) {
         row.push(`${(wait.combos/combos['all']*100).toFixed(1)}`)
         addTableRow(table, row)
     }
+    table.lastChild.lastChild.style.borderBottom = `1px solid ${GS.C_colorText}`;
     addTableRow(table, ["Total %", "", "", `${(keyCombo['all']/combos['all']*100).toFixed(1)}`])
+    table = document.createElement("table")
+    dangersDetailDiv.append(table)
+    table.style.visibility = 'hidden'
     for (let i=0; i<5-numRows; i++) {
         addTableRow(table, ['-'])
-        table.lastChild.lastChild.style.visibility = 'hidden'
-        table.lastChild.lastChild.style.border = 'none'
-        table.lastChild.lastChild.lastChild.style.border = 'none'
-        table.lastChild.lastChild.lastChild.style.visibility = 'hidden'
     }
 }
 function testDangers() {
@@ -1398,9 +1404,10 @@ function showDangerTable() {
     const dangersDiv = document.createElement('div')
     let table = document.createElement("table")
     GS.ui.genericModalBody.append(table)
-    addTableRow(table, [i18next.t('Pusher'), i18next.t('Tenpai'), i18next.t('Tile'), i18next.t('This %'), i18next.t('Total %')])
+    addTableRow(table, [i18next.t('Pusher'), i18next.t('Tenpai'), i18next.t('Tile'), '%', i18next.t('Total %')])
     for (let thisPidx=0; thisPidx<4; thisPidx++) {
         let accumP = 0
+        let firstRow = true
         for (let event of GS.ge[GS.hand_counter]) {
             if ('danger' in event && event['danger'][thisPidx]) {
                 for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
@@ -1409,6 +1416,10 @@ function showDangerTable() {
                         let p = (event.pai in d['combos']) ? d['combos'][event.pai]['all']/d['combos']['all'] : 0
                         accumP = accumP + (1-accumP)*p
                         addTableRow(table, [relativeToHeroStr(thisPidx), relativeToHeroStr(tenpaiPidx), createTile(tenhou2str(d['event'].pai)), (p*100).toFixed(1), (accumP*100).toFixed(1)])
+                        if (firstRow) {
+                            table.lastChild.lastChild.style.borderTop = `1px solid ${GS.C_colorText}`;
+                            firstRow = false
+                        }
                         table.lastChild.lastChild.addEventListener('click', (event) => {
                             GS.ply_counter = d['ply']-1
                             updateState()
@@ -1422,9 +1433,10 @@ function showDangerTable() {
     GS.ui.genericModalBody.append(createElemWithText('pre', ' '))
     table = document.createElement("table")
     GS.ui.genericModalBody.append(table)
-    addTableRow(table, [i18next.t('Tenpai'), i18next.t('Tsumo'), i18next.t('This %'), i18next.t('Total %')])
+    addTableRow(table, [i18next.t('Tenpai'), i18next.t('Tsumo'), '%', i18next.t('Total %')])
     for (let pidx=0; pidx<4; pidx++) {
         let accumP = 0
+        let firstRow = true
         let who = relativeToHeroStr(pidx)
         for (let event of GS.ge[GS.hand_counter]) {
             if (event.actor == pidx && 'tsumoAttempt' in event) {
@@ -1433,13 +1445,16 @@ function showDangerTable() {
                 accumP = accumP + (1-accumP)*p
                 let result = ta[0] ? i18next.t('hit') : i18next.t('miss')
                 addTableRow(table, [who, result, (p*100).toFixed(1), (accumP*100).toFixed(1)])
+                if (firstRow) {
+                    table.lastChild.lastChild.style.borderTop = `1px solid ${GS.C_colorText}`;
+                    firstRow = false
+                }
             }
         }
     }
     GS.ui.genericModalBody.append(dangersDiv)
     // testDangers()
     showModalAndWait(GS.ui.genericModal)
-    updateState() // TODO do all this calculation beforehand?
 }
 
 function addResult() {
@@ -1704,9 +1719,14 @@ function connectUI() {
             updateState()
         })
     }
-    document.querySelector(`.grid-hand-p0-container`).addEventListener("click", () => {
+    document.querySelector('.discard-bars-svg').addEventListener("click", () => {
         GS.showMortal = !GS.showMortal
         updateState()
+    })
+    document.querySelector('.danger-bars-svg').addEventListener("click", () => {
+        if (GS.showDealinRate) {
+            showDangerDetail()
+        }
     })
     document.addEventListener('keydown', function(event) {
         // If any modal is open, close the modal instead of doing anything else
@@ -1765,16 +1785,12 @@ function connectUI() {
         } else if (event.key == 'd') {
             toggleDealinRate()
         } else if (event.key == 'a') {
-            if (!genericModal.open) {
+            if (GS.showDealinRate) {
                 showDangerTable()
-            } else {
-                genericModal.close()
             }
         } else if (event.key == 'z') {
-            if (!genericModal.open) {
+            if (GS.showDealinRate) {
                 showDangerDetail()
-            } else {
-                genericModal.close()
             }
         } else if (event.key == 'b') {
             const urlParams = new URLSearchParams(window.location.search)

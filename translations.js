@@ -85,19 +85,14 @@ const i18next_data = {
                 "dealin-riichi-only": "Dealin rate: No opponents have called Riichi",
                 "dealin-rate": "Dealin Rate",
                 "accum-dealin-rate": "Accumulated Dealin Rate",
-                "Pusher": "Pusher",
+                "Pusher": "Pusher", // This player is discarding into someone who is tenpai
                 "Tenpai": "Tenpai",
                 "Tile": "Tile",
                 "This %": "This %",
                 "Total %": "Total %",
-                "pid-miss-tsumo": "{{pid}} miss Tsumo",
-                "dealin-pov": {
-                    "position": {
-                        "pov": "position-rel",
-                        "tenpai": "position-rel",
-                    },
-                    "full": "{{thisPosition}}'s dealin rate while {{tenpaiPosition}} is tenpai",
-                },
+                "Details": "Details",
+                "hit": "hit", // Tenpai player drew and won
+                "miss": "miss", // Tenpai player's draw was not 
                 "sujis-tested": "Sujis tested",
                 "suji-dealin-rate": "Suji dealin rate",
                 "Tile dealin rates": "Tile dealin rates",
@@ -112,6 +107,7 @@ const i18next_data = {
                 'reach'   : 'Riichi',
                 "Hmm..."  : "Hmm...",
                 "Clack!"  : "Clack!",
+                "ryukyoku" : "Draw", // Declare draw (I think this can only be nine terminals)
                 // No need to disambiguate these in the GUI display -- context will show which kind it is
                 'ankan'   : 'Kan',
                 'daiminkan' : 'Kan',
@@ -311,14 +307,9 @@ const i18next_data = {
                 "Tile": "Tile",
                 "This %": "This %",
                 "Total %": "Total %",
-                "pid-miss-tsumo": "{{pid}} miss Tsumo",
-                "dealin-pov": {
-                    "position": {
-                        "pov": "position-rel",
-                        "tenpai": "position-rel",
-                    },
-                    "full": "{{thisPosition}}'s dealin rate while {{tenpaiPosition}} is tenpai",
-                },
+                "Details": "Details",
+                "hit": "hit", // Tenpai player drew and won
+                "miss": "miss", // Tenpai player's draw was not 
                 "sujis-tested": "Sujis tested",
                 "suji-dealin-rate": "Suji dealin rate",
                 "Tile dealin rates": "Tile dealin rates",
@@ -333,6 +324,7 @@ const i18next_data = {
                 'reach'   : '立直',
                 "Hmm..."  : "嗯……",
                 "Clack!"  : "异议！",
+                "ryukyoku" : "Draw", // Declare draw (I think this can only be nine terminals)
                 // No need to disambiguate these in the GUI display -- context will show which kind it is
                 'ankan'   : '杠',
                 'daiminkan' : '杠',
@@ -553,14 +545,9 @@ const i18next_data = {
                 "Tile": "Tile",
                 "This %": "This %",
                 "Total %": "Total %",
-                "pid-miss-tsumo": "{{pid}} miss Tsumo",
-                "dealin-pov": {
-                    "position": {
-                        "pov": "position-rel-possessive",
-                        "tenpai": "position-rel-object",
-                    },
-                    "full": "{{thisPosition}} dealin rate while {{tenpaiPosition}} is tenpai",
-                },
+                "Details": "Details",
+                "hit": "hit", // Tenpai player drew and won
+                "miss": "miss", // Tenpai player's draw was not 
                 "sujis-tested": "Sujis tested",
                 "suji-dealin-rate": "Suji dealin rate",
                 "Tile dealin rates": "Tile dealin rates",
@@ -575,6 +562,7 @@ const i18next_data = {
                 'reach'   : '리치',
                 "Hmm..."  : "흠...",
                 "Clack!"  : "엣헴!",
+                "ryukyoku" : "Draw", // Declare draw (I think this can only be nine terminals)
                 // No need to disambiguate these in the GUI display -- context will show which kind it is
                 'ankan'   : '깡',
                 'daiminkan' : '깡',
@@ -780,14 +768,9 @@ const i18next_data = {
                 "Tile": "Tile",
                 "This %": "This %",
                 "Total %": "Total %",
-                "pid-miss-tsumo": "{{pid}} miss Tsumo",
-                "dealin-pov": {
-                    "position": {
-                        "pov": "position-rel",
-                        "tenpai": "position-rel",
-                    },
-                    "full": "{{thisPosition}}'s dealin rate while {{tenpaiPosition}} is tenpai",
-                },
+                "Details": "Details",
+                "hit": "hit", // Tenpai player drew and won
+                "miss": "miss", // Tenpai player's draw was not 
                 "sujis-tested": "Sujis tested",
                 "suji-dealin-rate": "Suji dealin rate",
                 "Tile dealin rates": "Tile dealin rates",
@@ -802,6 +785,7 @@ const i18next_data = {
                 'reach'   : 'リーチ',
                 "Hmm..."  : "うーん...",
                 "Clack!"  : "アカン！",
+                "ryukyoku" : "Draw", // Declare draw (I think this can only be nine terminals)
                 // No need to disambiguate these in the GUI display -- context will show which kind it is
                 'ankan'   : 'カン',
                 'daiminkan' : 'カン',
