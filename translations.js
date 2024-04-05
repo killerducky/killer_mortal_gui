@@ -302,7 +302,6 @@ const i18next_data = {
                 "R":"中",
                 "spoiler": "（注意：何切模式已开启。点击此处进行关闭）",
                 "dealin-riichi-only": "铳率条：没有对手宣告立直",
-<<<<<<< HEAD
                 "dealin-rate": "铳率",
                 "accum-dealin-rate": "累积铳率",
                 "Pusher": "切牌家",
