@@ -366,6 +366,7 @@ table, th, td {
     padding: 0.4rem;
     background: var(--color-accent2);
 }
+.hover-rows tr:hover td,
 .info-round-table tr:hover td {
     background:var(--color-hover);
 }

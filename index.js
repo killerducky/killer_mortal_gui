@@ -1235,6 +1235,8 @@ function showDangers(thisPidx, tenpaiPidx, thisUnseenTiles, genbutsu, discardsTo
     for (let i=0; i<4; i++) {
         tables[i] = document.createElement("table")
         span.append(tables[i])
+        tables[i].classList.add('hover-rows')
+        tables[i].classList.add('wider-table')
         tables[i].style.display = "inline-block"
         tables[i].style.verticalAlign = "top"
         tables[i].style.margin = "10px"
@@ -1265,7 +1267,7 @@ function showDangers(thisPidx, tenpaiPidx, thisUnseenTiles, genbutsu, discardsTo
 }
 function showDangersDetail(keyTile, combos, dangersDetailDiv) {
     let table = document.createElement("table")
-    table.style.marginTop = "10px"
+    table.classList.add('wider-table')
     let span = document.createElement('span')
     let tileDiv = createTile(tenhou2str(keyTile))
     span.innerHTML = tileDiv.innerHTML + ' ' + i18next.t('Details')
@@ -1404,6 +1406,7 @@ function showDangerTable() {
     const dangersDiv = document.createElement('div')
     let table = document.createElement("table")
     table.classList.add('wider-table')
+    table.classList.add('hover-rows')
     GS.ui.genericModalBody.append(table)
     addTableRow(table, [i18next.t('Pusher'), i18next.t('Tile'), i18next.t('Tenpai'), '%', i18next.t('Total %')])
     for (let thisPidx=0; thisPidx<4; thisPidx++) {
@@ -1417,12 +1420,16 @@ function showDangerTable() {
                         let d = event['danger'][tenpaiPidx][thisPidx]
                         let p = (event.pai in d['combos']) ? d['combos'][event.pai]['all']/d['combos']['all'] : 0
                         accumP = accumP + (1-accumP)*p
-                        if (firstTenpai) {
-                            addTableRow(table, [relativeToHeroStr(thisPidx), createTile(tenhou2str(d['event'].pai)), relativeToHeroStr(tenpaiPidx), (p*100).toFixed(1), (accumP*100).toFixed(1)])
+                        let row = [relativeToHeroStr(thisPidx), createTile(tenhou2str(d['event'].pai)), relativeToHeroStr(tenpaiPidx), (p*100).toFixed(1), (accumP*100).toFixed(1)]
+                        if (!firstTenpai) {
+                            row[1] = '' // Don't repeat the tile
                             firstTenpai = false
-                        } else {
-                            addTableRow(table, ['', '', relativeToHeroStr(tenpaiPidx), (p*100).toFixed(1), (accumP*100).toFixed(1)])
                         }
+                        firstTenpai = false
+                        if (!firstRow) {
+                            row[0] = '' // Don't repeat thisPidx
+                        }
+                        addTableRow(table, row)
                         if (firstRow) {
                             table.lastChild.lastChild.style.borderTop = `1px solid ${GS.C_colorText}`;
                             firstRow = false
