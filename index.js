@@ -936,7 +936,7 @@ function generateWaits() {
                 }
                 let wait = {}
                 wait.type = type
-                wait.tiles = Array(type==waitType.tanki ? 1:2).fill([suit*10+tankiShanpon])
+                wait.tiles = Array(type==waitType.tanki ? 1:2).fill(suit*10+tankiShanpon)
                 wait.waitsOn = [suit*10+tankiShanpon]
                 waitsArray.push(wait)
             }
@@ -1181,9 +1181,6 @@ function incrementalCalcDangerHelper(event, prevEvent, gs) {
     }
 }
 function doCalculateUkeire(finalHand, finalCalls, thisUnseenTiles) {
-    // TODO: Beware this assumes GS.gs.hands for tenpai player is correct
-    // Which it is given reach_accepted==true and they cannot change wait shape
-    // TODO: Actually this is wrong now that I'm going to try to do this all before the GUI starts.
     let ukeireHand = Array(38).fill(0)
     for (let t of finalHand) {
         ukeireHand[normRedFive(t)-10]++
@@ -1414,7 +1411,8 @@ function showDangerTable() {
                 for (let tenpaiPidx=0; tenpaiPidx<4; tenpaiPidx++) {
                     if (event['danger'][tenpaiPidx][thisPidx] && event['danger'][tenpaiPidx][thisPidx]['dangerousEvent']) {
                         let d = event['danger'][tenpaiPidx][thisPidx]
-                        let p = (event.pai in d['combos']) ? d['combos'][event.pai]['all']/d['combos']['all'] : 0
+                        let tile = normRedFive(event.pai)
+                        let p = (tile in d['combos']) ? d['combos'][tile]['all']/d['combos']['all'] : 0
                         accumP = accumP + (1-accumP)*p
                         let row = [relativeToHeroStr(thisPidx), createTile(tenhou2str(d['event'].pai)), relativeToHeroStr(tenpaiPidx), (p*100).toFixed(1), (accumP*100).toFixed(1)]
                         if (!firstTenpai) {
