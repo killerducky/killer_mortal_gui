@@ -370,7 +370,7 @@ class UI {
         svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         svgElement.setAttribute("width", GS.C_db_totWidth)
         svgElement.setAttribute("height", GS.C_db_height)
-        svgElement.setAttribute('style', `transform-origin: top left; transform: scale(${GS.C_zoom}, ${-GS.C_zoom}) translate(0, ${-1*(GS.C_db_height+GS.C_db_tileHeight)})`)
+        svgElement.setAttribute('style', `transform-origin: top left; transform: scale(${GS.C_zoom}, ${-GS.C_zoom}) translate(0, ${-1*(GS.C_db_height+GS.C_db_tileHeight)}px)`)
         svgElement.classList.add('danger-bars-svg')
         discardBars.append(svgElement)
     }
@@ -387,7 +387,7 @@ class UI {
         if (!mortalEval && !showDangerBars) {
             if (GS.showDealinRate) {
                 dangerSvgElem.appendChild(createSvgText(60,30,i18next.t("dealin-riichi-only")))
-                dangerSvgElem.lastChild.setAttribute('style', 'transform: translate(0, 50) scale(1, -1)')
+                dangerSvgElem.lastChild.setAttribute('style', 'transform: translate(0, 50px) scale(1, -1)')
             }
             return // nothing to display
         }
@@ -445,7 +445,7 @@ class UI {
         }
         if (GS.showDealinRate && !atLeastOnedanger) {
             dangerSvgElem.appendChild(createSvgText(60,30,i18next.t("dealin-riichi-only")))
-            dangerSvgElem.lastChild.setAttribute('style', 'transform: translate(0, 50) scale(1, -1)')
+            dangerSvgElem.lastChild.setAttribute('style', 'transform: translate(0, 50px) scale(1, -1)')
         }
     }
     updateHandInfo() {
