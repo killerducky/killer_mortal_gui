@@ -329,7 +329,7 @@ const i18next_data = {
                 'reach'   : '立直',
                 "Hmm..."  : "嗯……",
                 "Clack!"  : "异议！",
-                "ryukyoku" : "Draw", // Declare draw (I think this can only be nine terminals)
+                "ryukyoku" : "流局", // Declare draw (I think this can only be nine terminals)
                 // No need to disambiguate these in the GUI display -- context will show which kind it is
                 'ankan'   : '杠',
                 'daiminkan' : '杠',
@@ -348,7 +348,7 @@ const i18next_data = {
                 "九種九牌" : "九种九牌",
                 "四家立直" : "四家立直",
                 "三家和了" : "三家和了",
-                "四風連打" : "四風連打",
+                "四風連打" : "四风连打",
                 // Yakus, points
                 '飜' : '番',
                 '符' : '符',
@@ -426,7 +426,7 @@ const i18next_data = {
                 "石の上にも三年" : "石上三年",
                 "大七星" : "大七星",
                 "根" : "根",
-                "嶺上開花" : "杠上花",
+                "嶺上開花" : "岭上开花",
                 "嶺上放銃" : "杠上炮",
                 "無番和" : "底和",
                 "槍槓" : "枪杠",
@@ -446,8 +446,7 @@ const i18next_data = {
                 "天和" : "天和",
                 "地和" : "地和",
                 "清幺九" : "清幺九",
-                "海底摸月" : "海底捞月",
-
+                "海底摸月" : "海底摸月",
             }
         },
         ko: {
