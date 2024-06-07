@@ -914,7 +914,7 @@ const i18next_data = {
                 "海底摸月": "海底摸月",
             }
         },
-        "ru-RU": {
+        ru: {
             translation: {
                 "title": "Killer Mortal Reviewer",
                 "round-dec": "&lt; Пред. раунд",
