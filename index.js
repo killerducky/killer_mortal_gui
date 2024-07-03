@@ -154,6 +154,7 @@ class UI {
         this.infoThisRoundClose = document.querySelector('.info-this-round-close')
         this.genericModal = document.getElementById('generic-modal')
         this.genericModalBody = document.querySelector('.generic-modal-body')
+        this.optInfo = document.querySelector('.opt-info')
         this.setPovPidx(0)
     }
     setPovPidx(newPidx) {
@@ -222,12 +223,64 @@ class UI {
         }
         return resultTypeStr
     }
+    getActionSpan(detail) {
+        let actionSpan = document.createElement('span')
+        let textContent = i18next.t(detail.action.type)
+        if (detail.action.type == 'hora' && detail.action.actor != detail.action.target) {
+           textContent = i18next.t('ron') // translate defaults to Tsumo. Change to Ron in this case            
+        }
+        actionSpan.innerHTML = textContent
+        // Some kans include pai, some don't.
+        let pai = detail.action.type.endsWith('kan') ? detail.action.consumed[0] : detail.action.pai
+        if (pai) {
+            let tiles = [pai]
+            if (detail.action.consumed && !detail.action.type.endsWith('kan')) {
+                tiles = detail.action.consumed
+            }
+            actionSpan.innerHTML += "&nbsp&nbsp&nbsp"
+            for (let i=0; i<tiles.length; i++) {
+                // let tileDiv = createTile(tenhou2str(detail.action.pai))
+                let tileDiv = createTile(tenhou2str(tiles[i]))
+                actionSpan.innerHTML += tileDiv.innerHTML
+            }
+        }
+        return actionSpan
+    }
+    updateOptInfo() {
+        let gameEvent = GS.ge[GS.hand_counter][GS.ply_counter]
+        let mortalEval = gameEvent.mortalEval
+        this.optInfo.replaceChildren()
+        let actualTable = document.createElement("table")
+        actualTable.classList.add('wider-table')
+        actualTable.classList.add('hover-rows')
+        this.optInfo.append(actualTable)
+        let table = document.createElement("table")
+        table.classList.add('wider-table')
+        table.classList.add('hover-rows')
+        this.optInfo.append(table)
+        addTableRow(table, [i18next.t('Action'), i18next.t('Q'), i18next.t('P')])
+        if (!GS.showMortal || !mortalEval) {
+            addTableRow(actualTable, [i18next.t("Player"), ""])
+            addTableRow(actualTable, [i18next.t("Mortal"), ""])
+            return
+        }
+
+        addTableRow(actualTable, [i18next.t("Player"), this.getActionSpan(mortalEval.details[0])])
+        addTableRow(actualTable, [i18next.t("Mortal"), this.getActionSpan(mortalEval.details[mortalEval.actual_index])])
+    
+        for (let [idx, detail] of mortalEval.details.entries()) {
+            let actionSpan = this.getActionSpan(detail)
+            let row = [actionSpan, detail.q_value.toFixed(2), (detail.prob*100).toFixed(2)]
+            addTableRow(table, row)
+        }
+    }
     updateGridInfo() {
         this.clearDiscardBars()
         this.clearCallBars()
         let event = GS.ge[GS.hand_counter][GS.ply_counter]
         this.updateDiscardBars()
         this.updateCallBars()
+        this.updateOptInfo()
         this.tilesLeft.append(`x${GS.gs.tilesLeft}`)
         if (event.mortalEval && event.mortalEval.tiles_left != GS.gs.tilesLeft) {
             console.log('tiles left mismatch:', event.mortalEval.tiles_left, GS.gs.tilesLeft)

@@ -115,6 +115,11 @@ const i18next_data = {
                 'ankan'   : 'Kan',
                 'daiminkan' : 'Kan',
                 'kakan'   : 'Kan',
+                'Action'  : 'Action',
+                'Q'       : 'Q',
+                'P'       : 'P',
+                'Player'  : 'Player',
+                'Mortal'  : 'Mortal',
                 // Results
                 "Final"   : "Final", // Final score in score table
                 "Final Result:"   : "Final Result:", // Final result in accum-dealin-rate table

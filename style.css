@@ -311,6 +311,16 @@ h1{
     justify-content: space-around;
     gap: 10px;
 }
+.opt-info table {
+    width: 220px;
+    margin:10px;
+    background:var(--color-accent);
+}
+.opt-info table .tileImg {
+    width:calc(var(--tile-img-width) * 0.50);
+    height:calc(var(--tile-img-height) * 0.50);
+    margin:0px;
+}
 .controls {
     display:grid;
     grid-template-columns: repeat(2, calc(var(--zoom)*120px));
@@ -459,5 +469,8 @@ code {
     }
     button {
         font-size:x-small;
+    }
+    .opt-info {
+        display:none;
     }
 }
