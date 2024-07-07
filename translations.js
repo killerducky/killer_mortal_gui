@@ -339,6 +339,11 @@ const i18next_data = {
                 'ankan'   : '杠',
                 'daiminkan' : '杠',
                 'kakan'   : '杠',
+                'Action'  : 'Action',
+                'Q'       : 'Q',
+                'P'       : 'P',
+                'Player'  : 'Player',
+                'Mortal'  : 'Mortal',
                 // Results
                 "Final"   : "结果", // Final score in score table
                 "Final Result:"   : "最终结果：", // Final result in accum-dealin-rate table
@@ -579,6 +584,11 @@ const i18next_data = {
                 'ankan'   : '깡',
                 'daiminkan' : '깡',
                 'kakan'   : '깡',
+                'Action'  : 'Action',
+                'Q'       : 'Q',
+                'P'       : 'P',
+                'Player'  : 'Player',
+                'Mortal'  : 'Mortal',
                 // Results
                 "Final"   : "최종", // Final score in score table
                 "Final Result:"   : "Final Result:", // Final result in accum-dealin-rate table
@@ -805,6 +815,11 @@ const i18next_data = {
                 'ankan'   : 'カン',
                 'daiminkan' : 'カン',
                 'kakan'   : 'カン',
+                'Action'  : 'Action',
+                'Q'       : 'Q',
+                'P'       : 'P',
+                'Player'  : 'Player',
+                'Mortal'  : 'Mortal',
                 // Results
                 "Final"   : "最終結果", // 
                 "Final Result:"   : "Final Result:", // Final result in accum-dealin-rate table
@@ -1023,6 +1038,11 @@ const i18next_data = {
                 'ankan'   : 'Кан',
                 'daiminkan' : 'Кан',
                 'kakan'   : 'Кан',
+                'Action'  : 'Action',
+                'Q'       : 'Q',
+                'P'       : 'P',
+                'Player'  : 'Player',
+                'Mortal'  : 'Mortal',
                 // Results
                 "Final"   : "Финал", // Final score in score table
                 "Final Result:"   : "Финальный результат:", // Final result in accum-dealin-rate table
