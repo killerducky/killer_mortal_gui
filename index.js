@@ -265,8 +265,8 @@ class UI {
             return
         }
 
-        addTableRow(actualTable, [i18next.t("Player"), this.getActionSpan(mortalEval.details[0])])
-        addTableRow(actualTable, [i18next.t("Mortal"), this.getActionSpan(mortalEval.details[mortalEval.actual_index])])
+        addTableRow(actualTable, [i18next.t("Player"), this.getActionSpan(mortalEval.details[mortalEval.actual_index])])
+        addTableRow(actualTable, [i18next.t("Mortal"), this.getActionSpan(mortalEval.details[0])])
     
         for (let [idx, detail] of mortalEval.details.entries()) {
             let actionSpan = this.getActionSpan(detail)
