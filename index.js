@@ -1333,7 +1333,7 @@ function showDangersDetail(keyTile, combos, dangersDetailDiv) {
         addTableRow(table, row)
     }
     table.lastChild.lastChild.style.borderBottom = `1px solid ${GS.C_colorText}`;
-    addTableRow(table, ["Total %", "", "", `${(keyCombo['all']/combos['all']*100).toFixed(1)}`])
+    addTableRow(table, [i18next.t("Total %"), "", "", `${(keyCombo['all']/combos['all']*100).toFixed(1)}`])
     table = document.createElement("table")
     dangersDetailDiv.append(table)
     table.style.visibility = 'hidden'
