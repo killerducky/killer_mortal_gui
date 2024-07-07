@@ -313,7 +313,7 @@ const i18next_data = {
                 "Tenpai": "听牌家",
                 "Tile": "牌",
                 "This %": "此行 %",
-                "Total %": "累积 %",
+                "Total %": "累计 %",
                 "Details": "详细信息",
                 "hit": "成功", // Tenpai player drew and won
                 "miss": "失败", // Tenpai player's draw was not 
@@ -339,10 +339,10 @@ const i18next_data = {
                 'ankan'   : '杠',
                 'daiminkan' : '杠',
                 'kakan'   : '杠',
-                'Action'  : 'Action',
+                'Action'  : '操作',
                 'Q'       : 'Q',
                 'P'       : 'P',
-                'Player'  : 'Player',
+                'Player'  : '玩家',
                 'Mortal'  : 'Mortal',
                 // Results
                 "Final"   : "结果", // Final score in score table
