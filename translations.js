@@ -104,6 +104,7 @@ const i18next_data = {
                 'dahai'   : 'Cut',
                 'pon'     : 'Pon',
                 'chi'     : 'Chi',
+                'nukidora': 'Nuki',
                 'none'    : 'Skip',
                 'hora'    : 'Tsumo', // Default to Tsumo. If ron, javascript will change it.
                 'ron'     : 'Ron',
@@ -328,6 +329,7 @@ const i18next_data = {
                 'dahai'   : '切',
                 'pon'     : '碰',
                 'chi'     : '吃',
+                'nukidora': '拔北',
                 'none'    : '跳过',
                 'hora'    : '自摸', // Default to Tsumo. If ron, javascript will change it.
                 'ron'     : '荣和',
@@ -573,6 +575,7 @@ const i18next_data = {
                 'dahai'   : '타',
                 'pon'     : '퐁',
                 'chi'     : '치',
+                'nukidora': '북도라',
                 'none'    : '스킵',
                 'hora'    : '쯔모', // Default to Tsumo. If ron, javascript will change it.
                 'ron'     : '론',
@@ -804,6 +807,7 @@ const i18next_data = {
                 'dahai'   : '打',
                 'pon'     : 'ポン',
                 'chi'     : 'チー',
+                'nukidora': '抜きドラ',
                 'none'    : 'スルー', // 「スキップ」 spends too much space
                 'hora'    : 'ツモ', // Default to Tsumo. If ron, javascript will change it.
                 'ron'     : 'ロン',
@@ -1027,6 +1031,7 @@ const i18next_data = {
                 'dahai'   : 'Дискард',
                 'pon'     : 'Пон',
                 'chi'     : 'Чи',
+                'nukidora': 'Кита',
                 'none'    : 'Пропустить',
                 'hora'    : 'Цумо', // Default to Tsumo. If ron, javascript will change it.
                 'ron'     : 'Рон',
