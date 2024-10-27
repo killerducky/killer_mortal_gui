@@ -807,7 +807,7 @@ const i18next_data = {
                 'dahai'   : '打',
                 'pon'     : 'ポン',
                 'chi'     : 'チー',
-                'nukidora': '抜きドラ',
+                'nukidora': '北抜き',
                 'none'    : 'スルー', // 「スキップ」 spends too much space
                 'hora'    : 'ツモ', // Default to Tsumo. If ron, javascript will change it.
                 'ron'     : 'ロン',

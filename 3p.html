@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- initial-scale=0.5 is a quick hack to improve mobile layout -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <title>Killer Mortal Reviewer</title>
+    <link rel="stylesheet" href="style3p.css?d=10">
+</head>
+<body>
+    <main>
+        <div class="outer">
+            <div class="grid-main">
+                <span class="grid-hand-p0-container">
+                    <span id="discard-bars" class="discard-bars"></span>
+                    <span class="grid-hand pov-p0 grid-hand-p0">
+                        <span class="pov-p0 hand-closed-p0"></span>
+                        <span class="pov-p0 hand-calls-p0"></span>
+                    </span>
+                </span>
+                <span class="grid-hand pov-p3 grid-hand-p3">
+                    <span class="pov-p3 hand-closed-p3"></span>
+                    <span class="pov-p3 hand-calls-p3"></span>
+                </span>
+                <span class="grid-hand pov-p2 grid-hand-p2">
+                    <span class="pov-p2 hand-closed-p2"></span>
+                    <span class="pov-p2 hand-calls-p2"></span>
+                </span>
+                <span class="grid-hand pov-p1 grid-hand-p1">
+                    <span class="pov-p1 hand-closed-p1"></span>
+                    <span class="pov-p1 hand-calls-p1"></span>
+                </span>
+                <span class="grid-discard pov-p0 grid-discard-p0"></span>
+                <span class="grid-discard pov-p3 grid-discard-p3"></span>
+                <span class="grid-discard pov-p2 grid-discard-p2"></span>
+                <span class="grid-discard pov-p1 grid-discard-p1"></span>
+                <div class="grid-info">
+                    <button class="info-round"></button>
+                    <span class="info-tiles-left"></span>
+                    <span class="info-honbas"></span>
+                    <span class="info-doras"></span>
+                    <span class="gi-p0-outer"><span class="gi-p0"></span><span class="gi-p0-result"></span></span>
+                    <span class="gi-p1-outer"><span class="gi-p1"></span><span class="gi-p1-result"></span></span>
+                    <span class="gi-p2-outer"><span class="gi-p2"></span><span class="gi-p2-result"></span></span>
+                    <span class="gi-p3-outer"><span class="gi-p3"></span><span class="gi-p3-result"></span></span>
+                </div>
+            </div>
+        <div class="sidebar">
+            <div class="controls">
+                <button id="round-dec">&lt; Prev Round</button>
+                <button id="round-inc">Next Round &gt;</button>
+                <button id="prev-mismatch">&lt; Prev Error</button>
+                <button id="next-mismatch">Next Error &gt;</button>
+                <button id="ply-dec2">&lt; Prev Choice</button>
+                <button id="ply-inc2">Next Choice &gt;</button>
+                <button id="ply-dec">&lt; Prev</button>
+                <button id="ply-inc">Next &gt;</button>
+                <button id="options">Options</button>
+                <button id="about">About</button>
+            </div>
+            <div class="killer-call-div">
+                <div class="killer-call-bars"></div>
+                <img class="killer-call-img" src="media/rustferris.png"></img>
+            </div>
+        </div>
+        <div class="opt-info">
+        </div>
+    </main>
+    <dialog id="about-modal" class="modal">
+        <div> <!-- Container just to capture clicks -->
+        <button class="close about-close">&times</button>
+        <div id="about-body-0"></div>
+        <div class="about-metadata"></div>
+        <p></p>
+        <div id="about-body-1"></div>
+        </div>
+    </dialog>
+    <dialog id="options-modal" class="modal">
+        <div class="options-div">
+            <div class="options-header">
+                <span id="options-label"></span><button class="close options-close">&times</button>
+            </div>
+            <div>
+                <label for="langSelect" id="langLabel"></label>
+                <select id="langSelect" name="lang">
+                    <option value="en">English</option>
+                    <option value="zh-CN">简体中文</option>
+                    <option value="ko">한국어</option>
+                    <option value="ja">日本語</option>
+                    <option value="ru">Русский</option>
+                </select>
+            </div>
+            <button id="toggle-hands"></button>
+            <button id="toggle-mortal-advice"></button>
+            <button id="toggle-dealin-rate"></button>
+        </div>
+    </dialog>
+    <dialog class="modal info-round-modal">
+        <div>
+        <button class="close info-round-close">&times</button>
+        </div>
+        <div class="info-round-table"></div>
+    </dialog>
+    <dialog class="modal info-this-round-modal">
+        <button class="close info-this-round-close">&times</button>
+        <div class="info-this-round-table"></div>
+    </dialog>
+    <dialog id="generic-modal" class="modal">
+        <div>
+            <span>
+                <h2 class="title">Modal Title</h2>
+                <button id="generic-modal-close" class="close">&times</button>
+            </span>
+            <div id="generic-modal-body" class="generic-modal-body"></div>
+        </div>
+    </dialog>
+    <script src="https://unpkg.com/i18next@23.10.0/dist/umd/i18next.min.js"></script>
+    <script src="translations.js?d=10"></script>
+    <script type="module" src="boot3p.js?d=10"></script>
+</body>
+</html>
