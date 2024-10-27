@@ -741,14 +741,14 @@ const i18next_data = {
                     ['<code>h</code>', '相手の手牌を表示/非表示'],
                     ['<code>b</code>', '現在の局面をURLに反映'],
                     ['<code>?</code>', 'ヘルプを表示'],
-                    ['', 'Optional extra features:'
-                        + '<br>The following are not output by Mortal.'
-                        + '<br>Simple heuristics for riichi only.'
-                        + '<br>Enable with <code>d</code>.'
+                    ['', 'オプションの追加機能:'
+                        + '<br>これらの機能はMortalによる出力ではありません。'
+                        + '<br>リーチだけが対象の単純なヒューリスティクスです'
+                        + '<br><code>d</code> で有効化します。'
                     ],
-                    ['<code>d</code>', '放銃率を表示/非表示<br><br>(Mortalによる出力ではなく、単純なヒューリスティックのみ)'],
-                    ['<code>a</code>', 'Show accumulated dealin rate'],
-                    ['<code>z</code>', 'Show detailed dealin rate'],
+                    ['<code>d</code>', '放銃率を表示/非表示<br><br>(Mortalによる出力ではなく、単純なヒューリスティクスのみ)'],
+                    ['<code>a</code>', '累積放銃率を表示'],
+                    ['<code>z</code>', '詳細放銃率を表示'],
                 ],
                 'Engine'                : 'エンジン'                     ,
                 'Model tag'             : 'モデルタグ'                   ,
@@ -782,24 +782,24 @@ const i18next_data = {
                 "6z":"$t(G)",
                 "7z":"$t(R)",
                 "spoiler": "(ネタバレ注意: Mortalの意見は非表示。クリックで表示)",
-                "dealin-riichi-only": "Dealin rate: No opponents have called Riichi",
-                "dealin-rate": "Dealin Rate",
-                "accum-dealin-rate": "Accumulated Dealin Rate",
-                "Pusher": "Pusher",
-                "Tenpai": "Tenpai",
-                "Tile": "Tile",
-                "This %": "This %",
-                "Total %": "Total %",
-                "Details": "Details",
-                "hit": "hit", // Tenpai player drew and won
-                "miss": "miss", // Tenpai player's draw was not 
-                "sujis-tested": "Sujis tested",
-                "suji-dealin-rate": "Suji dealin rate",
-                "Tile dealin rates": "Tile dealin rates",
-                "waitTypeStr": ['Ryanmen', 'Kanchan', 'Penchan', 'Tanki', 'Shanpon'],
-                "Wait type": "Wait type",
-                "Tiles": "Tiles",
-                "Left": "Left",
+                "dealin-riichi-only": "放銃率: 誰もリーチしていません",
+                "dealin-rate": "放銃率",
+                "accum-dealin-rate": "累積放銃率",
+                "Pusher": "打牌者",
+                "Tenpai": "テンパイ",
+                "Tile": "牌",
+                "This %": "単体%",
+                "Total %": "合計%",
+                "Details": "詳細",
+                "hit": "ツモ", // Tenpai player drew and won
+                "miss": "ツモれず", // Tenpai player's draw was not 
+                "sujis-tested": "通ったスジ",
+                "suji-dealin-rate": "スジ放銃率",
+                "Tile dealin rates": "牌別放銃率",
+                "waitTypeStr": ['リャンメン', 'カンチャン', 'ペンチャン', '単騎', 'シャンポン'],
+                "Wait type": "待ち種",
+                "Tiles": "牌",
+                "Left": "残り",
                 // Advice words
                 'dahai'   : '打',
                 'pon'     : 'ポン',
@@ -815,14 +815,14 @@ const i18next_data = {
                 'ankan'   : 'カン',
                 'daiminkan' : 'カン',
                 'kakan'   : 'カン',
-                'Action'  : 'Action',
+                'Action'  : '選択',
                 'Q'       : 'Q',
                 'P'       : 'P',
-                'Player'  : 'Player',
+                'Player'  : 'プレイヤー',
                 'Mortal'  : 'Mortal',
                 // Results
                 "Final"   : "最終結果", // 
-                "Final Result:"   : "Final Result:", // Final result in accum-dealin-rate table
+                "Final Result:"   : "最終結果:", // Final result in accum-dealin-rate table
                 "Round"   : "局",
                 "Ron"     : "ロン",
                 "win-by"  : "{{winner}} {{type}}",
