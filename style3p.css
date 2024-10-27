@@ -101,8 +101,8 @@ h1{
     display: grid;
     width:calc(var(--zoom) * 695px);
     height:calc(var(--zoom) * 775px);
-    grid-template-columns: calc(90/695*100%) calc(135/695*100%) calc(235/695*100%) calc(135/695*100%) calc(90/695*100%);
-    grid-template-rows: calc(90/775*100%) calc(135/775*100%) calc(235/775*100%) calc(135/775*100%) calc((90 + 70)/775*100%);
+    grid-template-columns: calc(90/695*100%) calc(135/695*100%) calc(205/695*100%) calc(135/695*100%) calc(90/695*100%);
+    grid-template-rows: calc(90/775*100%) calc(135/775*100%) calc(205/775*100%) calc(135/775*100%) calc((90 + 70)/775*100%);
     grid-template-areas: "ah-p2 ah-p2 ah-p2   ah-p2 ah-p1"
                          "ah-p3     . ad-p2   .     ah-p1"
                          "ah-p3 ad-p3 a-info  ad-p1 ah-p1"
