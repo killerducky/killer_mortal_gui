@@ -18,6 +18,8 @@ const i18next_data = {
                 "toggle-hands": "Toggle show hands",
                 "toggle-mortal-advice": "Toggle Mortal advice",
                 "toggle-dealin-rate" : "Toggle dealin rate display<br><br>(Not output by Mortal, simple heuristics for riichi only)",
+                "toggle-error-threshold" : "Set error threshold",
+                "error-threshold-prompt" : "Score threshold for error (0-100. e.g. 100: show all, 50 show serious errors) Currently: {{current}}",
                 "options-label": "Options",
                 "options": "Options",
                 "langLabel": "Language",
@@ -47,6 +49,7 @@ const i18next_data = {
                         + '<br>Enable with <code>d</code>.'
                     ],
                     ['<code>d</code>', 'Toggle dealin display'],
+                    ['<code>e</code>', 'Set Error threshold'],
                     ['<code>a</code>', 'Show accumulated dealin rate'],
                     ['<code>z</code>', 'Show detailed dealin rate'],
                 ],
