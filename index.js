@@ -371,12 +371,6 @@ class UI {
                 continue // Not enough room in GUI to show more
             }
             let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/2 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
-            //TODO: Better way to show hero actions
-            //if (mortalEval.actual_index == idx) {
-            //    svgElement.appendChild(createRect(
-            //        xloc-GS.C_db_heroBarWidth/2, GS.C_db_heroBarWidth, GS.C_cb_heroBarHeight, 1, GS.C_colorBarHero
-            //    ))
-            //}
             svgElement.appendChild(createRect(
                 xloc-GS.C_db_mortBarWidth/2, GS.C_db_mortBarWidth, GS.C_cb_heroBarHeight, Pval/100*GS.C_cb_mortBarHeightRatio, GS.C_colorBarMortal
             ))
@@ -384,7 +378,21 @@ class UI {
             if (detail.action.type == 'hora' && detail.action.actor != detail.action.target) {
                 textContent = i18next.t('ron') // translate defaults to Tsumo. Change to Ron in this case            
             }
-            svgElement.appendChild(createSvgText(xloc-GS.C_db_mortBarWidth/2-10, GS.C_db_height + 20, textContent))
+            let textElem = createSvgText(xloc-GS.C_db_mortBarWidth/2-10, GS.C_db_height + 20, textContent)
+            svgElement.appendChild(textElem)
+            if (mortalEval.actual_index == idx) {
+                let bbox = textElem.getBBox()
+                let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+                rect.setAttribute("x", bbox.x - 3)
+                rect.setAttribute("y", bbox.y - 3)
+                rect.setAttribute("width", bbox.width + 6)
+                rect.setAttribute("height", bbox.height + 6)
+                rect.setAttribute("fill", "none")
+                rect.setAttribute("stroke", "hsl(0, 70%, 50%)")
+                rect.setAttribute("stroke-width", "2")
+                svgElement.insertBefore(rect, textElem)
+            }
+
             // Some kans include pai, some don't.
             let pai = detail.action.type.endsWith('kan') ? detail.action.consumed[0] : detail.action.pai
             if (pai) {
@@ -1811,10 +1819,14 @@ function connectUI() {
     })
     document.addEventListener('keydown', function(event) {
         // If any modal is open, close the modal instead of doing anything else
-        for (let thisModal of allModals) {
-            if (thisModal.open) {
-                thisModal.close()
-                return
+        // But only on "normal" keys
+        //   to avoid closing on e.g. shift or print screen for people doing screenshot hotkeys
+        if (/^[a-z0-9]$/i.test(event.key) || ["Escape", " ", "Enter", "Backspace"].includes(event.key)) {
+            for (let thisModal of allModals) {
+                if (thisModal.open) {
+                    thisModal.close()
+                    return
+                }
             }
         }
         if (event.key == 'h') {
@@ -2125,7 +2137,7 @@ export default { main, GS, debugState } // So we can access these from dev conso
 function main() {
     const lang = ("lang" in localStorage) ? localStorage.getItem("lang") : "en"
     GS.showDealinRate = ("showDealinRate" in localStorage) ? localStorage.getItem("showDealinRate") : false
-    GS.errorThreshold = ("errorThreshold" in localStorage) ? localStorage.getItem("errorThreshold") : 100
+    GS.errorThreshold = ("errorThreshold" in localStorage) ? localStorage.getItem("errorThreshold") : 1
     i18next_data.lng = lang
     i18next.init(i18next_data).then(parseUrl(true))
 }
