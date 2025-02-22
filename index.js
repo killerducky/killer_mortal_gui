@@ -362,7 +362,7 @@ class UI {
         let svgElement = callBars.firstElementChild
         let slot = 0
         for (let [idx, detail] of mortalEval.details.entries()) {
-            let Pval = detail.normProb*100
+            let Pval = detail.softNormProb*100
             let mortalDetail = !mortalEval.is_equal && idx==0
             if (detail.action.type == 'dahai' && !mortalDetail) {
                 continue // Skip tiles (unless it's a mismatch)
@@ -411,7 +411,7 @@ class UI {
         }
         if (!mortalEval.is_equal) {
             let xloc = GS.C_db_tileWidth*GS.C_cb_widthFactor/5 + slot*GS.C_db_tileWidth*GS.C_cb_widthFactor
-            let textContent = (mortalEval.details[mortalEval.actual_index].normProb > .50) ? i18next.t("Hmm...") : i18next.t("Clack!")
+            let textContent = (mortalEval.details[mortalEval.actual_index].normProb > .25) ? i18next.t("Hmm...") : i18next.t("Clack!")
             svgElement.appendChild(createSvgText(xloc-GS.C_db_mortBarWidth/2, 60, textContent))
         }
     }
@@ -466,7 +466,7 @@ class UI {
                 // TODO: Check code for this. For now assume due to illegal calls swaps
                 if (matchingDetailIdx != -1) {
                     let matchingDetail = mortalEval.details[matchingDetailIdx]
-                    let Pval = matchingDetail.normProb*100
+                    let Pval = matchingDetail.softNormProb*100
                     if (matchingDetailIdx == mortalEval.actual_index) {
                         let tileDivs = this.hands[GS.heroPidx].querySelectorAll('div')
                         if (i==-1) {
@@ -1654,13 +1654,14 @@ function toggleDealinRate() {
     updateState()
 }
 function toggleErrorThreshold() {
+    let saveET = GS.errorThreshold*100
     GS.errorThreshold = prompt(i18next.t("error-threshold-prompt", {current:`${(GS.errorThreshold*100).toFixed(0)}`}))
     if (GS.errorThreshold == null) {
-        GS.errorThreshold = 100
+        GS.errorThreshold = saveET
     }
     GS.errorThreshold = Number(GS.errorThreshold)
     if (isNaN(GS.errorThreshold) || GS.errorThreshold < 0 || GS.errorThreshold > 100) {
-        GS.errorThreshold = 100
+        GS.errorThreshold = saveET
     }
     GS.errorThreshold = GS.errorThreshold / 100
     localStorage.setItem("errorThreshold", GS.errorThreshold)
@@ -2024,7 +2025,15 @@ function normalizeMortalEvals(data) {
     for (let kyoku of data.review.kyokus) {
         for (let mortalEval of kyoku.entries) {
             let probs = mortalEval.details.map(x => x.prob)
-            let normProbs = normalizeAndSoften(probs)
+            // Use soft versions for the bars so that tiny probs are a little more visible
+            // It's just visual so black magic is Ok here.
+            let softNormProbs = normalizeAndSoften(probs, GS.C_soft_T)
+            // Use normal version for calculating the actual error size
+            // So that this metric is not black magic.
+            let normProbs = normalizeAndSoften(probs, 1)
+            mortalEval.details = mortalEval.details.map((obj, idx) => {
+                return { ...obj, softNormProb: softNormProbs[idx]}
+            })
             mortalEval.details = mortalEval.details.map((obj, idx) => {
                 return { ...obj, normProb: normProbs[idx]}
             })
@@ -2043,10 +2052,10 @@ function setMortalJsonStr(data) {
     GS.ui.updateAbout()
 }
 
-// Soften using temperature GS.C_soft_T
+// Soften using temperature T
 // Then normalize so the highest entry is set to 1, others scaled relative to the highest
-function normalizeAndSoften(pdfs) {
-    const hotter = pdfs.map(x => Math.pow(x, 1/GS.C_soft_T))
+function normalizeAndSoften(pdfs, T) {
+    const hotter = pdfs.map(x => Math.pow(x, 1/T))
     const denom = Math.max(...hotter)
     return hotter.map(x => x/denom)
 }

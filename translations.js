@@ -19,7 +19,7 @@ const i18next_data = {
                 "toggle-mortal-advice": "Toggle Mortal advice",
                 "toggle-dealin-rate" : "Toggle dealin rate display<br><br>(Not output by Mortal, simple heuristics for riichi only)",
                 "toggle-error-threshold" : "Set error threshold",
-                "error-threshold-prompt" : "Score threshold for error (0-100. e.g. 100: show all, 50 show serious errors) Currently: {{current}}",
+                "error-threshold-prompt" : "Set error threshold [100-0]. 100 = show all errors, 25 = show only large errors. Currently: {{current}}",
                 "options-label": "Options",
                 "options": "Options",
                 "langLabel": "Language",
@@ -28,7 +28,7 @@ const i18next_data = {
                     "Mortal's opinions shown with green bars",
                     "Top choice always 100% height",
                     "Others relative to the top choice",
-                    "User's choice shown with a yellow bar",
+                    "User's choice outlined in red",
                     "Click on discard bars to toggle spoiler-free WWYD mode",
                     "Click on round indicator to show score table",
                     "Click on a row in the table to skip to that round",
@@ -42,6 +42,7 @@ const i18next_data = {
                     ['<code>m</code>', 'Toggle Mortal advice'],
                     ['<code>h</code>', 'Toggle show hands'],
                     ['<code>b</code>', 'Bookmark current position in URL'],
+                    ['<code>e</code>', 'Set Error threshold <code>100*P(mortal)/P(user)<code>'],
                     ['<code>?</code>', 'Show about'],
                     ['', 'Optional extra features:'
                         + '<br>The following are not output by Mortal.'
@@ -49,7 +50,6 @@ const i18next_data = {
                         + '<br>Enable with <code>d</code>.'
                     ],
                     ['<code>d</code>', 'Toggle dealin display'],
-                    ['<code>e</code>', 'Set Error threshold'],
                     ['<code>a</code>', 'Show accumulated dealin rate'],
                     ['<code>z</code>', 'Show detailed dealin rate'],
                 ],
@@ -252,6 +252,8 @@ const i18next_data = {
                 "toggle-hands": "开关别家手牌",
                 "toggle-mortal-advice": "开关 Mortal 提示",
                 "toggle-dealin-rate" : "开关铳率条<br><br>（非 Mortal 输出，仅针对立直家，使用简单启发式算法）",
+                "toggle-error-threshold" : "Set error threshold",
+                "error-threshold-prompt" : "Set error threshold [100-0]. 100 = show all errors, 25 = show only large errors. Currently: {{current}}",
                 "options-label": "选项",
                 "options": "选项",
                 "langLabel": "语言",
@@ -274,15 +276,16 @@ const i18next_data = {
                     ['<code>m</code>', '开关 Mortal 提示'],
                     ['<code>h</code>', '开关别家手牌'],
                     ['<code>b</code>', '将当前局面表示在网址中，方便以后访问'],
+                    ['<code>e</code>', 'Set Error threshold <code>100*P(mortal)/P(user)<code>'],
                     ['<code>?</code>', '显示关于窗口'],
                     ['', '可选的额外功能：'
                         + '<br>以下内容不是 Mortal 的输出。'
                         + '<br>仅使用了简单的启发式算法，仅针对立直家。'
                         + '<br>按 <code>d</code> 键启用。'
                     ],
-                  ['<code>d</code>', '开关铳率条'],
-                  ['<code>a</code>', '显示累积铳率'],
-                  ['<code>z</code>', '显示详细铳率'],
+                    ['<code>d</code>', '开关铳率条'],
+                    ['<code>a</code>', '显示累积铳率'],
+                    ['<code>z</code>', '显示详细铳率'],
                 ],
                 'Engine'                : 'AI 引擎'                ,
                 'Model tag'             : '模型版本'               ,
@@ -476,6 +479,8 @@ const i18next_data = {
                 "toggle-hands": "타가 손패 보기",
                 "toggle-mortal-advice": "모탈 확률 보기",
                 "toggle-dealin-rate" : "Toggle dealin rate display<br><br>(Not output by Mortal, simple heuristics for riichi only)",
+                "toggle-error-threshold" : "Set error threshold",
+                "error-threshold-prompt" : "Set error threshold [100-0]. 100 = show all errors, 25 = show only large errors. Currently: {{current}}",
                 "options-label": "설정",
                 "options": "설정",
                 "langLabel": "언어",
@@ -498,6 +503,7 @@ const i18next_data = {
                     ['<code>m</code>', 'Toggle Mortal advice'],
                     ['<code>h</code>', 'Toggle show hands'],
                     ['<code>b</code>', 'Bookmark current position in URL'],
+                    ['<code>e</code>', 'Set Error threshold <code>100*P(mortal)/P(user)<code>'],
                     ['<code>?</code>', 'Show about'],
                     ['', 'Optional extra features:'
                         + '<br>The following are not output by Mortal.'
@@ -721,6 +727,8 @@ const i18next_data = {
                 "toggle-hands": "相手の手牌を表示/非表示",
                 "toggle-mortal-advice": "Mortalのアドバイスを表示/非表示",
                 "toggle-dealin-rate" : "放銃率を表示/非表示<br><br>(Mortalによる出力ではなく、単純なヒューリスティックのみ)",
+                "toggle-error-threshold" : "Set error threshold",
+                "error-threshold-prompt" : "Set error threshold [100-0]. 100 = show all errors, 25 = show only large errors. Currently: {{current}}",
                 "options-label": "設定",
                 "options": "設定",
                 "langLabel": "言語",
@@ -743,6 +751,7 @@ const i18next_data = {
                     ['<code>m</code>', 'Mortalのアドバイスを表示/非表示'],
                     ['<code>h</code>', '相手の手牌を表示/非表示'],
                     ['<code>b</code>', '現在の局面をURLに反映'],
+                    ['<code>e</code>', 'Set Error threshold <code>100*P(mortal)/P(user)<code>'],
                     ['<code>?</code>', 'ヘルプを表示'],
                     ['', 'オプションの追加機能:'
                         + '<br>これらの機能はMortalによる出力ではありません。'
@@ -951,6 +960,8 @@ const i18next_data = {
                 "toggle-hands": "Показать руки",
                 "toggle-mortal-advice": "Показать советы Mortal",
                 "toggle-dealin-rate" : "Показать вероятность наброса<br><br>(Оценка не от Mortal, простая эвристика только для риичи сценария)",
+                "toggle-error-threshold" : "Set error threshold",
+                "error-threshold-prompt" : "Set error threshold [100-0]. 100 = show all errors, 25 = show only large errors. Currently: {{current}}",
                 "options-label": "Настройки",
                 "options": "Настройки",
                 "langLabel": "Язык",
@@ -973,6 +984,7 @@ const i18next_data = {
                     ['<code>m</code>', 'Показать советы Mortal'],
                     ['<code>h</code>', 'Включить показ рук'],
                     ['<code>b</code>', 'Добавить текущее положение в URL'],
+                    ['<code>e</code>', 'Set Error threshold <code>100*P(mortal)/P(user)<code>'],
                     ['<code>?</code>', 'Открыть "О приложении"'],
                     ['', 'Дополнительные возможности:'
                         + '<br>Следующее - это не оценка Mortal.'
