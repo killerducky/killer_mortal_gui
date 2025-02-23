@@ -42,7 +42,7 @@ const i18next_data = {
                     ['<code>m</code>', 'Toggle Mortal advice'],
                     ['<code>h</code>', 'Toggle show hands'],
                     ['<code>b</code>', 'Bookmark current position in URL'],
-                    ['<code>e</code>', 'Set Error threshold <code>100*P(mortal)/P(user)<code>'],
+                    ['<code>e</code>', 'Set Error threshold <code>100*P(user)/P(mortal)<code>'],
                     ['<code>?</code>', 'Show about'],
                     ['', 'Optional extra features:'
                         + '<br>The following are not output by Mortal.'
@@ -276,7 +276,7 @@ const i18next_data = {
                     ['<code>m</code>', '开关 Mortal 提示'],
                     ['<code>h</code>', '开关别家手牌'],
                     ['<code>b</code>', '将当前局面表示在网址中，方便以后访问'],
-                    ['<code>e</code>', 'Set Error threshold <code>100*P(mortal)/P(user)<code>'],
+                    ['<code>e</code>', 'Set Error threshold <code>100*P(user)/P(mortal)<code>'],
                     ['<code>?</code>', '显示关于窗口'],
                     ['', '可选的额外功能：'
                         + '<br>以下内容不是 Mortal 的输出。'
@@ -503,7 +503,7 @@ const i18next_data = {
                     ['<code>m</code>', 'Toggle Mortal advice'],
                     ['<code>h</code>', 'Toggle show hands'],
                     ['<code>b</code>', 'Bookmark current position in URL'],
-                    ['<code>e</code>', 'Set Error threshold <code>100*P(mortal)/P(user)<code>'],
+                    ['<code>e</code>', 'Set Error threshold <code>100*P(user)/P(mortal)<code>'],
                     ['<code>?</code>', 'Show about'],
                     ['', 'Optional extra features:'
                         + '<br>The following are not output by Mortal.'
@@ -751,7 +751,7 @@ const i18next_data = {
                     ['<code>m</code>', 'Mortalのアドバイスを表示/非表示'],
                     ['<code>h</code>', '相手の手牌を表示/非表示'],
                     ['<code>b</code>', '現在の局面をURLに反映'],
-                    ['<code>e</code>', 'Set Error threshold <code>100*P(mortal)/P(user)<code>'],
+                    ['<code>e</code>', 'Set Error threshold <code>100*P(user)/P(mortal)<code>'],
                     ['<code>?</code>', 'ヘルプを表示'],
                     ['', 'オプションの追加機能:'
                         + '<br>これらの機能はMortalによる出力ではありません。'
@@ -984,7 +984,7 @@ const i18next_data = {
                     ['<code>m</code>', 'Показать советы Mortal'],
                     ['<code>h</code>', 'Включить показ рук'],
                     ['<code>b</code>', 'Добавить текущее положение в URL'],
-                    ['<code>e</code>', 'Set Error threshold <code>100*P(mortal)/P(user)<code>'],
+                    ['<code>e</code>', 'Set Error threshold <code>100*P(user)/P(mortal)<code>'],
                     ['<code>?</code>', 'Открыть "О приложении"'],
                     ['', 'Дополнительные возможности:'
                         + '<br>Следующее - это не оценка Mortal.'
