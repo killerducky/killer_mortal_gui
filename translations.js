@@ -252,8 +252,8 @@ const i18next_data = {
                 "toggle-hands": "开关别家手牌",
                 "toggle-mortal-advice": "开关 Mortal 提示",
                 "toggle-dealin-rate" : "开关铳率条<br><br>（非 Mortal 输出，仅针对立直家，使用简单启发式算法）",
-                "toggle-error-threshold" : "Set error threshold",
-                "error-threshold-prompt" : "Set error threshold [100-0]. 100 = show all errors, 25 = show only large errors. Currently: {{current}}",
+                "toggle-error-threshold" : "设置错误阈值",
+                "error-threshold-prompt" : "设置错误阈值 [100-0]。100 = 显示所有错误，25 = 只显示重大错误。当前值：{{current}}",
                 "options-label": "选项",
                 "options": "选项",
                 "langLabel": "语言",
@@ -262,7 +262,7 @@ const i18next_data = {
                     "Mortal 切牌选择显示为绿条。",
                     "第一切牌选择固定为 100% 高度。",
                     "其他切牌选择为相对高度。",
-                    "User's choice outlined in red",
+                    "玩家的选择用红框框出。",
                     "点击手牌区域，切换无提示何切模式。",
                     "点击局数指示器，显示得点表。",
                     "点击得点表任意一行，可跳转至该小局。",
@@ -276,7 +276,7 @@ const i18next_data = {
                     ['<code>m</code>', '开关 Mortal 提示'],
                     ['<code>h</code>', '开关别家手牌'],
                     ['<code>b</code>', '将当前局面表示在网址中，方便以后访问'],
-                    ['<code>e</code>', 'Set Error threshold <code>100*P(user)/P(mortal)<code>'],
+                    ['<code>e</code>', '设置错误阈值 <code>100*P(玩家)/P(mortal)<code>'],
                     ['<code>?</code>', '显示关于窗口'],
                     ['', '可选的额外功能：'
                         + '<br>以下内容不是 Mortal 的输出。'
