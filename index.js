@@ -1236,7 +1236,7 @@ function incrementalCalcDangerHelper(event, prevEvent, gs) {
     }
     if (event.type == 'tsumo') { // draw
         gs.unseenTiles[event.actor][normRedFive(event.pai)]--
-    } else if (['chi', 'pon', 'daiminikan', 'ankan'].includes(event.type)) {
+    } else if (['chi', 'pon', 'daiminkan', 'ankan'].includes(event.type)) {
         // the other players will see the consumed tiles
         for (let tile of event.consumed) {
             weseeitnow(gs, normRedFive(tile), event.actor)
