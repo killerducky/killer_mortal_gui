@@ -20,6 +20,7 @@ class GlobalState {
     this.heroPidx = null; // player index mortal reviewed
     this.showHands = false;
     this.showMortal = true;
+    this.wwydMode = false;
     this.showDealinRate = null; // set by localStorage
     this.uiConnected = false;
 
@@ -2071,7 +2072,20 @@ function decPlyCounter() {
   }
 }
 
+function maybeSubmitWwyd() {
+  const confirmSubmit = confirm(
+    "Submit WWYD results and turn on Mortal advice?",
+  );
+  if (!confirmSubmit) return 0;
+  alert("test");
+  GS.wwydMode = 0;
+  return 1;
+}
+
 function incRoundCounter() {
+  if (GS.wwydMode) {
+    if (!maybeSubmitWwyd()) return;
+  }
   GS.hand_counter++;
   if (GS.hand_counter >= GS.ge.length) {
     GS.hand_counter = 0;
@@ -2080,6 +2094,9 @@ function incRoundCounter() {
 }
 
 function decRoundCounter() {
+  if (GS.wwydMode) {
+    if (!maybeSubmitWwyd()) return;
+  }
   GS.hand_counter--;
   if (GS.hand_counter < 0) {
     GS.hand_counter = GS.ge.length - 1;
@@ -2110,6 +2127,14 @@ function i18nElem(key) {
   const elem = document.getElementById(key);
   elem.innerHTML = i18next.t(key);
   return elem;
+}
+function toggleMortalAdvice() {
+  if (GS.wwydMode) {
+    if (!maybeSubmitWwyd()) return;
+    GS.wwydMode = 0;
+  }
+  GS.showMortal = !GS.showMortal;
+  updateState();
 }
 function toggleDealinRate() {
   GS.showDealinRate = !GS.showDealinRate;
@@ -2150,7 +2175,7 @@ function connectUI() {
   const dec = i18nElem("ply-dec");
   const options = i18nElem("options");
   const toggleShowHands = i18nElem("toggle-hands");
-  const toggleMortalAdvice = i18nElem("toggle-mortal-advice");
+  const toggleMortalAdviceElem = i18nElem("toggle-mortal-advice");
   const toggleDealinRateElem = i18nElem("toggle-dealin-rate");
   const toggleErrorThresholdElem = i18nElem("toggle-error-threshold");
   const about = i18nElem("about");
@@ -2252,9 +2277,8 @@ function connectUI() {
     GS.showHands = !GS.showHands;
     updateState();
   });
-  toggleMortalAdvice.addEventListener("click", () => {
-    GS.showMortal = !GS.showMortal;
-    updateState();
+  toggleMortalAdviceElem.addEventListener("click", () => {
+    toggleMortalAdvice();
   });
   toggleDealinRateElem.addEventListener("click", () => {
     toggleDealinRate();
@@ -2289,8 +2313,7 @@ function connectUI() {
       });
   }
   document.querySelector(".discard-bars-svg").addEventListener("click", () => {
-    GS.showMortal = !GS.showMortal;
-    updateState();
+    toggleMortalAdvice();
   });
   document.querySelector(".danger-bars-svg").addEventListener("click", () => {
     if (GS.showDealinRate) {
@@ -2316,8 +2339,7 @@ function connectUI() {
       GS.showHands = !GS.showHands;
       updateState();
     } else if (event.key == "m") {
-      GS.showMortal = !GS.showMortal;
-      updateState();
+      toggleMortalAdvice();
     } else if (event.key == "PageUp" || event.key == ",") {
       do {
         decPlyCounter();
@@ -2375,6 +2397,7 @@ function connectUI() {
       urlParams.set("hand", GS.hand_counter);
       urlParams.set("ply", GS.ply_counter);
       urlParams.set("showMortal", GS.showMortal ? 1 : 0);
+      urlParams.set("wwydMode", GS.wwydMode ? 1 : 0);
       window.location.href =
         window.location.pathname + "?" + urlParams.toString();
     } else if (event.key == "?") {
@@ -2609,6 +2632,9 @@ function parseUrl() {
   let ply_counter = Number(urlParams.get("ply"));
   if (urlParams.get("showMortal")) {
     GS.showMortal = Number(urlParams.get("showMortal"));
+  }
+  if (urlParams.get("wwydMode")) {
+    GS.wwydMode = Number(urlParams.get("wwydMode"));
   }
   if (urlParams.get("alphaTestMode")) {
     GS.alphaTestMode = true;
