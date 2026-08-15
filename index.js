@@ -309,15 +309,9 @@ class UI {
     if (!userGuess) {
       addTableRow(actualTable, [i18next.t("My Pick"), ""]);
     } else {
-      let userGuessDetail = {
-        action: {
-          type: "dahai",
-          pai: tm2t(userGuess),
-        },
-      };
       addTableRow(actualTable, [
         i18next.t("My Pick"),
-        this.getActionSpan(userGuessDetail),
+        this.getActionSpan(userGuess),
       ]);
     }
     if (!mortalEval) {
@@ -341,6 +335,7 @@ class UI {
     if (!GS.showMortal) {
       details = this.sortMortalActions(mortalEval.details);
     }
+
     for (let [idx, detail] of details.entries()) {
       let actionSpan = this.getActionSpan(detail);
       let row = [
@@ -348,7 +343,12 @@ class UI {
         GS.showMortal ? detail.q_value.toFixed(2) : 0,
         GS.showMortal ? (detail.prob * 100).toFixed(2) : 0,
       ];
-      addTableRow(table, row);
+      let tr = addTableRow(table, row);
+      tr.addEventListener("click", () => {
+        console.log(detail);
+        (GS.userGuesses[GS.hand_counter] ??= {})[GS.ply_counter] = detail;
+        updateState();
+      });
     }
   }
   // Sort by action.type, then action.pai.
@@ -362,6 +362,9 @@ class UI {
 
       // 1. Primary sort: action.type (alphabetical)
       if (typeA !== typeB) {
+        // manually make dahai last
+        if (typeA === "dahai") return 1;
+        if (typeB === "dahai") return -1;
         return typeA.localeCompare(typeB);
       }
 
@@ -766,11 +769,13 @@ class UI {
     }
     for (let i in tileStrArray) {
       let tile = createTile(tileStrArray[i]);
-      tile.addEventListener("click", () => {
-        const chosenAction = tileStrArray[i];
-        (GS.userGuesses[GS.hand_counter] ??= {})[GS.ply_counter] = chosenAction;
-        updateState();
-      });
+      // let's do this in the action table instead
+      // so we can handle calls also.
+      //   tile.addEventListener("click", () => {
+      //     const chosenAction = tileStrArray[i];
+      //     (GS.userGuesses[GS.hand_counter] ??= {})[GS.ply_counter] = chosenAction;
+      //     updateState();
+      //   });
       div.appendChild(tile);
     }
   }
@@ -993,6 +998,7 @@ function addTableRow(table, values) {
       cell.innerHTML = v;
     }
   }
+  return tr;
 }
 class Tile {
   constructor(tile) {
