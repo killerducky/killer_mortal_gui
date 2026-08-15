@@ -308,10 +308,10 @@ class UI {
       GS.ply_counter
     ] ??= "");
     if (!userGuess) {
-      addTableRow(actualTable, [i18next.t("My Pick"), ""]);
+      addTableRow(actualTable, [i18next.t("WWYD"), ""]);
     } else {
       addTableRow(actualTable, [
-        i18next.t("My Pick"),
+        i18next.t("WWYD"),
         this.getActionSpan(userGuess),
       ]);
     }
@@ -2055,6 +2055,22 @@ function convertTileStr(str) {
   return output;
 }
 
+function maybeSubmitWwyd() {
+  const confirmSubmit = confirm(
+    "Submit WWYD results and turn on Mortal advice?",
+  );
+  if (!confirmSubmit) return 0;
+  console.log("ge", GS.ge[GS.hand_counter]);
+  console.log("ug", GS.userGuesses[GS.hand_counter]);
+  for (let [ply, action] of Object.entries(GS.userGuesses[GS.hand_counter])) {
+    console.log("ply action", ply, action);
+  }
+
+  alert("test");
+  GS.wwydMode = 0;
+  return 1;
+}
+
 function incPlyCounter() {
   if (GS.ply_counter < GS.ge[GS.hand_counter].length - 1) {
     GS.ply_counter++;
@@ -2070,16 +2086,6 @@ function decPlyCounter() {
     decRoundCounter();
     GS.ply_counter = GS.ge[GS.hand_counter].length - 1;
   }
-}
-
-function maybeSubmitWwyd() {
-  const confirmSubmit = confirm(
-    "Submit WWYD results and turn on Mortal advice?",
-  );
-  if (!confirmSubmit) return 0;
-  alert("test");
-  GS.wwydMode = 0;
-  return 1;
 }
 
 function incRoundCounter() {
@@ -2396,8 +2402,8 @@ function connectUI() {
       const urlParams = new URLSearchParams(window.location.search);
       urlParams.set("hand", GS.hand_counter);
       urlParams.set("ply", GS.ply_counter);
-      urlParams.set("showMortal", GS.showMortal ? 1 : 0);
       urlParams.set("wwydMode", GS.wwydMode ? 1 : 0);
+      urlParams.set("showMortal", GS.showMortal ? 1 : 0);
       window.location.href =
         window.location.pathname + "?" + urlParams.toString();
     } else if (event.key == "?") {
@@ -2630,11 +2636,11 @@ function parseUrl() {
   let dataParam = urlParams.get("data");
   let hand_counter = Number(urlParams.get("hand"));
   let ply_counter = Number(urlParams.get("ply"));
-  if (urlParams.get("showMortal")) {
-    GS.showMortal = Number(urlParams.get("showMortal"));
-  }
   if (urlParams.get("wwydMode")) {
     GS.wwydMode = Number(urlParams.get("wwydMode"));
+  }
+  if (urlParams.get("showMortal")) {
+    GS.showMortal = GS.wwydMode ? 0 : Number(urlParams.get("showMortal")); // wwydMode overrides
   }
   if (urlParams.get("alphaTestMode")) {
     GS.alphaTestMode = true;
