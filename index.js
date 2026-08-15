@@ -2062,12 +2062,34 @@ function maybeSubmitWwyd() {
   if (!confirmSubmit) return 0;
   console.log("ge", GS.ge[GS.hand_counter]);
   console.log("ug", GS.userGuesses[GS.hand_counter]);
-  for (let [ply, action] of Object.entries(GS.userGuesses[GS.hand_counter])) {
-    console.log("ply action", ply, action);
-  }
+  let matchCnt = 0;
+  let defaultCnt = 0;
+  let totalCnt = 0;
+  for (let [ply, userGuessDetail] of Object.entries(
+    GS.userGuesses[GS.hand_counter],
+  )) {
+    totalCnt += 1;
+    // console.log("ply action", ply, userGuessDetail);
+    let mortalEval = GS.ge[GS.hand_counter][ply].mortalEval;
+    const actualAction = mortalEval.details[mortalEval.actual_index];
+    const expectedAction = mortalEval.details[0]; // They are listed in order so first is the expected
+    if (userGuessDetail == "") {
+      // If user didn't guess, assume they agreed with what the player did
+      defaultCnt += 1;
+      userGuessDetail = structuredClone(actualAction);
+      GS.userGuesses[GS.hand_counter][ply] = userGuessDetail;
+    }
+    // console.log("actualAction", actualAction);
 
-  alert("test");
-  GS.wwydMode = 0;
+    if (JSON.stringify(expectedAction) == JSON.stringify(userGuessDetail)) {
+      matchCnt += 1;
+    }
+  }
+  console.log("ug", GS.userGuesses[GS.hand_counter]);
+  let s = `Matches ${matchCnt} / ${totalCnt} (${((matchCnt / totalCnt) * 100).toFixed(1)}%)`;
+  console.log(s);
+  alert(s);
+  //   GS.wwydMode = 0;
   return 1;
 }
 
@@ -2075,7 +2097,10 @@ function incPlyCounter() {
   if (GS.ply_counter < GS.ge[GS.hand_counter].length - 1) {
     GS.ply_counter++;
   } else {
-    incRoundCounter();
+    if (!GS.wwydMode) {
+      incRoundCounter();
+    }
+    GS.ply_counter = 0;
   }
 }
 
@@ -2083,7 +2108,9 @@ function decPlyCounter() {
   if (GS.ply_counter > 0) {
     GS.ply_counter--;
   } else {
-    decRoundCounter();
+    if (!GS.wwydMode) {
+      decRoundCounter();
+    }
     GS.ply_counter = GS.ge[GS.hand_counter].length - 1;
   }
 }
@@ -2135,9 +2162,8 @@ function i18nElem(key) {
   return elem;
 }
 function toggleMortalAdvice() {
-  if (GS.wwydMode) {
+  if (!GS.showMortal && GS.wwydMode) {
     if (!maybeSubmitWwyd()) return;
-    GS.wwydMode = 0;
   }
   GS.showMortal = !GS.showMortal;
   updateState();
