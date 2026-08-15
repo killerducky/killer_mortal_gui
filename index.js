@@ -304,6 +304,9 @@ class UI {
     table.classList.add("hover-rows");
     this.optInfo.append(table);
     addTableRow(table, [i18next.t("Action"), i18next.t("Q"), i18next.t("P")]);
+    if (!mortalEval) {
+      return;
+    }
     let userGuess = ((GS.userGuesses[GS.hand_counter] ??= {})[
       GS.ply_counter
     ] ??= "");
@@ -314,9 +317,6 @@ class UI {
         i18next.t("WWYD"),
         this.getActionSpan(userGuess),
       ]);
-    }
-    if (!mortalEval) {
-      return;
     }
     if (!GS.showMortal) {
       addTableRow(actualTable, [i18next.t("Player"), ""]);
