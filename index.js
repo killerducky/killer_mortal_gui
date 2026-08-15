@@ -320,30 +320,57 @@ class UI {
         this.getActionSpan(userGuessDetail),
       ]);
     }
-    if (!GS.showMortal || !mortalEval) {
-      addTableRow(actualTable, [i18next.t("Player"), ""]);
-      addTableRow(actualTable, [i18next.t("Mortal"), ""]);
+    if (!mortalEval) {
       return;
     }
-
-    addTableRow(actualTable, [
-      i18next.t("Player"),
-      this.getActionSpan(mortalEval.details[mortalEval.actual_index]),
-    ]);
-    addTableRow(actualTable, [
-      i18next.t("Mortal"),
-      this.getActionSpan(mortalEval.details[0]),
-    ]);
-
-    for (let [idx, detail] of mortalEval.details.entries()) {
+    if (!GS.showMortal) {
+      addTableRow(actualTable, [i18next.t("Player"), ""]);
+      addTableRow(actualTable, [i18next.t("Mortal"), ""]);
+    } else {
+      addTableRow(actualTable, [
+        i18next.t("Player"),
+        this.getActionSpan(mortalEval.details[mortalEval.actual_index]),
+      ]);
+      addTableRow(actualTable, [
+        i18next.t("Mortal"),
+        this.getActionSpan(mortalEval.details[0]),
+      ]);
+    }
+    console.log("entries", mortalEval.details);
+    let details = mortalEval.details;
+    if (!GS.showMortal) {
+      details = this.sortMortalActions(mortalEval.details);
+    }
+    for (let [idx, detail] of details.entries()) {
       let actionSpan = this.getActionSpan(detail);
       let row = [
         actionSpan,
-        detail.q_value.toFixed(2),
-        (detail.prob * 100).toFixed(2),
+        GS.showMortal ? detail.q_value.toFixed(2) : 0,
+        GS.showMortal ? (detail.prob * 100).toFixed(2) : 0,
       ];
       addTableRow(table, row);
     }
+  }
+  // Sort by action.type, then action.pai.
+  sortMortalActions(list) {
+    if (!Array.isArray(list)) return [];
+
+    return [...list].sort((a, b) => {
+      // Safely extract types (default to empty string if missing)
+      const typeA = a?.action?.type ?? "";
+      const typeB = b?.action?.type ?? "";
+
+      // 1. Primary sort: action.type (alphabetical)
+      if (typeA !== typeB) {
+        return typeA.localeCompare(typeB);
+      }
+
+      // 2. Secondary sort: action.pai (numerical, items without pai go to the end)
+      const paiA = a?.action?.pai ?? Infinity;
+      const paiB = b?.action?.pai ?? Infinity;
+
+      return paiA - paiB;
+    });
   }
   updateGridInfo() {
     this.clearDiscardBars();
